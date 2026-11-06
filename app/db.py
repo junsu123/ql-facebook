@@ -124,6 +124,8 @@ def initialize():
     # Keep migrations idempotent for existing local databases.
     from .brains import init_brains
     init_brains()
+    from .academy import init_academy
+    init_academy()
 
 def log(agent: str, kind: str, message: str, task_id: str | None = None):
     run('INSERT INTO activity(agent_id,kind,message,task_id,created) VALUES(?,?,?,?,?)',

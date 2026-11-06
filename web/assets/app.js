@@ -3,7 +3,7 @@
 const ROUTES=[
   ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['pages','📣','100 Fanpage'],
   ['accounts','🦊','Tài khoản Firefox'],['content','📝','Nội dung & Lịch'],
-  ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['settings','⚙️','Cài đặt']
+  ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['academy','🎓','Học viện 10M'],['settings','⚙️','Cài đặt']
 ];
 const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all'};
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -225,6 +225,35 @@ function renderBrains(){
   ${(b.routing?.recent||[]).map(x=>`<tr><td>${E(agentName(x.agent_id))}</td><td><code>${E(x.model)}</code></td><td>${E(({routine_low_cost:'Việc thường',complex_explicit:'Nhiệm vụ phức tạp',complex_keywords:'Nhiệm vụ có rủi ro',long_complex_plan:'Kế hoạch dài'})[x.route_reason]||x.route_reason||'Từ bản cũ')}</td><td>$${Number(x.cost_usd||0).toFixed(5)}</td><td>${E(x.status)}</td></tr>`).join('')}</tbody></table></div>`:empty('🤖','Chưa có lời gọi Claude','Sau khi nhân viên xử lý nhiệm vụ, bảng sẽ hiển thị model thực sự được sử dụng.')}</div>
   <div class="grid-2" style="margin-top:17px"><div class="card"><h2>⚙️ Tối ưu chi phí Claude</h2><p>① Ưu tiên bộ nhớ và quy tắc cục bộ. ② Dùng model Haiku cho việc thường. ③ Chỉ nâng lên Sonnet khi khó, có yêu cầu hoặc khi model nhỏ không giải quyết được. ④ Tái dùng câu trả lời trùng khớp trong 6 giờ. ⑤ Khóa ngân sách mỗi agent và toàn công ty.</p><button class="btn ghost" data-route="settings">Đi đến cài đặt ngân sách</button></div><div class="card"><h2>🛡️ Điều kiện tự học</h2><p>Học và ghi nhớ 24/24 nghĩa là xử lý các sự kiện khi phần mềm đang chạy, không phải tạo yêu cầu AI liên tục hay tự suy đoán dữ liệu Facebook. Khi tắt máy, hoạt động dừng; sự kiện còn trong database sẽ được xử lý khi mở lại.</p><p class="muted">Dữ liệu mỗi agent lưu riêng. CEO chỉ giao việc và đọc báo cáo, không mặc định xem mọi thông tin nhạy cảm.</p></div></div>`;
 }
+function renderAcademy(){
+  const a=S.data.academy||{},c=a.counts||{},u=a.usage||{};
+  const limit=Number(a.daily_token_limit||10000000),used=Number(u.tokens_reserved_and_used_today||0),pct=Math.min(100,Math.max(0,used/Math.max(limit,1)*100));
+  const trainingCount=Number(c.jobs_done||0),totalJobs=Number(c.jobs||0);
+  return `${heading('Học viện AI · 10 triệu token/ngày','9 nhân viên học từ tài liệu có nguồn, tóm tắt chung một lần rồi ghi nhớ theo chuyên môn. Không tự quét Facebook.',`<button class="btn ghost" data-action="academy.toggle">${a.enabled?"⏸ Tạm dừng học tự động":"▶ Bật học tự động"}</button><button class="btn primary" data-action="academy.step">▶ Học một bước ngay</button>`)}
+    <div class="stat-grid">${stat('📚','Nguồn đã nạp',c.sources||0,'Tài liệu có quyền sử dụng','#9782ff')}${stat('🧩','Đoạn kiến thức',c.chunks||0,`${c.digests_done||0} đã tóm tắt`,'#64e6b4')}${stat('🎓','Bài huấn luyện',trainingCount+'/'+totalJobs,`${c.jobs_queued||0} đang chờ`,'#ffc17c')}${stat('🪙','Token hôm nay',Number(used).toLocaleString('vi-VN'),`Hạn mức: ${limit.toLocaleString('vi-VN')}`,'#79c4ff')}</div>
+    <div class="card" style="margin-top:18px"><div class="space-between"><h2>📈 Hạn mức token Claude</h2><span class="badge ${a.enabled?'green':'yellow'}">${a.enabled?'Đang bật học tự động':'Học tự động đang tắt'}</span></div>
+       <p class="muted">Hệ thống theo dõi input + output + cache từ usage API và token dự trù của yêu cầu đang chạy. Quota không đồng nghĩa API miễn phí.</p>
+       <div class="academy-progress"><div class="academy-progress-fill" style="width:${pct}%"></div></div>
+       <div class="space-between"><strong>${used.toLocaleString('vi-VN')} / ${limit.toLocaleString('vi-VN')} token</strong><span class="muted">${pct.toFixed(2)}%</span></div>
+       <p class="card-sub">Ngân sách USD còn được kiểm soát độc lập: $${Number(u.today_usd||0).toFixed(4)} / $${Number(u.daily_limit_usd||0).toFixed(2)} hôm nay. Nếu chạm hạn mức USD hoặc thiếu nguồn học, hệ thống không tự tiêu token để lấp đầy chỉ tiêu.</p>
+       <div class="warn">Đây là giới hạn nội bộ, không phải thông tin quota thật từ Anthropic. Hãy kiểm tra giới hạn và hóa đơn trong Claude Console. ${Number(S.data.settings.daily_llm_call_limit||200)<1000?'Giới hạn '+E(S.data.settings.daily_llm_call_limit||'200')+' lượt gọi/ngày đang khá thấp để dùng nhiều triệu token; có thể tăng ở Cài đặt nếu hạn mức thực cho phép.':''}</div>
+    </div>
+    <div class="grid-2" style="margin-top:17px"><div class="card"><h2>📥 Nạp nguồn đào tạo</h2><p class="muted">Dán tài liệu bạn sở hữu hoặc được phép sử dụng. Bản này nhận văn bản thuần tối đa 300.000 ký tự/lần; không tự thu thập dữ liệu Facebook.</p>
+      <form id="academyForm">
+        ${field('Tên tài liệu','title','','text','minlength="3" maxlength="180" placeholder="Ví dụ: Quy trình chăm sóc Fanpage" required')}
+        ${field('Nguồn / liên kết gốc (tùy chọn)','source_ref','','text','maxlength="350" placeholder="https://... hoặc Sổ tay nội bộ"')}
+        <div class="form-field"><label>Nội dung tài liệu</label><textarea class="textarea" name="content" rows="9" minlength="160" maxlength="300000" required placeholder="Dán nội dung tài liệu vào đây... Không dán API key, mật khẩu hoặc cookie."></textarea></div>
+        <label class="brain-option"><input type="checkbox" name="owner_has_rights" required> Tôi có quyền sử dụng tài liệu này để đào tạo AI</label>
+        <button class="btn primary block" type="submit">＋ Nạp tài liệu & tạo nhiệm vụ đào tạo</button>
+      </form></div>
+    <div class="card"><h2>👥 Tiến độ đào tạo theo agent</h2><p class="muted">Một đoạn tài liệu được tóm tắt chung, sau đó mỗi agent rút bài học phù hợp với chức năng. Bộ nhớ từng người vẫn được cách ly.</p>
+    <div class="table-scroll"><table class="data-table"><thead><tr><th>Nhân viên</th><th>Đã học</th><th>Chờ học</th></tr></thead><tbody>
+    ${(a.agents||[]).map(x=>`<tr><td>${E(x.name)}</td><td>${Number(x.done||0)}</td><td>${Number(x.queued||0)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="subtle-divider"></div><h2>📁 Tài liệu gần đây</h2>
+    ${(a.sources||[]).length?(a.sources||[]).map(x=>`<div class="activity-item"><strong>${E(x.title)}</strong><p>${Number(x.chunks)} đoạn · ${E(x.source_ref||'Tài liệu nội bộ')}</p><small>${F(x.created)}</small></div>`).join(''):empty('📭','Chưa có nguồn học','Nạp dữ liệu để khởi động học viện.')}
+    </div></div>`;
+}
+
 function renderSettings(){
   const cfg=S.data.settings;
   const brain=S.data.brain_overview||{};
@@ -239,6 +268,9 @@ function renderSettings(){
     ${field('Hạn mức Claude toàn công ty (USD/ngày)','claude_daily_budget_usd',cfg.claude_daily_budget_usd??'1.00','number','min="0" max="1000" step="0.01" required')}
     ${field('Hạn mức Claude mỗi agent (USD/ngày)','claude_agent_daily_budget_usd',cfg.claude_agent_daily_budget_usd??'0.25','number','min="0" max="1000" step="0.01" required')}
     ${field('Giới hạn lượt gọi Claude/ngày','daily_llm_call_limit',cfg.daily_llm_call_limit??'200','number','min="1" max="10000" required')}
+    ${field('Hạn mức token toàn công ty/ngày','academy_daily_token_limit',cfg.academy_daily_token_limit??'10000000','number','min="10000" max="100000000" step="10000" required')}
+    ${field('Khoảng cách giữa các bước học (giây)','academy_interval_seconds',cfg.academy_interval_seconds??'35','number','min="10" max="3600" required')}
+    <label class="brain-option"><input type="checkbox" name="academy_enabled" ${cfg.academy_enabled==='1'?'checked':''}> Bật Học viện AI tự học khi server đang chạy (có thể phát sinh phí Claude)</label>
     <label class="brain-option"><input type="checkbox" name="claude_cache_enabled" ${cfg.claude_cache_enabled==='1'?'checked':''}> Dùng lại kết quả giống hệt trong 6 giờ & prompt caching</label>
     <label class="brain-option"><input type="checkbox" name="brain_learning_enabled" ${cfg.brain_learning_enabled==='1'?'checked':''}> Học từ sự kiện nội bộ khi chương trình đang chạy (không tốn Claude khi rảnh)</label>
     <label class="brain-option"><input type="checkbox" name="auto_run_agents" ${cfg.auto_run_agents==='1'?'checked':''}> Tự chạy hàng đợi agent trong giới hạn ngân sách</label>
@@ -253,7 +285,7 @@ function renderSettings(){
 function render(){
   if(!S.data)return;
   window.OfficeLive?.unmount();
-  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,settings:renderSettings};
+  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,settings:renderSettings};
   document.getElementById('view').innerHTML=(dict[S.route]||renderOffice)();
   if(S.route==='office'){
     const scene=window.OfficeLive?.mount(document.getElementById('office-live-stage'),S.data,id=>action('agent.details',id).catch(err=>toast(err.message,true)));
@@ -399,6 +431,8 @@ async function action(name,id,el){
       const r=await api('/api/pages/'+p+'/learn','POST');toast('Đã lưu bài học từ '+r.samples+' dòng số liệu.');modal('🧠 Kết quả học từ dữ liệu',`<p>${E(r.note)}</p>`);break;
     }
     case 'claude.check':{const r=await api('/api/claude/check','POST');toast(r.ok?('Claude đã kết nối. Haiku: '+(r.haiku_available?'Có':'Không')+'; Sonnet: '+(r.sonnet_available?'Có':'Không')):'Không thể kiểm tra Claude',!r.ok);break;}
+    case 'academy.toggle':{const was=!!S.data.academy?.enabled;await api('/api/settings','POST',{academy_enabled:!was});toast(was?'Đã tạm dừng học tự động.':'Đã bật học tự động khi server đang chạy.');await reload();break;}
+    case 'academy.step':{const x=await api('/api/academy/step','POST');toast(x.status==='started'?'Đã gửi một bước học vào hàng đợi.':'Học viện đang xử lý.');setTimeout(reload,1500);break;}
     case 'brain.learn-now':{
       const result=await api('/api/brains/learn-now','POST');toast('Đã xử lý '+result.processed+' sự kiện học tập cục bộ, không dùng Claude.');await reload();break;
     }
@@ -427,6 +461,10 @@ document.addEventListener('submit',async e=>{
     S.busy=true;render();try{const r=await api('/api/ceo/chat','POST',{message:msg});await reload();if(r.mode==='error')toast('CEO AI gặp lỗi: xem trả lời trong hội thoại.',true);}
     catch(err){toast(err.message,true)}finally{S.busy=false;render();}
   }
+  if(e.target.id==='academyForm'){
+    e.preventDefault();const values=Object.fromEntries(new FormData(e.target).entries());
+    try{const r=await api('/api/academy/sources','POST',{title:values.title,source_ref:values.source_ref||'',content:values.content,owner_has_rights:!!values.owner_has_rights});toast(r.duplicate?'Tài liệu đã có, không nạp trùng.':'Đã tạo '+r.jobs+' bài đào tạo cho 9 agent.');e.target.reset();await reload();}catch(err){toast(err.message,true);}
+  }
   if(e.target.id==='settingsForm'||e.target.id==='firefoxForm'){
     e.preventDefault();const f=Object.fromEntries(new FormData(e.target).entries());const current=S.data.settings;
     const payload={};
@@ -434,6 +472,9 @@ document.addEventListener('submit',async e=>{
       payload.daily_llm_call_limit=Number(f.daily_llm_call_limit);
       payload.claude_daily_budget_usd=Number(f.claude_daily_budget_usd);
       payload.claude_agent_daily_budget_usd=Number(f.claude_agent_daily_budget_usd);
+      payload.academy_daily_token_limit=Number(f.academy_daily_token_limit);
+      payload.academy_interval_seconds=Number(f.academy_interval_seconds);
+      payload.academy_enabled=!!f.academy_enabled;
       payload.auto_run_agents=!!f.auto_run_agents;
       payload.claude_cache_enabled=!!f.claude_cache_enabled;
       payload.brain_learning_enabled=!!f.brain_learning_enabled;
@@ -447,4 +488,4 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();}});
 (async()=>{try{await reload();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
-  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
+  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();

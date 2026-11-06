@@ -1,8 +1,29 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.4.0)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.5.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
 > **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. Chỉ cấu hình Claude API; tự chọn model theo loại nhiệm vụ, giữ giới hạn ngân sách.
+
+## V1.5.0 – Học viện AI 10 triệu token/ngày (nguồn có quyền sử dụng)
+
+- Menu **Học viện 10M**: nạp tài liệu văn bản có nguồn, chống trùng bằng SHA-256, cắt đoạn 4.000 ký tự và tạo bài huấn luyện riêng cho 9 agent.
+- **Tóm tắt dùng chung một lần mỗi đoạn** rồi tạo bài học theo vai trò CEO/Research/Strategy/Content/Creative/Publishing/Customer/Analytics/Compliance. Bài học lưu bộ nhớ riêng theo nguồn, **chưa tự xác thực là sự thật**.
+- Học viện **tắt mặc định**. Người dùng cần nhập Claude API key, chủ động bật học tự động, có tài liệu và thiết lập ngân sách trước khi chương trình thực hiện yêu cầu AI. Nếu không có dữ liệu mới, **không gọi Claude để đốt token**.
+- `academy_daily_token_limit` mặc định **10.000.000 token/ngày**, áp dụng cho **tổng lời gọi Claude của cả công ty** (tính input, output, cache read, cache write và token dự trù khi call đang chạy); đây là hạn mức nội bộ **không tự đo được gói trả phí của nhà cung cấp**.
+- Giữ hai lớp bảo vệ độc lập: **10M token/ngày + USD/ngày toàn công ty và từng agent**. Giới hạn `daily_llm_call_limit` còn hiệu lực: để học nhiều phải điều chỉnh phù hợp trong Cài đặt. Quota token **không đồng nghĩa được sử dụng miễn phí**.
+- Worker học một bước mỗi `academy_interval_seconds` (mặc định 35 giây) khi server đang hoạt động. Có tạm dừng/bật lại; trên Windows muốn 24/24 phải để máy và server chạy. Không có crawler Facebook, không tự truy cập tài khoản người khác hoặc vượt giới hạn nền tảng.
+- Nguồn học V1.5: **văn bản do chủ sở hữu cung cấp**, tối đa 300.000 ký tự/lần, có trường ghi URL/nguồn tham khảo **chỉ làm metadata, không tự tải URL**. Sau này có thể thêm bộ nhập PDF/DOCX và tài liệu từ các nguồn được phép.
+- Chi phí thực tế lấy từ usage Anthropic nhưng chỉ **ước tính USD** bằng bảng giá trong mã; cần so với billing của Anthropic. Kiểm thử giả lập không tiêu API thật.
+
+### Cách sử dụng Học viện AI
+
+1. Vào **Cài đặt**, nhập Claude API key và xác nhận đã lưu.
+2. Đặt `Hạn mức token toàn công ty/ngày` thành `10000000` (mặc định), ngân sách USD, ngân sách/agent và số lượt gọi/ngày phù hợp với hạn mức **thực tế** của bạn. Mức mặc định $1/ngày và 200 lượt/ngày sẽ làm hệ thống dừng sớm.
+3. Vào **Học viện 10M** và nạp tài liệu bạn có quyền dùng. Cần ít nhất 160 ký tự/tài liệu; nên nạp theo lĩnh vực (nội dung, khách hàng, KPI, pháp lý, quy trình).
+4. Bấm **Bật học tự động** hoặc **Học một bước ngay** sau khi đã bật. Màn hình hiển thị tài liệu, số đoạn, bài đã đào tạo, token và USD/ngày.
+5. Các agent tự truy xuất và lưu bài học theo nguồn; kết quả vẫn cần kiểm tra trước khi áp dụng quyết định lớn.
+
+> Không hứa tiêu hết 10M token/ngày nếu không có đủ tài liệu chất lượng hoặc ngân sách. Không tự đọc Facebook API, không tự quét Facebook, không tự đăng bài.
 
 ## V1.4.0 – Claude-only, model tự chọn để tiết kiệm chi phí
 

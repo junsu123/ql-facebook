@@ -45,3 +45,10 @@ V1.4: CHI CAU HINH CLAUDE API
 - Khong can chon model: viec nhe la Haiku 5.5, viec phuc tap la Sonnet 5.5.
 - Cap nhat code moi bang git pull origin main, dong server cu, mo lai start_windows.bat.
 - Cac API key cua nha cung cap cu khong duoc su dung nua; khong xoa du lieu cu.
+
+HOC VIEN 10M TOKEN/NGAY (V1.5):
+- Cai dat > nhap Claude key, dat ngan sach USD/ngay, 10.000.000 token/ngay, so luot goi/ngay.
+- Hoc vien 10M > Nap tai lieu co quyen su dung > Bat hoc tu dong.
+- He thong doc tai lieu ban cung cap, luu bo nho rieng cho 9 agent.
+- Khong tu dong quet Facebook. Hoc vien chi goi Claude khi co du lieu moi, khi app dang chay.
+- 10M token KHONG dong nghia mien phi: kiem tra quota va billing thuc te cua nha cung cap.

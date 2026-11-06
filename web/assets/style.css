@@ -18,3 +18,6 @@
 .brain-option input{width:17px;height:17px;accent-color:#8f81ff}
 .brain-memories{max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
 .brain-memories .activity-item{overflow-wrap:anywhere}
+
+/* Academy quota display */
+.academy-progress{height:13px;border-radius:99px;background:#323e5c;margin:15px 0 10px;overflow:hidden}.academy-progress-fill{height:100%;background:linear-gradient(90deg,#6c84ed,#61d9bd);border-radius:inherit;transition:width .35s}

@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS claude_usage (
  cost_usd REAL NOT NULL DEFAULT 0, input_tokens INTEGER NOT NULL DEFAULT 0,
  output_tokens INTEGER NOT NULL DEFAULT 0, cache_read_tokens INTEGER NOT NULL DEFAULT 0,
  cache_write_tokens INTEGER NOT NULL DEFAULT 0, created TEXT NOT NULL, finished_at TEXT,
- route_reason TEXT NOT NULL DEFAULT ''
+ route_reason TEXT NOT NULL DEFAULT '', reserved_tokens INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS ix_claude_usage_day ON claude_usage(created,agent_id,status);
 CREATE TABLE IF NOT EXISTS brain_response_cache (
@@ -97,6 +97,8 @@ def init_brains():
         columns={row[1] for row in c.execute('PRAGMA table_info(claude_usage)')}
         if 'route_reason' not in columns:
             c.execute("ALTER TABLE claude_usage ADD COLUMN route_reason TEXT NOT NULL DEFAULT ''")
+        if 'reserved_tokens' not in columns:
+            c.execute('ALTER TABLE claude_usage ADD COLUMN reserved_tokens INTEGER NOT NULL DEFAULT 0')
         c.executemany('INSERT OR IGNORE INTO agent_brain_state(agent_id) VALUES (?)',[(a,) for a in AGENT_IDS])
         defaults = {
             'claude_daily_budget_usd':'1.00',
@@ -196,6 +198,7 @@ def reserve_budget(agent_id:str, model:str, purpose:str, prompt:str,system:str,m
     total_cap=max(0,float(cfg.get('claude_daily_budget_usd','1')))
     agent_cap=max(0,float(cfg.get('claude_agent_daily_budget_usd','.25')))
     amount=_max_reservation(model,prompt,system,max_tokens)
+    requested_tokens=_tokens_upper(system+prompt)+max_tokens
     rid='R'+uuid.uuid4().hex
     with db() as c:
         # BEGIN IMMEDIATE serializes reservations across workers and processes.
@@ -206,12 +209,15 @@ def reserve_budget(agent_id:str, model:str, purpose:str, prompt:str,system:str,m
                             (_vietnam_day_start_utc(),)).fetchone()[0]
         if used_calls>=max_calls:
             raise ValueError('Đã đạt hạn mức lượt gọi Claude hôm nay.')
+        token_cap=max(1,int(cfg.get('academy_daily_token_limit','10000000')))
+        if _tokens_today(c)+requested_tokens>token_cap:
+            raise ValueError('Đã đạt hạn mức tổng token Claude hôm nay.')
         if _spent_today(c)+amount>total_cap+1e-10:
             raise ValueError('Đã hết hạn mức Claude toàn công ty hôm nay.')
         if _spent_today(c,agent_id)+amount>agent_cap+1e-10:
             raise ValueError(f'Agent {agent_id} đã chạm ngân sách Claude ngày.')
-        c.execute('''INSERT INTO claude_usage(id,agent_id,model,purpose,status,estimated_reservation_usd,created,route_reason)
-                     VALUES(?,?,?,?,?,?,?,?)''',(rid,agent_id,model,purpose,'reserved',amount,now(),route_reason))
+        c.execute('''INSERT INTO claude_usage(id,agent_id,model,purpose,status,estimated_reservation_usd,created,route_reason,reserved_tokens)
+                     VALUES(?,?,?,?,?,?,?,?,?)''',(rid,agent_id,model,purpose,'reserved',amount,now(),route_reason,requested_tokens))
     return rid,amount
 
 
@@ -226,19 +232,36 @@ def _update_usage(rid:str, status:str, usage:dict|None=None, model:str=''):
     cache_read_multiplier=(0.05 if model=='claude-sonnet-5-5' else 0.1)
     cost=(inp*ip + out*op + cr*ip*cache_read_multiplier + cw*ip*1.25)/1_000_000
     run('''UPDATE claude_usage SET status=?,cost_usd=?,estimated_reservation_usd=0,
-       input_tokens=?,output_tokens=?,cache_read_tokens=?,cache_write_tokens=?,finished_at=? WHERE id=?''',
+       input_tokens=?,output_tokens=?,cache_read_tokens=?,cache_write_tokens=?,reserved_tokens=0,finished_at=? WHERE id=?''',
        (status,round(cost,9),inp,out,cr,cw,now(),rid))
     return round(cost,9)
+
+
+def _tokens_today(c: sqlite3.Connection, agent_id: str|None=None) -> int:
+    clauses = "created>=? AND status IN ('reserved','completed')"
+    args = [_vietnam_day_start_utc()]
+    if agent_id:
+        clauses += ' AND agent_id=?'; args.append(agent_id)
+    row = c.execute(f'''SELECT COALESCE(SUM(CASE WHEN status='reserved'
+            THEN reserved_tokens ELSE input_tokens+output_tokens+cache_read_tokens+cache_write_tokens END),0) AS total
+            FROM claude_usage WHERE {clauses}''',args).fetchone()
+    return int(row['total'])
 
 
 def spent_report():
     with db() as c:
         company=_spent_today(c)
         per={a:round(_spent_today(c,a),6) for a in AGENT_IDS}
+        tokens_used=_tokens_today(c)
+        tokens_per_agent={a:_tokens_today(c,a) for a in AGENT_IDS}
     cfg=budget_settings()
     return {'today_usd':round(company,6),'daily_limit_usd':float(cfg.get('claude_daily_budget_usd','1')),
             'per_agent_limit_usd':float(cfg.get('claude_agent_daily_budget_usd','.25')),
             'agents':per,'currency':'USD',
+            'tokens_reserved_and_used_today':tokens_used,
+            'daily_token_limit':int(cfg.get('academy_daily_token_limit','10000000')),
+            'tokens_remaining':max(0,int(cfg.get('academy_daily_token_limit','10000000'))-tokens_used),
+            'tokens_by_agent':tokens_per_agent,
             'disclaimer':'Ứng dụng chỉ ước tính chi phí Claude từ usage API; hóa đơn thực tế do Anthropic quyết định.'}
 
 

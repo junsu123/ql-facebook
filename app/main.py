@@ -25,6 +25,7 @@ from .ai import (ModelError, ceo_message, config, create_task, execute_task,
                  generate_content, save_key, get_key)
 from .brains import (agent_brain_overview, relevant_memories, learning_tick,
                      enqueue_learning, spent_report, AGENT_IDS)
+from .academy import academy_overview, add_source, academy_tick, recover_interrupted_academy_jobs
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
                       close_profile, confirm_login, delete_profile, executable)
 from .firefox_installer import (FirefoxInstallError, start_install as start_firefox_install,
@@ -32,7 +33,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.4.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.5.0',docs_url='/api/docs',redoc_url=None)
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
 app.mount('/media',StaticFiles(directory=MEDIA_DIR),name='media')
@@ -40,6 +41,8 @@ executor=ThreadPoolExecutor(max_workers=2,thread_name_prefix='aifc-agent')
 _worker_lock=threading.Lock()
 _submitted:set[str]=set()
 _stop=threading.Event()
+_academy_lock=threading.Lock()
+_academy_future=None
 
 @app.middleware('http')
 async def local_only(request: Request, call_next):
@@ -59,7 +62,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.4.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.5.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/bootstrap')
 def bootstrap():
@@ -80,6 +83,7 @@ def bootstrap():
         'campaigns':all_rows('SELECT * FROM campaigns ORDER BY created DESC LIMIT 30'),
         'settings':config(),
         'brain_overview':agent_brain_overview(),
+        'academy':academy_overview(),
         'firefox_available':bool(executable()),
         'firefox_installer':firefox_install_status(),
         'counts':{
@@ -106,19 +110,23 @@ class SettingsChange(BaseModel):
     brain_learning_enabled:bool|None=None
     claude_daily_budget_usd:float|None=Field(default=None,ge=0,le=1000)
     claude_agent_daily_budget_usd:float|None=Field(default=None,ge=0,le=1000)
+    academy_daily_token_limit:int|None=Field(default=None,ge=10000,le=100000000)
+    academy_enabled:bool|None=None
+    academy_interval_seconds:int|None=Field(default=None,ge=10,le=3600)
 
 @app.post('/api/settings')
 def update_settings(req:SettingsChange):
     values=req.model_dump(exclude_unset=True,exclude_none=True)
     saved=('daily_llm_call_limit','firefox_path','auto_run_agents',
            'claude_cache_enabled','brain_learning_enabled',
-           'claude_daily_budget_usd','claude_agent_daily_budget_usd')
+           'claude_daily_budget_usd','claude_agent_daily_budget_usd',
+           'academy_daily_token_limit','academy_enabled','academy_interval_seconds')
     with db() as c:
         c.execute("INSERT INTO settings(key,value) VALUES('provider','claude') ON CONFLICT(key) DO UPDATE SET value='claude'")
         for key in saved:
             if key not in values:
                 continue
-            value=('1' if values[key] else '0') if key in ('auto_run_agents','claude_cache_enabled','brain_learning_enabled') else str(values[key])
+            value=('1' if values[key] else '0') if key in ('auto_run_agents','claude_cache_enabled','brain_learning_enabled','academy_enabled') else str(values[key])
             c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',(key,value))
     if 'claude_key' in values:
         save_key('claude',values['claude_key'])
@@ -144,6 +152,41 @@ def claude_connection_check():
         raise HTTPException(400,f'Claude từ chối kiểm tra key: HTTP {e.response.status_code}') from e
     except (httpx.RequestError,ValueError) as e:
         raise HTTPException(503,'Không thể kết nối Claude Models API để kiểm tra.') from e
+
+@app.get('/api/academy')
+def get_academy():
+    return academy_overview()
+
+class AcademySourceInput(BaseModel):
+    title: str=Field(min_length=3,max_length=180)
+    content: str=Field(min_length=160,max_length=300000)
+    source_ref: str=Field(default='',max_length=350)
+    agents: list[str]|None=None
+    owner_has_rights: bool=False
+
+@app.post('/api/academy/sources')
+def upload_academy_source(req:AcademySourceInput):
+    if not req.owner_has_rights:
+        raise HTTPException(400,'Hãy xác nhận quyền sử dụng tài liệu trước khi nạp.')
+    try:
+        return add_source(req.title,req.content,req.source_ref,req.agents)
+    except ValueError as error:
+        raise HTTPException(400,str(error)) from error
+
+@app.post('/api/academy/step')
+def run_academy_step():
+    # One paid request in a thread pool, not on the main HTTP worker. Explicit
+    # manual trigger still requires enabled setting, and cannot bypass caps.
+    global _academy_future
+    if config().get('academy_enabled','0')!='1':
+        raise HTTPException(400,'Hãy bật Học viện AI trước khi bắt đầu học.')
+    if not get_key('claude'):
+        raise HTTPException(400,'Hãy cấu hình Claude API key trước.')
+    with _academy_lock:
+        if _academy_future and not _academy_future.done():
+            return {'status':'already_running'}
+        _academy_future=executor.submit(academy_tick)
+    return {'status':'started'}
 
 @app.get('/api/brains')
 def brains_overview():
@@ -580,7 +623,9 @@ def scheduler_tick():
 
 
 def scheduler_loop():
+    global _academy_future
     last_brain_cycle=0.0
+    last_academy_cycle=0.0
     while not _stop.wait(10):
         try:
             scheduler_tick()
@@ -591,6 +636,13 @@ def scheduler_loop():
             if time.monotonic()-last_brain_cycle>=60:
                 learning_tick(40)
                 last_brain_cycle=time.monotonic()
+            if cfg.get('academy_enabled','0')=='1' and get_key('claude'):
+                interval=max(10,int(cfg.get('academy_interval_seconds','35')))
+                if time.monotonic()-last_academy_cycle>=interval:
+                    with _academy_lock:
+                        if not _academy_future or _academy_future.done():
+                            _academy_future=executor.submit(academy_tick)
+                            last_academy_cycle=time.monotonic()
             if cfg.get('auto_run_agents')=='1' and get_key('claude'):
                 with _worker_lock:
                     available=max(0,2-len(_submitted))
@@ -601,6 +653,7 @@ def scheduler_loop():
 
 @app.on_event('startup')
 async def on_startup():
+    recover_interrupted_academy_jobs()
     scheduler_tick()
     learning_tick(40)
     thread=threading.Thread(target=scheduler_loop,name='schedule-checker',daemon=True)
