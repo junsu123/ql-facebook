@@ -1,4 +1,4 @@
-"""V1.3.1 regression tests for startup, port reuse, and offline diagnostics."""
+"""Launcher regression tests for startup, port reuse, and offline diagnostics."""
 from __future__ import annotations
 import os
 import sys

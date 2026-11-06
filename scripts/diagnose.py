@@ -26,9 +26,16 @@ def diagnostic_text() -> str:
     ]
     modules = {'fastapi':'fastapi','uvicorn':'uvicorn','httpx':'httpx',
                'cryptography':'cryptography','psutil':'psutil','PIL':'Pillow',
-               'multipart':'python-multipart'}
+               'multipart':'python-multipart','tzdata':'tzdata'}
     for mod, pkg in modules.items():
         info.append(f'Thu vien {pkg}: ' + ('OK' if importlib.util.find_spec(mod) else 'THIEU'))
+    try:
+        from zoneinfo import ZoneInfo
+        datetime.now(ZoneInfo('Asia/Ho_Chi_Minh')).date()
+        info.append('Mui gio Asia/Ho_Chi_Minh: OK')
+    except Exception as exc:
+        info.append('Mui gio Asia/Ho_Chi_Minh: THIEU IANA DATABASE (' + type(exc).__name__ + ')')
+        info.append('Khac phuc: .venv\\Scripts\\python.exe -m pip install tzdata')
     for port in (8765,8766,8767):
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         try:

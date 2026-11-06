@@ -13,8 +13,8 @@ import re
 import sqlite3
 import time
 import uuid
-from datetime import datetime, timezone, time as clock_time
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone, timedelta, time as clock_time
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Any
 
 import httpx
@@ -136,11 +136,32 @@ def _max_reservation(model: str,prompt: str,system: str,max_tokens:int) -> float
     return round((_tokens_upper(system+prompt)*ip*1.25+max_tokens*op)/1_000_000 + 0.000001,9)
 
 
+def _vietnam_billing_timezone():
+    """Vietnam time for daily Claude budgets, including Windows without tzdata.
+
+    Normal installations use the IANA database.  Vietnam has no daylight-saving
+    time and its current civil offset is UTC+07, so the fixed-offset fallback is
+    safe for daily *current* spending boundaries if tzdata is missing or broken.
+    """
+    try:
+        return ZoneInfo('Asia/Ho_Chi_Minh')
+    except ZoneInfoNotFoundError:
+        return timezone(timedelta(hours=7), name='Asia/Ho_Chi_Minh fallback')
+
+
+def _vietnam_day_start_utc(instant:datetime|None=None) -> str:
+    """UTC ISO timestamp of local midnight for the instant's Vietnam date."""
+    instant=instant or datetime.now(timezone.utc)
+    if instant.tzinfo is None:
+        raise ValueError('Expected timezone-aware datetime')
+    tz=_vietnam_billing_timezone()
+    day=instant.astimezone(tz).date()
+    return datetime.combine(day,clock_time(0),tzinfo=tz).astimezone(timezone.utc).isoformat(timespec='seconds')
+
+
 def _spent_today(c:sqlite3.Connection, agent_id:str|None=None) -> float:
     clauses="created>=? AND status IN ('reserved','completed')"
-    local_date=datetime.now(ZoneInfo('Asia/Ho_Chi_Minh')).date()
-    start_utc=datetime.combine(local_date,clock_time(0),tzinfo=ZoneInfo('Asia/Ho_Chi_Minh')).astimezone(timezone.utc)
-    args=[start_utc.isoformat(timespec='seconds')]
+    args=[_vietnam_day_start_utc()]
     if agent_id:
         clauses+=' AND agent_id=?';args.append(agent_id)
     r=c.execute(f'''SELECT COALESCE(SUM(CASE WHEN status='reserved' THEN estimated_reservation_usd ELSE cost_usd END),0) AS dollars FROM claude_usage WHERE {clauses}''',args).fetchone()

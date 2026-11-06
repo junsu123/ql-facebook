@@ -33,3 +33,9 @@ KHAC PHUC LOI:
 - Xem diagnostics.txt va %LOCALAPPDATA%\AI-Fanpage-Company\logs\startup.log.
 - Tuyet doi KHONG xoa thu muc data/profiles hoac file API key ma hoa.
 - Neu cong 8765 dang ban, launcher co the chon cong 8766-8775.
+
+SUA LOI MUI GIO (Windows / Python 3.14):
+  git pull origin main
+  .venv\Scripts\python.exe -m pip install -r requirements.txt
+  Dong phan mem cu, sau do chay start_windows.bat
+Neu thieu tzdata, backend V1.3.2 co fallback UTC+7 cho bao cao chi phi Claude.

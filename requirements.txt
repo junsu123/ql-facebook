@@ -5,3 +5,5 @@ cryptography>=44,<50
 psutil>=5.9,<8
 pillow>=10,<13
 python-multipart>=0.0.9
+# IANA timezone database is not bundled with Python on Windows.
+tzdata>=2025.1

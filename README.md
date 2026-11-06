@@ -1,8 +1,15 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.2)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.3.2)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
 > **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. Các API Gemini/Groq chỉ hoạt động khi bạn nhập khóa hợp lệ.
+
+## Bản vá V1.3.2 – lỗi múi giờ trên Windows
+
+- Thêm dependency `tzdata` vào `requirements.txt` để Python (bao gồm 3.14) tìm được `Asia/Ho_Chi_Minh`.
+- Bộ tính ngân sách Claude có dự phòng múi giờ UTC+07:00 nếu dữ liệu IANA không tồn tại, tránh lỗi `/api/bootstrap` HTTP 500 khi mở giao diện.
+- Công cụ `diagnose_windows.bat` kiểm tra tình trạng timezone/tzdata.
+- Nếu đang chạy V1.3.1, thực hiện `git pull origin main` rồi **đóng cửa sổ máy chủ cũ** và khởi động lại bằng `start_windows.bat` để tự cài dependency. Có thể sửa ngay bằng `.venv\Scripts\python.exe -m pip install tzdata` trong thư mục dự án.
 
 ## Chạy trên Windows
 
