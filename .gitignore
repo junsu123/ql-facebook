@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.env.*
+data/
+*.sqlite3
+*.key
+*.enc
+.DS_Store
+
+# Local account / session / runtime data (never commit)
+.test-runtime/
+profiles/
+backups/
+runtime/
+logs/
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3-shm
+*.sqlite3-wal
+api_secrets.json.enc
+local_secret.key

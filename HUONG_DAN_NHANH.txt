@@ -1,0 +1,20 @@
+AI FANPAGE COMPANY - HUONG DAN KHOI DONG WINDOWS
+===============================================
+
+1. Cai Python 3.11 tro len: https://www.python.org/downloads/
+2. Cai Firefox: https://www.firefox.com/
+3. Giai nen file ZIP vao thu muc ban muon.
+4. Nhan DOP CHUOT vao start_windows.bat.
+5. Lan dau, phan mem cai thu vien Python (can Internet).
+6. Neu trinh duyet chua tu mo, truy cap http://127.0.0.1:8765
+7. Vao Cai dat de nhap Gemini/Groq API key.
+8. Vao Tai khoan Firefox > Them tai khoan. Firefox mo cho ban dang nhap thu cong.
+9. Vao Fanpage > Them Page + du lieu san pham.
+10. Vao AI CEO > Tao chien dich nhieu Page > Chay hang doi.
+
+CHU Y: Ban V1 KHONG tu dang bai Facebook, khong dung Meta API,
+khong can extension. Phan mem tao va duyet noi dung, lap lich,
+mo dung Firefox profile de ban TU dang, roi xac nhan da dang.
+Van phong 3D la minh hoa chibi co trang thai AI thuc te.
+
+Neu ban can huong dan chi tiet, mo file README.md.
