@@ -8,7 +8,7 @@ import os
 import re
 import threading
 import uuid
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, Future
 from datetime import datetime, timezone, timedelta
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -35,7 +35,8 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.6.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.7.0',docs_url='/api/docs',redoc_url=None)
+INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
 app.mount('/media',StaticFiles(directory=MEDIA_DIR),name='media')
@@ -45,6 +46,18 @@ _submitted:set[str]=set()
 _stop=threading.Event()
 _academy_lock=threading.Lock()
 _academy_future=None
+_background_lock=threading.Lock()
+_background_jobs:set[Future]=set()
+
+def submit_background(fn, *args):
+    """Track asynchronous CEO/growth requests so updates do not stop paid work."""
+    with _background_lock:
+        future=executor.submit(fn,*args)
+        _background_jobs.add(future)
+    def completed(done):
+        with _background_lock:_background_jobs.discard(done)
+    future.add_done_callback(completed)
+    return future
 
 @app.middleware('http')
 async def local_only(request: Request, call_next):
@@ -64,7 +77,25 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.6.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.7.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+
+@app.get('/api/system/restart-readiness')
+def restart_readiness():
+    """Signal to the launcher that it is safe to restart this process.
+
+    Do not interrupt Claude calls or academy work to update UI/code.  If work
+    is stuck, the user can stop the app explicitly; the watcher does not force
+    an automatic restart while a paid AI operation is still running.
+    """
+    with _worker_lock:
+        queued_workers = len(_submitted)
+    academy_running = bool(_academy_future and not _academy_future.done())
+    with _background_lock:
+        background_running=sum(1 for job in _background_jobs if not job.done())
+    active = queued_workers + int(academy_running) + background_running
+    return {'ready': active == 0, 'active_workers': queued_workers,
+            'academy_busy': academy_running, 'background_busy': background_running,
+            'reason': 'Có tác vụ Claude / Học viện AI đang chạy.' if active else 'Sẵn sàng khởi động lại.'}
 
 @app.get('/api/bootstrap')
 def bootstrap():
@@ -393,7 +424,7 @@ def new_growth_sprint(req:GrowthSprintInput):
         raise HTTPException(400,str(err)) from err
     if req.auto_generate and get_key('claude'):
         # Generate AI draft in background; HTTP returns the persisted local plan.
-        executor.submit(generate_ceo_plan,sprint['id'])
+        submit_background(generate_ceo_plan,sprint['id'])
         sprint['ai_generation_queued']=True
     else:
         sprint['ai_generation_queued']=False
@@ -415,7 +446,7 @@ def regenerate_growth_sprint(sid:str):
     if not get_key('claude'):raise HTTPException(400,'Hãy cấu hình Claude API key trước.')
     if one('SELECT status FROM growth_sprints WHERE id=?',(sid,))['status']=='generating':
         return {'status':'already_running'}
-    executor.submit(generate_ceo_plan,sid)
+    submit_background(generate_ceo_plan,sid)
     return {'status':'submitted','note':'CEO sẽ tạo kế hoạch AI, không đăng Facebook tự động.'}
 
 class GrowthPageInput(BaseModel):

@@ -348,6 +348,7 @@ function renderSettings(){
     ${S.data.firefox_available?'':firefoxInstallerNotice()}
     <form id="firefoxForm">${field('Đường dẫn Firefox (tùy chọn)','firefox_path',cfg.firefox_path,'text','placeholder="C:\\Program Files\\Mozilla Firefox\\firefox.exe"')}<button class="btn ghost">Lưu đường dẫn</button></form>
     <div class="office-note">Chạy phần mềm trên chính máy Windows có Firefox. Profile được lưu dưới %LOCALAPPDATA%\\AI-Fanpage-Company\\profiles.</div></div>
+    <div class="card"><h2>🔄 Cập nhật phần mềm</h2><p>Khi phần mềm được mở bằng <code>start_windows.bat</code>, bộ giám sát sẽ phát hiện mã nguồn mới sau <code>git pull</code>, đợi nhân viên AI hoàn tất công việc rồi tự khởi động lại backend. Giao diện sẽ tự tải lại khi máy chủ mới sẵn sàng.</p><p class="muted">Bạn có thể chạy <code>update_windows.bat</code> trong thư mục phần mềm để tải bản mới an toàn (chỉ fast-forward). Nếu đang chạy bản cũ chưa có supervisor, cần khởi động lại thủ công một lần để kích hoạt.</p></div>
     <div class="card"><h2>🔐 Bảo mật</h2><p>Backend chỉ nghe <code>127.0.0.1:8765</code>. Không mở cổng công khai. Tài khoản Facebook đăng nhập trực tiếp trong Firefox, không lưu mật khẩu vào ứng dụng.</p><p class="muted">Bảo vệ toàn bộ thư mục dữ liệu của ứng dụng và khóa mã hóa bằng tài khoản Windows hoặc mã hóa ổ đĩa.</p></div>
     <div class="card"><h2>📌 Phạm vi V1</h2><p>✅ CEO AI thật (khi có key), phân công và nhật ký.</p><p>✅ Profile Firefox cố định, đăng nhập thủ công.</p><p>✅ Nội dung, kiểm duyệt, lịch, bộ nhớ, KPI.</p><p>⚠️ Không tự đăng Facebook bằng UI bot; không tự đọc quyền/Insights.</p></div></div></div>`;
 }
@@ -565,3 +566,27 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.ke
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();}});
 (async()=>{try{await reload();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
   try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy','growth'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
+
+
+// Keep the currently open dashboard in sync with a restarted local backend.
+// A failed health check is expected while Python restarts; reload only after
+// a NEW instance ID appears, never on an intermittent network error.
+let bootInstanceId=null;
+let healthPollBusy=false;
+async function watchBackendRestart(){
+  if(healthPollBusy)return;
+  healthPollBusy=true;
+  try{
+    const resp=await fetch('/api/health',{cache:'no-store'});
+    if(!resp.ok)return;
+    const state=await resp.json();
+    if(!state.ok||!state.instance_id)return;
+    if(bootInstanceId===null){bootInstanceId=state.instance_id;return;}
+    if(bootInstanceId!==state.instance_id){
+      window.location.reload();  // Preserve current route/hash.
+    }
+  }catch(_){/* server is briefly offline during the restart */}
+  finally{healthPollBusy=false;}
+}
+watchBackendRestart();
+setInterval(watchBackendRestart,3000);

@@ -63,3 +63,10 @@ TANG TRUONG FANPAGE 7 NGAY (V1.6):
 - Ngay 3/5/7 neu thap hon muc kiem tra, Analytics duoc giao danh gia lai.
 - Neu chua bat Tu chay agent trong Cai dat, can vao Nhiem vu AI > Chay hang doi.
 - Tuyet doi khong su dung bot follow/view gia, khong tu dang Facebook, khong khang dinh cong dung suc khoe chua xac thuc.
+
+CAP NHAT VA KHOI DONG LAI TU DONG (V1.7):
+1. Lần đầu sau khi nâng lên V1.7, dong cua so server cu, mo lai start_windows.bat.
+2. Cac lan sau chi can chay update_windows.bat hoac git pull --ff-only origin main.
+3. Phan mem se doi tac vu AI ket thuc, tu khoi dong lai backend va refresh giao dien.
+4. Neu loi, xem %%LOCALAPPDATA%%\AI-Fanpage-Company\logs\startup.log.
+5. Khong xoa data, profiles, .venv hoac reset git --hard.

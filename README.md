@@ -1,8 +1,24 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.6.0)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.7.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
 > **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. Chỉ cấu hình Claude API; tự chọn model theo loại nhiệm vụ, giữ giới hạn ngân sách.
+
+## V1.7.0 – Tự khởi động lại khi có code mới tải về
+
+- **Chỉ cần kích hoạt một lần:** đóng bản cũ và khởi động với `start_windows.bat` mới. Launcher là tiến trình giám sát, không thoát sau khi mở backend.
+- Khi cập nhật bằng `git pull --ff-only origin main` hoặc `update_windows.bat`, launcher đọc dấu vân tay của mã trong `app/`, `scripts/`, `web/` và `requirements.txt`; đợi thay đổi ổn định 5 giây rồi **tự restart** server. Không cần nhấn `start_windows.bat` lại.
+- Nếu Claude/AI Academy/CEO có công việc đang chạy, launcher **chờ đến khi tác vụ kết thúc** trước khi restart (không tự ngắt tác vụ trả phí). Nếu tác vụ treo mãi, người dùng chủ động dừng hoặc khắc phục rồi khởi động lại.
+- Nếu `requirements.txt` thay đổi, dependency được đồng bộ bằng đúng Python trong `.venv` trước khi chạy backend mới. Nếu đồng bộ thất bại, dừng cập nhật và ghi lỗi vào `%LOCALAPPDATA%\AI-Fanpage-Company\logs\startup.log`; **không tự xóa dữ liệu**.
+- Trang dashboard định kỳ kiểm tra `instance_id` của backend, tự tải lại khi phiên mới lên. URL và tab đang mở được giữ nguyên.
+- Thay đổi trong database, cookie, profile Firefox, log, `.venv` không kích hoạt restart. **Không tự truy cập Internet để lấy và chạy code không được người dùng chủ động cập nhật.**
+- Lưu ý: tự restart chỉ có khi mở ứng dụng qua `start_windows.bat`. Nếu chạy thẳng `uvicorn`, hoặc bản V1.6 cũ còn đang chạy, phải tắt server cũ rồi khởi động bằng bản V1.7 mới.
+
+### Cập nhật một lần nhấp
+
+1. Đảm bảo thư mục được tạo bằng `git clone https://github.com/junsu123/ql-facebook.git` và Git for Windows được cài.
+2. Trong khi ứng dụng chạy qua `start_windows.bat`, nhấp đúp `update_windows.bat` **hoặc** chạy `git pull --ff-only origin main` trong thư mục dự án.
+3. Chờ hoàn thành tải code; supervisor sẽ đợi tác vụ AI xong và tự restart. Trình duyệt tự refresh. Nếu Git báo conflict/dirty tree, cập nhật dừng và không `reset --hard` để tránh mất sửa đổi cá nhân.
 
 ## V1.6.0 – CEO xây Fanpage từ tên sản phẩm + thành phần (Growth Sprint 7 ngày)
 
