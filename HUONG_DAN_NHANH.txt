@@ -27,3 +27,9 @@ V1.3: CAU HINH BO NAO AI
 - Vao Bo nao nhan vien de xem bai hoc rieng tung agent, chi phi va xu ly hang doi hoc.
 - Hoc su kien noi bo chay khi phan mem dang mo; khong goi Claude lien tuc khi ranh.
 - Gia va usage la uoc tinh; khong tu lay du lieu Facebook neu khong co API/nguon duoc phep.
+
+KHAC PHUC LOI:
+- Neu phan mem khong mo hoac tu tat: chay diagnose_windows.bat.
+- Xem diagnostics.txt va %LOCALAPPDATA%\AI-Fanpage-Company\logs\startup.log.
+- Tuyet doi KHONG xoa thu muc data/profiles hoac file API key ma hoa.
+- Neu cong 8765 dang ban, launcher co the chon cong 8766-8775.

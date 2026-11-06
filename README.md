@@ -148,3 +148,15 @@ AI đã thực sự trao đổi lời nói.
 **Giới hạn quan trọng:** Một agent không tự tạo kiến thức mới từ Internet nếu không được cấp nguồn đáng tin cậy. Kết quả công việc và số liệu nhập thủ công vẫn được đánh dấu chưa xác minh. Chi phí thực có thể thay đổi theo giá và điều khoản Anthropic; báo cáo chỉ theo các lời gọi đi qua phần mềm, không bao gồm các ứng dụng khác dùng cùng API key. Để bộ nhớ chạy xuyên ngày đêm, máy chủ cài phần mềm phải hoạt động liên tục (hoặc triển khai trên máy chủ luôn bật).
 
 Tài liệu Anthropic: [Messages API](https://platform.claude.com/docs/en/api/http/messages), [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), [Message Batches](https://platform.claude.com/docs/en/build-with-claude/batch-processing).
+
+## Khắc phục lỗi khởi động – V1.3.1
+
+1. Trên Windows, cập nhật mã nguồn bằng `git pull origin main` và chạy lại `start_windows.bat`.
+2. Nếu phần mềm báo lỗi hoặc tự đóng, nhấp đúp `diagnose_windows.bat`. Công cụ chỉ kiểm tra thư viện Python, tình trạng cổng và nhật ký khởi động, không đọc API key hay cookie Facebook.
+3. Đọc `diagnostics.txt` trong thư mục dự án; chi tiết máy chủ nằm tại `%LOCALAPPDATA%\AI-Fanpage-Company\logs\startup.log`.
+4. Nếu giao diện trống, mở URL được in trong cửa sổ console (có thể là cổng `8766` nếu `8765` đã bận) và nhấn `Ctrl+Shift+R` để tải lại tài nguyên.
+5. Nếu Python không được nhận diện, hãy cài Python 3.11+ với tùy chọn **Add Python to PATH**, rồi chạy lại. Script mới thử cả `py -3` và `python`.
+
+**Không xóa** `%LOCALAPPDATA%\AI-Fanpage-Company`, đặc biệt `company.sqlite3`, `profiles`, `api_secrets.json.enc` và `local_secret.key`: đây là dữ liệu, thông tin phiên Firefox và khóa API đã mã hóa của bạn. Không chia sẻ những tệp này hoặc mật khẩu, cookie, API key khi báo lỗi.
+
+Những thay đổi này tăng khả năng phát hiện lỗi chung; chưa xác định nguyên nhân cụ thể của lỗi Windows khi chưa có log hoặc ảnh màn hình từ máy người dùng.

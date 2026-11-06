@@ -32,7 +32,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.3.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.3.1',docs_url='/api/docs',redoc_url=None)
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
 app.mount('/media',StaticFiles(directory=MEDIA_DIR),name='media')
@@ -59,7 +59,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.3.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.3.1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/bootstrap')
 def bootstrap():
