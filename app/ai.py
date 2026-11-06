@@ -40,7 +40,7 @@ def load_keys() -> dict:
 
 
 def save_key(provider: str, value: str):
-    if provider not in ('gemini','groq'):
+    if provider not in ('gemini','groq','claude'):
         raise ValueError('Nhà cung cấp không được hỗ trợ')
     keys = load_keys()
     if value:
@@ -61,7 +61,7 @@ def get_key(provider: str) -> str:
 def config() -> dict:
     rows = all_rows('SELECT key,value FROM settings')
     out = {r['key']:r['value'] for r in rows}
-    for provider in ('gemini','groq'):
+    for provider in ('gemini','groq','claude'):
         out[f'{provider}_configured'] = bool(get_key(provider))
     return out
 
@@ -71,11 +71,16 @@ def record_usage(provider, model, request_type):
         (provider, model, request_type, now()))
 
 
-def call_llm(system: str, prompt: str, purpose: str = 'task') -> str:
+def call_llm(system: str, prompt: str, purpose: str = 'task', agent_id: str = 'ceo', hard: bool = False) -> str:
     cfg = config()
     provider = cfg.get('provider','gemini')
+    from .brains import ask_claude
+    if provider == 'claude' or (get_key('claude') and cfg.get('claude_escalation','1') == '1' and hard):
+        return ask_claude(agent_id, system, prompt, purpose, hard=hard)
     key = get_key(provider)
     if not key:
+        if get_key('claude'):
+            return ask_claude(agent_id,system,prompt,purpose,hard=False)
         raise ModelError(f'Chưa cấu hình API key {provider}. Vào mục Cài đặt để thêm key.')
     limit = max(1,min(100000,int(cfg.get('daily_llm_call_limit',200))))
     count = one("SELECT count(*) AS n FROM ai_calls WHERE created >= ?",(datetime.now(timezone.utc).date().isoformat(),))['n']
@@ -113,6 +118,8 @@ def call_llm(system: str, prompt: str, purpose: str = 'task') -> str:
     if not text.strip():
         raise ModelError('Mô hình không trả về văn bản.')
     record_usage(provider,model,purpose)
+    if 'NEED_CLAUDE' in text.upper() and get_key('claude') and cfg.get('claude_escalation','1') == '1':
+        return ask_claude(agent_id,system,prompt,purpose,hard=True)
     return text.strip()
 
 
@@ -150,7 +157,7 @@ def ceo_message(message: str) -> dict:
         'open_tasks':one("SELECT count(*) AS n FROM tasks WHERE status IN ('queued','running')")['n'],
         'drafts':one("SELECT count(*) AS n FROM contents WHERE status='draft'")['n']
     }
-    if not get_key(config().get('provider','gemini')):
+    if not (get_key(config().get('provider','gemini')) or get_key('claude')):
         tid = create_task('ceo','Yêu cầu của chủ sở hữu',message,source='owner_pending_ai')
         reply = 'Tôi đã lưu yêu cầu của bạn vào hàng đợi CEO. Cần cấu hình Gemini hoặc Groq trong Cài đặt để CEO phân tích và giao nhiệm vụ bằng AI thật. Tôi chưa thực thi công việc.'
         run('INSERT INTO chats(role,body,created) VALUES(?,?,?)',('assistant',reply,now()))
@@ -160,7 +167,9 @@ Chỉ lập kế hoạch và giao việc trong hệ thống nội bộ, không t
 Tạo JSON THUẦN: {"reply":"...", "assignments":[{"agent":"research|strategy|content|creative|publishing|customer|analytics|compliance", "title":"...", "instructions":"...", "page_id":null}]}
 Tối đa 8 nhiệm vụ/lượt, ngắn gọn, đúng dữ liệu được cung cấp. page_id phải nằm trong danh sách nếu có. Không tạo nhiệm vụ tự động nhắn tin hay đăng hàng loạt trên Facebook. Nếu thiếu Page, giao nhiệm vụ nghiên cứu/lập kế hoạch tổng quát. Không giả mạo thống kê hay kết quả.'''
     try:
-        raw = call_llm(system,json.dumps({'message':message,'pages':pages,'stats':stats},ensure_ascii=False),'ceo')
+        from .brains import relevant_memories, enqueue_learning, is_hard_problem, brain_system
+        useful=relevant_memories('ceo',message,limit=4)
+        raw = call_llm(brain_system('ceo')+'\n'+system,json.dumps({'message':message,'pages':pages,'stats':stats,'ceo_memory':useful},ensure_ascii=False),'ceo',agent_id='ceo',hard=is_hard_problem(message))
         response = parse_json_reply(raw)
         reply = str(response.get('reply','Đã tạo kế hoạch.'))[:3000]
         assigned = []
@@ -174,6 +183,7 @@ Tối đa 8 nhiệm vụ/lượt, ngắn gọn, đúng dữ liệu được cung
                 str(item.get('instructions','')),page_id))
         run('INSERT INTO chats(role,body,created) VALUES(?,?,?)',('assistant',reply,now()))
         log('ceo','decision',f'CEO giao {len(assigned)} nhiệm vụ và báo cáo: {reply[:400]}')
+        enqueue_learning('ceo','decision',f'CEO đã giao {len(assigned)} nhiệm vụ. Kết quả dự kiến: {reply[:350]}',source_ref='ceo_chat')
         return {'reply':reply,'task_ids':assigned,'mode':'ai'}
     except ModelError as err:
         reply = f'Chưa giao nhiệm vụ tự động vì lỗi AI: {err}. Yêu cầu đã được lưu; vui lòng kiểm tra cài đặt và thử lại.'
@@ -199,15 +209,19 @@ def execute_task(task_id: str) -> dict:
     run('UPDATE tasks SET status=?,error=?,updated=? WHERE id=?',('running','',now(),task_id))
     log(task['agent_id'],'start',f'Đang xử lý: {task["title"]}',task_id)
     context = page_context(task['page_id'])
-    system = f'''Bạn là {task['agent_id']} - một chuyên viên AI thuộc công ty marketing.
+    from .brains import relevant_memories, enqueue_learning, is_hard_problem, brain_system
+    brain_memories = relevant_memories(task['agent_id'], task['title']+' '+task['instructions'], task['page_id'])
+    context['agent_memory'] = brain_memories
+    system = brain_system(task['agent_id']) + f'''Bạn là {task['agent_id']} - một chuyên viên AI thuộc công ty marketing.
 Chỉ hoàn thành nhiệm vụ bằng nội dung hoặc đề xuất có thể xác minh. Không tự nhận đã truy cập hay đăng Facebook, không bịa ra chỉ số. Không dùng tuyên bố chữa bệnh hoặc cam kết kết quả. Nếu thiếu dữ liệu hãy nêu rõ.
-Trả lời tiếng Việt dạng văn bản rõ ràng, ngắn gọn, phù hợp chuyên môn.'''
+Trả lời tiếng Việt dạng văn bản rõ ràng, ngắn gọn, phù hợp chuyên môn. Nếu không thể tự giải quyết vấn đề phức tạp, trả về NEED_CLAUDE để yêu cầu mô hình mạnh hơn, không giả vờ đã hoàn thành.'''
     prompt = json.dumps({'title':task['title'],'instructions':task['instructions'],'page_context':context},ensure_ascii=False)
     try:
         if task['agent_id']=='publishing':
             result = 'Đã ghi nhận yêu cầu vận hành. Trong chế độ không dùng Meta API, công việc xuất bản phải thực hiện qua luồng chuẩn bị bài và xác nhận thủ công. Không có thao tác đăng tự động trên Facebook.'
         else:
-            result = call_llm(system,prompt,'agent_task')
+            result = call_llm(system,prompt,'agent_task',agent_id=task['agent_id'],
+                              hard=is_hard_problem(task['title']+' '+task['instructions']))
         with db() as c:
             c.execute('UPDATE tasks SET status=?,result=?,updated=? WHERE id=?',('done',result,now(),task_id))
             if task['agent_id']=='content' and task['page_id']:
@@ -215,9 +229,13 @@ Trả lời tiếng Việt dạng văn bản rõ ràng, ngắn gọn, phù hợp
                 c.execute('INSERT INTO contents(id,page_id,topic,body,created,updated) VALUES(?,?,?,?,?,?)',
                     (cid,task['page_id'],task['title'],result,now(),now()))
         log(task['agent_id'],'done',f'Đã hoàn tất: {task["title"]}',task_id)
+        enqueue_learning(task['agent_id'],'task_completed',
+                         f'Từ nhiệm vụ "{task["title"]}": {result[:550]}',
+                         source_ref=task_id,page_id=task['page_id'])
         return one('SELECT * FROM tasks WHERE id=?',(task_id,))
     except ModelError as err:
         run('UPDATE tasks SET status=?,error=?,updated=? WHERE id=?',('failed',str(err),now(),task_id))
+        enqueue_learning(task['agent_id'],'task_failed',f'Tác vụ {task["title"]} thất bại: {str(err)[:220]}',source_ref=task_id,page_id=task['page_id'])
         log(task['agent_id'],'error',str(err),task_id)
         return one('SELECT * FROM tasks WHERE id=?',(task_id,))
 
@@ -228,9 +246,12 @@ def generate_content(page_id: str, topic: str) -> dict:
     if not page.get('facts'):
         raise ValueError('Cần nhập dữ liệu sản phẩm/kiến thức đã xác minh cho Page trước khi tạo nội dung bằng AI.')
     system = '''Bạn là copywriter marketing. Viết MỘT bài Facebook nguyên bản tiếng Việt ngắn gọn, hữu ích, có lời mời tương tác tự nhiên. CHỈ dùng dữ kiện sản phẩm được cung cấp. Không thổi phồng, không tuyên bố chữa bệnh, không nói điều chưa có bằng chứng. Không tạo bình luận hoặc đánh giá khách hàng giả. Trả về trực tiếp nội dung bài đăng.'''
-    text = call_llm(system,json.dumps({'topic':topic,'page':page},ensure_ascii=False),'content')
+    from .brains import relevant_memories,enqueue_learning
+    memories=relevant_memories('content',topic,page_id)
+    text = call_llm(system,json.dumps({'topic':topic,'page':page,'agent_memory':memories},ensure_ascii=False),'content',agent_id='content')
     cid='C'+uuid.uuid4().hex[:10].upper()
     run('INSERT INTO contents(id,page_id,topic,body,created,updated) VALUES(?,?,?,?,?,?)',
         (cid,page_id,topic[:200],text,now(),now()))
     log('content','draft',f'Tạo bản nháp mới: {topic[:100]}')
+    enqueue_learning('content','draft_created',f'Đã tạo nháp cho chủ đề {topic[:150]}',source_ref=cid,page_id=page_id)
     return one('SELECT * FROM contents WHERE id=?',(cid,))

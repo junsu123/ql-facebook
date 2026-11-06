@@ -19,3 +19,11 @@ Van phong 2.5D chibi co nhan vat di lai, trao doi minh hoa.
 Trang thai nhiem vu lay tu backend, khong phai noi chuyen that.
 
 Neu ban can huong dan chi tiet, mo file README.md.
+
+V1.3: CAU HINH BO NAO AI
+- Mo Cai dat > Claude Brain & Chi phi > nhap Claude API key.
+- Mac dinh: Claude Haiku 5.5 cho viec don gian, Claude Sonnet 5.5 cho viec kho.
+- Gioi han Claude toan cong ty 1 USD/ngay, moi agent 0.25 USD/ngay (co the sua).
+- Vao Bo nao nhan vien de xem bai hoc rieng tung agent, chi phi va xu ly hang doi hoc.
+- Hoc su kien noi bo chay khi phan mem dang mo; khong goi Claude lien tuc khi ranh.
+- Gia va usage la uoc tinh; khong tu lay du lieu Facebook neu khong co API/nguon duoc phep.

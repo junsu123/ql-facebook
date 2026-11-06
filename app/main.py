@@ -23,6 +23,8 @@ from PIL import Image, UnidentifiedImageError
 from .db import BASE, MEDIA_DIR, all_rows, db, initialize, log, now, one, run
 from .ai import (ModelError, ceo_message, config, create_task, execute_task,
                  generate_content, save_key, get_key)
+from .brains import (agent_brain_overview, relevant_memories, learning_tick,
+                     enqueue_learning, spent_report, AGENT_IDS, CLAUDE_PRICING)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
                       close_profile, confirm_login, delete_profile, executable)
 from .firefox_installer import (FirefoxInstallError, start_install as start_firefox_install,
@@ -30,7 +32,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.2.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.3.0',docs_url='/api/docs',redoc_url=None)
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
 app.mount('/media',StaticFiles(directory=MEDIA_DIR),name='media')
@@ -57,7 +59,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.1.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.3.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/bootstrap')
 def bootstrap():
@@ -77,6 +79,7 @@ def bootstrap():
         'metrics':all_rows('SELECT m.*,p.name AS page_name FROM metrics m JOIN pages p ON m.page_id=p.id ORDER BY m.date DESC LIMIT 300'),
         'campaigns':all_rows('SELECT * FROM campaigns ORDER BY created DESC LIMIT 30'),
         'settings':config(),
+        'brain_overview':agent_brain_overview(),
         'firefox_available':bool(executable()),
         'firefox_installer':firefox_install_status(),
         'counts':{
@@ -100,19 +103,44 @@ class SettingsChange(BaseModel):
     firefox_path:str=''
     gemini_key:str|None=None
     groq_key:str|None=None
+    claude_key:str|None=None
+    claude_cheap_model:str='claude-haiku-5-5'
+    claude_hard_model:str='claude-sonnet-5-5'
+    claude_escalation:bool=True
+    claude_cache_enabled:bool=True
+    brain_learning_enabled:bool=True
+    claude_daily_budget_usd:float=Field(default=1.0,ge=0,le=1000)
+    claude_agent_daily_budget_usd:float=Field(default=0.25,ge=0,le=1000)
 
 @app.post('/api/settings')
 def update_settings(req:SettingsChange):
-    if req.provider not in ('gemini','groq'):raise HTTPException(400,'Nhà cung cấp không hợp lệ')
+    if req.provider not in ('gemini','groq','claude'):raise HTTPException(400,'Nhà cung cấp không hợp lệ')
+    if req.claude_cheap_model not in CLAUDE_PRICING or req.claude_hard_model not in CLAUDE_PRICING:
+        raise HTTPException(400,'Model Claude không nằm trong danh sách tính phí đã xác minh')
     with db() as c:
-        for key in ('provider','gemini_model','groq_model','daily_llm_call_limit','firefox_path','auto_run_agents'):
-            value=('1' if req.auto_run_agents else '0') if key=='auto_run_agents' else str(getattr(req,key))
+        for key in ('provider','gemini_model','groq_model','daily_llm_call_limit','firefox_path',
+                    'auto_run_agents','claude_cheap_model','claude_hard_model','claude_escalation',
+                    'claude_cache_enabled','brain_learning_enabled','claude_daily_budget_usd','claude_agent_daily_budget_usd'):
+            value=('1' if getattr(req,key) else '0') if key in ('auto_run_agents','claude_escalation','claude_cache_enabled','brain_learning_enabled') else str(getattr(req,key))
             c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',(key,value))
-    for provider in ('gemini','groq'):
+    for provider in ('gemini','groq','claude'):
         val=getattr(req,provider+'_key')
         if val is not None:save_key(provider,val)
     log('ceo','settings','Chủ sở hữu cập nhật cấu hình hệ thống (không lưu khóa trong log).')
     return {'ok':True,'settings':config()}
+
+@app.get('/api/brains')
+def brains_overview():
+    return agent_brain_overview()
+
+@app.get('/api/brains/{agent_id}/memories')
+def agent_memories(agent_id:str):
+    if agent_id not in AGENT_IDS:raise HTTPException(404,'Không tìm thấy agent')
+    return {'agent_id':agent_id,'items':all_rows("SELECT id,kind,content,source_ref,page_id,confidence,created FROM agent_memories WHERE agent_id=? ORDER BY created DESC LIMIT 100",(agent_id,))}
+
+@app.post('/api/brains/learn-now')
+def brain_learn_now():
+    return learning_tick(50)
 
 class NewAccount(BaseModel):
     label:str=''
@@ -518,6 +546,7 @@ def learn(page_id:str):
           f'Ngày có tổng tương tác cao nhất trong mẫu: {best["date"]}. '
           'Đây là quan sát, chưa đủ để khẳng định quan hệ nhân quả hay khung giờ tối ưu.')
     run('INSERT INTO memories(page_id,note,source,created) VALUES(?,?,?,?)',(page_id,note,'metrics_summary',now()))
+    enqueue_learning('analytics','metric_observation',note,source_ref='kpi_manual:'+page_id,page_id=page_id)
     log('analytics','learning',f'Đã lưu bài học có nguồn dữ liệu cho Page {page_id}')
     return {'note':note,'samples':len(rows)}
 
@@ -535,11 +564,18 @@ def scheduler_tick():
 
 
 def scheduler_loop():
+    last_brain_cycle=0.0
     while not _stop.wait(10):
         try:
             scheduler_tick()
             cfg=config()
-            if cfg.get('auto_run_agents')=='1' and get_key(cfg.get('provider','gemini')):
+            # Offline event processing keeps each memory updated while the app
+            # is running, even with no Claude key and zero idle Claude calls.
+            import time
+            if time.monotonic()-last_brain_cycle>=60:
+                learning_tick(40)
+                last_brain_cycle=time.monotonic()
+            if cfg.get('auto_run_agents')=='1' and (get_key(cfg.get('provider','gemini')) or get_key('claude')):
                 with _worker_lock:
                     available=max(0,2-len(_submitted))
                 if available:
@@ -550,6 +586,7 @@ def scheduler_loop():
 @app.on_event('startup')
 async def on_startup():
     scheduler_tick()
+    learning_tick(40)
     thread=threading.Thread(target=scheduler_loop,name='schedule-checker',daemon=True)
     thread.start()
 

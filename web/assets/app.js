@@ -3,7 +3,7 @@
 const ROUTES=[
   ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['pages','📣','100 Fanpage'],
   ['accounts','🦊','Tài khoản Firefox'],['content','📝','Nội dung & Lịch'],
-  ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['settings','⚙️','Cài đặt']
+  ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['settings','⚙️','Cài đặt']
 ];
 const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all'};
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -211,13 +211,32 @@ function renderInsights(){
     <div class="card"><h2>🧠 Học từ dữ liệu thực tế</h2><p class="muted">Khi có ít nhất 5 ngày KPI cho một Page, hệ thống tính toán số liệu quan sát được và lưu vào trí nhớ. Không tự suy đoán quan hệ nhân quả.</p>${pick('Chọn Fanpage','learnpage',pageOptions())}<button class="btn primary" data-action="metrics.learn">Tổng hợp thành bài học</button><div class="warn">KPI nhập thủ công chưa được đối chiếu với Facebook. Nên nhập từ báo cáo hợp lệ do doanh nghiệp sở hữu.</div></div></div>
     <div class="card" style="margin-top:16px"><h2>📋 Dữ liệu KPI gần nhất</h2>${rows.length?`<div class="table-scroll"><table class="data-table"><thead><tr><th>Ngày</th><th>Page</th><th>Lượt xem</th><th>Thích</th><th>Bình luận</th><th>Chia sẻ</th></tr></thead><tbody>${rows.slice(0,45).map(r=>`<tr><td>${E(r.date)}</td><td>${E(r.page_name)}</td><td>${r.views}</td><td>${r.likes}</td><td>${r.comments}</td><td>${r.shares}</td></tr>`).join('')}</tbody></table></div>`:empty('📭','Chưa có KPI')}</div>`;
 }
+function renderBrains(){
+  const b=S.data?.brain_overview||{};
+  const cost=b.cost||{};
+  const agents=b.agents||[];
+  return `${heading('Bộ não 9 nhân viên AI','Mỗi agent học từ sự kiện nội bộ, lưu bộ nhớ độc lập và chỉ gọi Claude khi thật sự cần.',`<button class="btn primary" data-action="brain.learn-now">↻ Xử lý bài học chờ</button>`)}
+  <div class="stat-grid">${stat('🧠','Bộ não',agents.length,'Không dùng chung lịch sử','#9782ff')}${stat('📚','Kinh nghiệm đã lưu',agents.reduce((n,a)=>n+Number(a.memory_count||0),0),'Lưu trên máy chủ của bạn','#64e6b4')}${stat('⏳','Bài học chờ xử lý',agents.reduce((n,a)=>n+Number(a.pending_learning||0),0),'Xử lý nội bộ, không tốn token','#ffc17c')}${stat('💵','Claude hôm nay','$'+Number(cost.today_usd||0).toFixed(4),'Giới hạn $'+Number(cost.daily_limit_usd||0).toFixed(2)+'/ngày','#79c4ff')}</div>
+  <div class="card" style="margin-top:17px"><div class="space-between"><h2>🧠 Bộ nhớ riêng từng agent</h2><span class="badge green">Học theo sự kiện</span></div><p class="muted">Dịch vụ học chạy khi máy chủ phần mềm hoạt động. Agent ghi chú kết quả làm việc nhưng chỉ dữ liệu được xác minh mới được đánh dấu xác thực. Không gọi Claude liên tục khi không có nhiệm vụ.</p><div class="table-scroll"><table class="data-table"><thead><tr><th>Nhân viên</th><th>Ghi nhớ</th><th>Đang chờ</th><th>Đã xử lý</th><th>Claude hôm nay</th><th>Chi tiết</th></tr></thead><tbody>
+    ${agents.map(a=>`<tr><td><strong>${E(a.name)}</strong></td><td>${Number(a.memory_count||0)}</td><td>${Number(a.pending_learning||0)}</td><td>${Number(a.processed_events||0)}</td><td>$${Number(cost.agents?.[a.id]||0).toFixed(4)}</td><td><button class="btn sm ghost" data-action="brain.memory" data-id="${E(a.id)}">Xem trí nhớ</button></td></tr>`).join('')}</tbody></table></div></div>
+  <div class="grid-2" style="margin-top:17px"><div class="card"><h2>⚙️ Tối ưu chi phí Claude</h2><p>① Ưu tiên bộ nhớ và quy tắc cục bộ. ② Dùng model Haiku cho việc thường. ③ Chỉ nâng lên Sonnet khi khó, có yêu cầu hoặc khi model nhỏ không giải quyết được. ④ Tái dùng câu trả lời trùng khớp trong 6 giờ. ⑤ Khóa ngân sách mỗi agent và toàn công ty.</p><button class="btn ghost" data-route="settings">Đi đến cài đặt ngân sách</button></div><div class="card"><h2>🛡️ Điều kiện tự học</h2><p>Học và ghi nhớ 24/24 nghĩa là xử lý các sự kiện khi phần mềm đang chạy, không phải tạo yêu cầu AI liên tục hay tự suy đoán dữ liệu Facebook. Khi tắt máy, hoạt động dừng; sự kiện còn trong database sẽ được xử lý khi mở lại.</p><p class="muted">Dữ liệu mỗi agent lưu riêng. CEO chỉ giao việc và đọc báo cáo, không mặc định xem mọi thông tin nhạy cảm.</p></div></div>`;
+}
 function renderSettings(){
   const cfg=S.data.settings;
   return `${heading('Cài đặt phần mềm','Tùy chỉnh mô hình AI, hạn mức và đường dẫn Firefox.',`<span class="badge green">🔒 Localhost only</span>`)}
     <div class="columns"><div class="card"><h2>🧠 AI API Settings</h2><p class="card-sub">API key được mã hóa trong thư mục dữ liệu cục bộ; không đưa vào log hay trả về frontend.</p><form id="settingsForm" style="margin-top:17px">
-    <div class="form-field"><label>Nhà cung cấp AI chính</label><select class="select" name="provider"><option ${selected(cfg.provider,'gemini')} value="gemini">Google Gemini</option><option ${selected(cfg.provider,'groq')} value="groq">Groq</option></select></div>
+    <div class="form-field"><label>Nhà cung cấp AI chính</label><select class="select" name="provider"><option ${selected(cfg.provider,'gemini')} value="gemini">Google Gemini</option><option ${selected(cfg.provider,'groq')} value="groq">Groq</option><option ${selected(cfg.provider,'claude')} value="claude">Anthropic Claude</option></select></div>
     ${field('Model Gemini','gemini_model',cfg.gemini_model,'text','required')}${field('Gemini API key'+(cfg.gemini_configured?' · Đã lưu':''),'gemini_key','','password','placeholder="Để trống nếu giữ key hiện tại"')}
     ${field('Model Groq','groq_model',cfg.groq_model,'text','required')}${field('Groq API key'+(cfg.groq_configured?' · Đã lưu':''),'groq_key','','password','placeholder="Để trống nếu giữ key hiện tại"')}
+    <div class="subtle-divider"></div><h2>🔵 Claude Brain & Chi phí</h2><p class="card-sub">Khi Gemini/Groq khó xử lý nhiệm vụ, nhân viên có thể xin hỗ trợ từ Claude. Mặc định ưu tiên model rẻ và tuyệt đối không có vòng gọi API không ngừng.</p>
+    ${field('Claude API key'+(cfg.claude_configured?' · Đã lưu':''),'claude_key','','password','placeholder="Để trống nếu giữ key hiện tại"')}
+    <div class="form-field"><label>Model Claude tiết kiệm</label><select class="select" name="claude_cheap_model">${['claude-haiku-5-5','claude-haiku-4-5','claude-sonnet-5-5','claude-opus-5-5'].map(m=>`<option value="${m}" ${selected(m,cfg.claude_cheap_model)}>${m}</option>`).join('')}</select></div>
+    <div class="form-field"><label>Model Claude xử lý việc khó</label><select class="select" name="claude_hard_model">${['claude-sonnet-5-5','claude-haiku-5-5','claude-haiku-4-5','claude-opus-5-5'].map(m=>`<option value="${m}" ${selected(m,cfg.claude_hard_model)}>${m}</option>`).join('')}</select></div>
+    ${field('Hạn mức Claude toàn công ty (USD/ngày)','claude_daily_budget_usd',cfg.claude_daily_budget_usd||'1.00','number','min="0" max="1000" step="0.01" required')}
+    ${field('Hạn mức Claude mỗi agent (USD/ngày)','claude_agent_daily_budget_usd',cfg.claude_agent_daily_budget_usd||'0.25','number','min="0" max="1000" step="0.01" required')}
+    <label class="brain-option"><input type="checkbox" name="claude_escalation" ${cfg.claude_escalation==='1'?'checked':''}> Cho phép agent gọi Claude khi gặp nhiệm vụ khó</label>
+    <label class="brain-option"><input type="checkbox" name="claude_cache_enabled" ${cfg.claude_cache_enabled==='1'?'checked':''}> Tái sử dụng câu trả lời giống hệt & prompt caching</label>
+    <label class="brain-option"><input type="checkbox" name="brain_learning_enabled" ${cfg.brain_learning_enabled==='1'?'checked':''}> Học và tổng kết sự kiện nội bộ khi phần mềm đang chạy</label>
     ${field('Giới hạn lượt gọi LLM/ngày','daily_llm_call_limit',cfg.daily_llm_call_limit,'number','min="1" max="10000" required')}<label style="display:flex;align-items:center;gap:10px;margin:8px 0 19px;font-size:13px"><input type="checkbox" name="auto_run_agents" ${cfg.auto_run_agents==='1'?'checked':''}> Tự chạy nhiệm vụ AI trong hàng đợi (có dùng API và hạn mức ngày)</label>
     <button class="btn primary block">💾 Lưu cài đặt</button></form></div>
     <div class="stack"><div class="card"><h2>🦊 Firefox</h2><p class="muted">Trạng thái trên máy chạy server: ${S.data.firefox_available?'<span class="badge green">Đã tìm thấy</span>':'<span class="badge red">Chưa tìm thấy</span>'}</p>
@@ -230,7 +249,7 @@ function renderSettings(){
 function render(){
   if(!S.data)return;
   window.OfficeLive?.unmount();
-  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,settings:renderSettings};
+  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,settings:renderSettings};
   document.getElementById('view').innerHTML=(dict[S.route]||renderOffice)();
   if(S.route==='office'){
     const scene=window.OfficeLive?.mount(document.getElementById('office-live-stage'),S.data,id=>action('agent.details',id).catch(err=>toast(err.message,true)));
@@ -375,11 +394,19 @@ async function action(name,id,el){
       if(!p)throw new Error('Hãy chọn Fanpage trước.');
       const r=await api('/api/pages/'+p+'/learn','POST');toast('Đã lưu bài học từ '+r.samples+' dòng số liệu.');modal('🧠 Kết quả học từ dữ liệu',`<p>${E(r.note)}</p>`);break;
     }
+    case 'brain.learn-now':{
+      const result=await api('/api/brains/learn-now','POST');toast('Đã xử lý '+result.processed+' sự kiện học tập cục bộ, không dùng Claude.');await reload();break;
+    }
+    case 'brain.memory':{
+      const res=await api('/api/brains/'+encodeURIComponent(id)+'/memories');
+      const a=V('agents').find(x=>x.id===id)||{name:id};
+      modal('🧠 Bộ não '+a.name,`<p class="muted">Bộ nhớ nội bộ, phân biệt dữ kiện được xác minh và nhận xét chưa xác minh. Không phải nhật ký suy nghĩ ẩn của mô hình.</p><div class="brain-memories">${res.items?.length?res.items.slice(0,35).map(m=>`<div class="activity-item"><strong>${E(m.kind)} · ${m.confidence==='verified'?'✅ Đã xác minh':'◌ Chưa xác minh'}</strong><p>${E(m.content)}</p><small class="muted">${E(m.source_ref||'Nội bộ')} · ${F(m.created)}</small></div>`).join(''):empty('📭','Chưa có bài học','Agent sẽ ghi nhớ khi hoàn thành nhiệm vụ hoặc có KPI thực tế.')}</div>`);break;
+    }
     case 'agent.details':{
       const a=V('agents').find(x=>x.id===id);
       if(!a)return;const tasks=V('tasks').filter(t=>t.agent_id===id).slice(0,6);
       modal(a.emoji+' '+a.name,`<p>${E(a.description)}</p><p>${a.active_tasks} nhiệm vụ đang chạy · ${a.queued_tasks} nhiệm vụ chờ</p><div class="subtle-divider"></div>`+
-      (tasks.map(t=>`<div class="activity-item"><strong>${E(t.title)}</strong><p>${E(t.status)} · ${F(t.created)}</p></div>`).join('')||empty('📭','Chưa có nhiệm vụ cho agent này')));break;
+      (tasks.map(t=>`<div class="activity-item"><strong>${E(t.title)}</strong><p>${E(t.status)} · ${F(t.created)}</p></div>`).join('')||empty('📭','Chưa có nhiệm vụ cho agent này'))+`<div class="actions"><button type="button" class="btn ghost sm" data-action="brain.memory" data-id="${E(id)}">🧠 Xem trí nhớ agent</button></div>`);break;
     }
   }
 }
@@ -399,13 +426,20 @@ document.addEventListener('submit',async e=>{
     e.preventDefault();const f=Object.fromEntries(new FormData(e.target).entries());const current=S.data.settings;
     const payload={provider:f.provider||current.provider,gemini_model:f.gemini_model||current.gemini_model,
       groq_model:f.groq_model||current.groq_model,daily_llm_call_limit:Number(f.daily_llm_call_limit||current.daily_llm_call_limit),
-      firefox_path:f.firefox_path??current.firefox_path,auto_run_agents:e.target.id==='settingsForm'?(!!f.auto_run_agents):(current.auto_run_agents==='1')};
+      firefox_path:f.firefox_path??current.firefox_path,auto_run_agents:e.target.id==='settingsForm'?(!!f.auto_run_agents):(current.auto_run_agents==='1'),
+      claude_cheap_model:f.claude_cheap_model||current.claude_cheap_model,claude_hard_model:f.claude_hard_model||current.claude_hard_model,
+      claude_daily_budget_usd:Number(f.claude_daily_budget_usd??current.claude_daily_budget_usd),
+      claude_agent_daily_budget_usd:Number(f.claude_agent_daily_budget_usd??current.claude_agent_daily_budget_usd),
+      claude_escalation:e.target.id==='settingsForm'?(!!f.claude_escalation):(current.claude_escalation==='1'),
+      claude_cache_enabled:e.target.id==='settingsForm'?(!!f.claude_cache_enabled):(current.claude_cache_enabled==='1'),
+      brain_learning_enabled:e.target.id==='settingsForm'?(!!f.brain_learning_enabled):(current.brain_learning_enabled==='1')};
     if(f.gemini_key?.trim())payload.gemini_key=f.gemini_key.trim();
     if(f.groq_key?.trim())payload.groq_key=f.groq_key.trim();
+    if(f.claude_key?.trim())payload.claude_key=f.claude_key.trim();
     try{await api('/api/settings','POST',payload);await reload();toast('Đã lưu cấu hình.');}catch(err){toast(err.message,true);}
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();}});
 (async()=>{try{await reload();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
-  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
+  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();

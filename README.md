@@ -128,3 +128,23 @@ AI đã thực sự trao đổi lời nói.
 - Tự tắt chuyển động ban đầu khi thiết bị bật `prefers-reduced-motion`.
 
 Đây là chế độ **2.5D isometric mô phỏng 3D**, không phải engine 3D WebGL với mô hình rigged/điều khiển camera tự do.
+
+## V1.3 — Bộ não riêng cho 9 agent + Claude API có hạn mức
+
+- **Mỗi agent có trí nhớ độc lập:** `agent_memories` phân vùng theo `agent_id`, nguồn bài học và mức tin cậy (`unverified`/`verified`). Truy xuất theo từ khóa ở máy chủ, không gửi toàn bộ lịch sử lên Claude và không cần vector API.
+- **Học theo sự kiện 24/24 khi máy chủ hoạt động:** các nhiệm vụ hoàn tất và KPI nhập vào tạo `agent_learning_events`; dịch vụ nền đọc sự kiện và tổng kết bộ nhớ nội bộ mỗi phút, chi phí Claude lúc không có công việc **0 USD**. Khi tắt máy, hệ thống ngừng; bật lại xử lý sự kiện còn chờ. Không có khả năng tự duyệt Facebook hoặc tự đọc Insights.
+- **Claude thông minh theo nhu cầu:** có thể đặt Claude làm provider chính, hoặc dùng Gemini/Groq chính và cho phép nâng cấp lên Claude với nhiệm vụ rủi ro/khó xử lý. Model nhẹ mặc định `claude-haiku-5-5`, model nâng cấp `claude-sonnet-5-5`. Nếu model nhẹ trả `NEED_CLAUDE`, hệ thống chỉ thử **một lần nâng cấp**. Không có vòng gọi Claude vô hạn.
+- **Chi phí và bảo mật:** API key Claude mã hóa cùng Gemini/Groq, không được đưa lên Git. `claude_usage` lưu số token và tiền ước tính; hai hạn mức USD/ngày (toàn công ty và mỗi agent) có dự trù ngân sách trước cuộc gọi để ngăn worker vượt số tiền được cấu hình. Ngày được tính theo giờ Việt Nam. Số tiền hiển thị là **ước tính**, không thay hóa đơn thực tế Anthropic. Vẫn cần giới hạn sử dụng và cảnh báo trên Anthropic Console.
+- **Tiết kiệm thêm:** giới hạn context và output; dùng local memory; tái sử dụng phản hồi với đầu vào *hoàn toàn giống nhau* trong 6 giờ, tách biệt theo agent; bật prompt caching cho prompt ổn định và đủ dài. Anthropic hỗ trợ Batches giảm 50% cho công việc không cần phản hồi ngay, nhưng **V1.3 chưa triển khai Batch API**.
+- **Giao diện mới:** menu `🧠 Bộ não nhân viên` hiển thị bộ nhớ, backlog, lượt học, USD/ngày và khả năng xem bài học. Mục Cài đặt có API key Claude, model Haiku/Sonnet, bật/tắt học, cache, escalation, ngân sách.
+
+### Cách sử dụng Claude
+
+1. Chạy `start_windows.bat`, vào **Cài đặt** → **Claude Brain & Chi phí**.
+2. Nhập `Claude API key` (không nhập trong chat, không ghi vào file `.env` để commit). Có thể chọn Claude là nhà cung cấp AI chính, hoặc để Gemini/Groq và bật **Cho phép agent gọi Claude khi gặp nhiệm vụ khó**.
+3. Đặt ngân sách mặc định `1 USD/ngày` cho công ty và `0.25 USD/ngày` cho mỗi agent; có thể chỉnh giảm về 0 để khóa toàn bộ cuộc gọi Claude.
+4. Vào **Bộ não nhân viên** để xem kinh nghiệm riêng. Bấm **Xử lý bài học chờ** để cập nhật ngay, không tốn token.
+
+**Giới hạn quan trọng:** Một agent không tự tạo kiến thức mới từ Internet nếu không được cấp nguồn đáng tin cậy. Kết quả công việc và số liệu nhập thủ công vẫn được đánh dấu chưa xác minh. Chi phí thực có thể thay đổi theo giá và điều khoản Anthropic; báo cáo chỉ theo các lời gọi đi qua phần mềm, không bao gồm các ứng dụng khác dùng cùng API key. Để bộ nhớ chạy xuyên ngày đêm, máy chủ cài phần mềm phải hoạt động liên tục (hoặc triển khai trên máy chủ luôn bật).
+
+Tài liệu Anthropic: [Messages API](https://platform.claude.com/docs/en/api/http/messages), [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), [Message Batches](https://platform.claude.com/docs/en/build-with-claude/batch-processing).

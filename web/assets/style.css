@@ -12,3 +12,9 @@
 .office-live-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#312e58}
 .agent-mini-button{border:0;background:none;text-align:left;width:100%;color:inherit;cursor:pointer}.agent-mini-button:hover,.agent-mini-button:focus-visible{background:#8c78e51b;border-radius:10px;outline:1px solid #8c78e555}
 @media(max-width:620px){.office-live-toolbar{padding:10px}.office-live-toolbar .toolbar{gap:5px}.office-live-stage{aspect-ratio:1.36;min-height:300px}.office-live-toolbar .btn.sm{padding:6px 8px;font-size:11px}.office-live-title strong{font-size:12px}}
+
+/* Independent AI brains / safe budget controls */
+.brain-option{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:13px;line-height:1.45}
+.brain-option input{width:17px;height:17px;accent-color:#8f81ff}
+.brain-memories{max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.brain-memories .activity-item{overflow-wrap:anywhere}

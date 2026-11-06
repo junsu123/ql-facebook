@@ -94,3 +94,121 @@ def test_ceo_campaign_batch_and_auto_run_switch():
              'daily_llm_call_limit':20,'auto_run_agents':False,'firefox_path':''}
     assert client.post('/api/settings',json=payload).status_code==200
     assert client.get('/api/bootstrap').json()['settings']['auto_run_agents']=='0'
+
+# V1.3 independent brains + bounded Claude escalation (all mocked, zero API charges).
+def test_brains_independent_memory_and_continuous_local_learning():
+    from app.brains import enqueue_learning, learning_tick, relevant_memories
+    assert client.get('/api/brains').status_code == 200
+    assert len(client.get('/api/brains').json()['agents']) == 9
+    enqueue_learning('research','task_completed','Nghiên cứu chủ đề trà túi lọc mùa đông',source_ref='TEST-RESEARCH')
+    enqueue_learning('strategy','task_completed','Kế hoạch nội dung từng tuần cho mùa hè',source_ref='TEST-STRATEGY')
+    result = client.post('/api/brains/learn-now')
+    assert result.status_code == 200 and result.json()['processed'] >= 2
+    research = client.get('/api/brains/research/memories').json()['items']
+    strategy = client.get('/api/brains/strategy/memories').json()['items']
+    assert any('mùa đông' in x['content'] for x in research)
+    assert all('mùa đông' not in x['content'] for x in strategy)
+    assert relevant_memories('research','trà mùa đông',limit=3)
+    assert not relevant_memories('creative','trà mùa đông',limit=3)
+    assert all(x['confidence'] == 'unverified' for x in research)
+    assert client.get('/api/brains/malicious/memories').status_code == 404
+
+
+def test_claude_settings_and_encrypted_secret():
+    from app.ai import SECRETS_FILE, get_key
+    new = client.post('/api/settings',json={
+        'provider':'claude','claude_key':'sk-test-fake-local-only',
+        'claude_cheap_model':'claude-haiku-5-5',
+        'claude_hard_model':'claude-sonnet-5-5',
+        'claude_daily_budget_usd':1.5,'claude_agent_daily_budget_usd':0.4,
+        'claude_escalation':True,'claude_cache_enabled':True,'brain_learning_enabled':True,
+    })
+    assert new.status_code == 200
+    cfg = client.get('/api/bootstrap').json()['settings']
+    assert cfg['claude_configured'] is True
+    assert 'sk-test' not in str(cfg)
+    assert get_key('claude') == 'sk-test-fake-local-only'
+    assert b'sk-test-fake-local-only' not in SECRETS_FILE.read_bytes()
+    bad=client.post('/api/settings',json={'provider':'claude','claude_hard_model':'not-a-valid-model'})
+    assert bad.status_code == 400
+
+
+def test_claude_usage_bill_cache_and_no_repeat_http():
+    import httpx
+    from app.brains import ask_claude, spent_report
+    calls=[]
+    def mock_response(req):
+        calls.append(req)
+        assert req.url.host=='api.anthropic.com'
+        assert req.headers['anthropic-version']=='2023-06-01'
+        assert req.headers['x-api-key']=='sk-test-fake-local-only'
+        import json
+        body=json.loads(req.content)
+        assert body['model']=='claude-haiku-5-5'
+        return httpx.Response(200,json={'content':[{'type':'text','text':'Bài học hữu ích từ dữ liệu đã xác nhận.'}],
+                                        'usage':{'input_tokens':220,'output_tokens':80,'cache_read_input_tokens':0,'cache_creation_input_tokens':0}})
+    with httpx.Client(transport=httpx.MockTransport(mock_response)) as mock_client:
+        a=ask_claude('research','Quy tắc phân tích marketing.', 'Đề xuất kế hoạch nghiên cứu sản phẩm.',client=mock_client,max_tokens=200)
+        b=ask_claude('research','Quy tắc phân tích marketing.', 'Đề xuất kế hoạch nghiên cứu sản phẩm.',client=mock_client,max_tokens=200)
+    assert a==b
+    assert len(calls)==1  # second request reused exact local response
+    report=spent_report()
+    assert report['today_usd']>0
+    assert report['agents']['research']>0
+    assert client.get('/api/brains').json()['cost']['today_usd']>0
+
+
+def test_claude_dollar_cap_rejects_requests_before_network():
+    from app.brains import ask_claude
+    from app.ai import ModelError
+    changed=client.post('/api/settings',json={'provider':'claude','claude_daily_budget_usd':0,
+                                            'claude_agent_daily_budget_usd':0})
+    assert changed.status_code==200
+    try:
+        ask_claude('research','System task','No network should happen',max_tokens=150)
+    except ModelError as exc:
+        assert 'hạn mức' in str(exc).lower() or 'ngân sách' in str(exc).lower()
+    else:
+        assert False,'Budget=0 must prohibit a Claude call'
+    # Restore budget for other tests.
+    assert client.post('/api/settings',json={'provider':'gemini','claude_daily_budget_usd':1,
+        'claude_agent_daily_budget_usd':0.25}).status_code==200
+
+
+def test_agent_escalation_can_use_claude_without_using_primary(monkeypatch):
+    from app.ai import call_llm
+    import app.brains as brains
+    calls=[]
+    def fake_claude(agent_id,system,prompt,purpose,hard=False):
+        calls.append((agent_id,hard))
+        return 'Claude đã phân tích vấn đề được giao.'
+    monkeypatch.setattr(brains,'ask_claude',fake_claude)
+    result=call_llm('Bạn là chuyên gia','Giải quyết tranh chấp nội dung','agent_task',agent_id='compliance',hard=True)
+    assert result.startswith('Claude')
+    assert calls==[('compliance',True)]
+
+
+def test_brain_dashboard_frontend_available():
+    js=client.get('/assets/app.js')
+    assert js.status_code == 200
+    assert 'renderBrains' in js.text
+    assert 'claude_daily_budget_usd' in js.text
+
+
+def test_claude_haiku_escalates_only_once_when_it_requests_help():
+    import httpx
+    import json
+    from app.brains import ask_claude
+    seen=[]
+    def fake(req):
+        model=json.loads(req.content)['model']
+        seen.append(model)
+        return httpx.Response(200,json={
+            'content':[{'type':'text','text':'NEED_CLAUDE' if model=='claude-haiku-5-5' else 'Giải pháp do Sonnet tổng hợp.'}],
+            'usage':{'input_tokens':150,'output_tokens':50}
+        })
+    with httpx.Client(transport=httpx.MockTransport(fake)) as mock:
+        answer=ask_claude('compliance','Rà soát chính sách nội bộ không có tuyên bố thiếu căn cứ.',
+                          'Tranh chấp cần đối chiếu quy tắc xuất bản.',max_tokens=150,client=mock)
+    assert answer=='Giải pháp do Sonnet tổng hợp.'
+    assert seen==['claude-haiku-5-5','claude-sonnet-5-5']

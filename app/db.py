@@ -123,6 +123,9 @@ def initialize():
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('daily_llm_call_limit','200'))
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('auto_run_agents','0'))
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('firefox_path',''))
+    # Keep migrations idempotent for existing local databases.
+    from .brains import init_brains
+    init_brains()
 
 def log(agent: str, kind: str, message: str, task_id: str | None = None):
     run('INSERT INTO activity(agent_id,kind,message,task_id,created) VALUES(?,?,?,?,?)',
