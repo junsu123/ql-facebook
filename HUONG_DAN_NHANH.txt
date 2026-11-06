@@ -7,7 +7,7 @@ AI FANPAGE COMPANY - HUONG DAN KHOI DONG WINDOWS
 4. Nhan DOP CHUOT vao start_windows.bat.
 5. Lan dau, phan mem cai thu vien Python (can Internet).
 6. Neu trinh duyet chua tu mo, truy cap http://127.0.0.1:8765
-7. Vao Cai dat de nhap Gemini/Groq API key.
+7. Vao Cai dat de nhap DUY NHAT Claude API key; Agent tu chon model tiet kiem.
 8. Vao Tai khoan Firefox > Them tai khoan. Firefox mo cho ban dang nhap thu cong.
 9. Vao Fanpage > Them Page + du lieu san pham.
 10. Vao AI CEO > Tao chien dich nhieu Page > Chay hang doi.
@@ -39,3 +39,9 @@ SUA LOI MUI GIO (Windows / Python 3.14):
   .venv\Scripts\python.exe -m pip install -r requirements.txt
   Dong phan mem cu, sau do chay start_windows.bat
 Neu thieu tzdata, backend V1.3.2 co fallback UTC+7 cho bao cao chi phi Claude.
+
+V1.4: CHI CAU HINH CLAUDE API
+- Cai dat > Nhap Claude API key > Luu > (tuy chon) Kiem tra Claude da luu.
+- Khong can chon model: viec nhe la Haiku 5.5, viec phuc tap la Sonnet 5.5.
+- Cap nhat code moi bang git pull origin main, dong server cu, mo lai start_windows.bat.
+- Cac API key cua nha cung cap cu khong duoc su dung nua; khong xoa du lieu cu.

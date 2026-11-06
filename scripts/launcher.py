@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-APP_VERSION = '1.3.2'
+APP_VERSION = '1.4.0'
 PORTS = tuple(range(8765, 8776))
 
 

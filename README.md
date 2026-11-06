@@ -1,8 +1,17 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.3.2)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.4.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
-> **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. Các API Gemini/Groq chỉ hoạt động khi bạn nhập khóa hợp lệ.
+> **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. Chỉ cấu hình Claude API; tự chọn model theo loại nhiệm vụ, giữ giới hạn ngân sách.
+
+## V1.4.0 – Claude-only, model tự chọn để tiết kiệm chi phí
+
+- Màn hình **Cài đặt API** chỉ còn khóa **Anthropic Claude**; không có lựa chọn Gemini, Groq hoặc dropdown model. Mã nguồn hiện không gọi Gemini/Groq. Các khóa cũ vẫn được giữ nguyên trong kho mã hóa để tránh mất dữ liệu khi nâng cấp nhưng không còn được dùng.
+- Mỗi agent chọn model **theo luật không tốn API**: Haiku 5.5 cho việc thường, Sonnet 5.5 cho vấn đề phức tạp/rủi ro; Haiku được phép yêu cầu nâng cấp **một lần** nếu không xử lý được. Không có vòng lặp gọi model không giới hạn.
+- Ngân sách USD/ngày và giới hạn lượt gọi/ngày áp dụng với toàn bộ lời gọi Claude, kể cả khi nâng cấp. Nếu không đủ ngân sách, nhiệm vụ báo lỗi thay vì tự đổi sang model chất lượng thấp cho nội dung rủi ro.
+- **Bộ não nhân viên** hiển thị lịch sử model và chi phí ước tính theo từng agent. Cache cục bộ vẫn tránh lặp yêu cầu giống hệt. Model có thể không khả dụng nếu tài khoản Anthropic chưa được cấp quyền; dùng nút **Kiểm tra Claude đã lưu** để kiểm tra mà không phát sinh token suy luận.
+- Cấu hình cũ được đọc an toàn; lựa chọn provider/model cũ không còn tác động tới routing. Không xóa SQLite, bộ nhớ agent, khóa mã hóa hay Firefox profiles khi cập nhật.
+- Bảng giá và model IDs có thể thay đổi; dự toán trong ứng dụng không phải hóa đơn Anthropic. Kiểm tra bảng giá mới tại <https://platform.claude.com/docs/en/about-claude/pricing>.
 
 ## Bản vá V1.3.2 – lỗi múi giờ trên Windows
 
@@ -17,7 +26,7 @@ Phần mềm quản trị marketing AI dạng **local-first**, có giao diện v
 2. Giải nén thư mục `ai-fanpage-company` vào ổ đĩa bất kỳ.
 3. Nhấp đúp `start_windows.bat`. Lần đầu script sẽ tạo `.venv` và cài thư viện (cần Internet).
 4. Trình duyệt mặc định mở `http://127.0.0.1:8765` để sử dụng phần mềm. **Chỉ chạy một instance server** trên cùng port 8765.
-5. Vào **Cài đặt** và nhập Gemini hoặc Groq API key để sử dụng agent AI thực. Nếu không có key, CEO sẽ giữ yêu cầu ở trạng thái chờ, không bịa kết quả.
+5. Vào **Cài đặt** và nhập Claude API key để sử dụng agent AI thực. Nếu không có key, CEO sẽ giữ yêu cầu ở trạng thái chờ, không bịa kết quả.
 
 > Lưu ý: Firefox mở trên **máy nơi chạy backend**, không phải máy người dùng khác đang truy cập URL này. Server được cấu hình chỉ cho phép localhost.
 
@@ -48,7 +57,7 @@ Giao diện web: `http://127.0.0.1:8765`. OpenAPI: `http://127.0.0.1:8765/api/do
 1. **Tài khoản Firefox** → Nếu chưa có Firefox, bấm **Tải và cài Firefox**. Phần mềm chọn bản Windows x86/x64/ARM64, tải từ Mozilla, xác minh chữ ký số Mozilla Corporation rồi mở trình cài chính thức để bạn tự chấp thuận cài đặt. Sau khi nhận diện Firefox, bấm **Thêm tài khoản**: phần mềm tạo profile độc lập và mở Firefox. Bạn đăng nhập Facebook và hoàn thành 2FA trực tiếp.
 2. **Xác nhận đăng nhập**: nhấn nút sau khi đã kiểm tra thủ công. Trạng thái không có nghĩa phần mềm đã đọc/xác nhận danh tính từ Facebook.
 3. **Fanpage** → Thêm Page, URL, ngành hàng, giọng văn, dữ kiện sản phẩm, gắn tài khoản Firefox. Bạn có trách nhiệm bảo đảm có quyền quản trị Page.
-4. **Cài đặt AI** → chọn Gemini hoặc Groq, cung cấp key và model ID khả dụng.
+4. **Cài đặt AI** → nhập duy nhất Claude API key. Model do phần mềm tự chọn; không có hộp chọn Gemini/Groq hay chọn model Claude.
 5. **AI CEO** → giao nhiệm vụ; CEO thật sẽ tạo hàng đợi agent. Bấm **Tạo chiến dịch nhiều Page** để giao 1 nhiệm vụ nội dung riêng cho mỗi Page có dữ liệu. Bấm **Chạy nhiệm vụ chờ**, hoặc bật **Tự chạy nhiệm vụ AI** trong Cài đặt để worker xử lý tự động theo hạn mức/ngày. Nhiệm vụ content của Page có thể tạo bản nháp.
 6. **Nội dung** → AI viết / tự tạo bản nháp → kiểm duyệt → đặt lịch. Khi đến lịch, nội dung chuyển sang `ready`, **chưa đăng Facebook**. Bật tự chạy agent sẽ phát sinh chi phí API và không tự bật theo mặc định.
 7. **Mở để đăng** → Firefox mở đúng profile + Page. Sao chép bài, bạn đăng thủ công và bấm **Đã đăng** để lưu xác nhận.
@@ -78,7 +87,7 @@ PYOURPAGEID,2026-11-02,980,27,5,1
 - Backend: FastAPI + SQLite (WAL), httpx, cryptography, psutil.
 - Frontend: HTML/CSS/JS thuần; văn phòng hoạt hình isometric chạy trên Canvas 2D theo trạng thái nhiệm vụ. Không cần Node/npm/CDN lúc vận hành.
 - Scheduler: một vòng kiểm tra trong process, 10 giây/lần; chỉ chuyển bài sang `ready` để người dùng đăng. Không chạy khi app tắt.
-- AI: REST Gemini `generateContent` hoặc Groq `chat/completions`. Model có thể cấu hình, hạn mức số lần gọi/ngày. Một số model không có sẵn tùy tài khoản API.
+- AI: Claude Messages API qua HTTPS. Bộ định tuyến chọn Haiku 5.5 cho nhiệm vụ thường, Sonnet 5.5 cho nhiệm vụ khó/rủi ro. Không cần chọn model; có giới hạn lượt gọi và USD/ngày.
 - Agents: CEO, Research, Strategy, Content, Creative, Publishing, Customer, Analytics, Compliance. Mỗi task ghi trạng thái, kết quả, lỗi và activity log.
 - Firefox: mở native bằng `--no-remote --profile <absolute_path>`. Không Selenium, không browser extension, không lấy cookie. Quản lý PID và thời điểm tiến trình để tránh đóng nhầm Firefox khác.
 - Dự án chỉ phục vụ 127.0.0.1, không CORS; chưa có xác thực người dùng. **Không đưa ra Internet hoặc triển khai nhiều người dùng nếu chưa bổ sung auth, RBAC, CSRF protection, backup và secret vault chính thức.**
@@ -103,8 +112,6 @@ pytest -q
 ## Nguồn thông tin kỹ thuật
 
 - Mozilla Firefox command line flags: https://firefox-source-docs.mozilla.org/browser/CommandLineParameters.html
-- Gemini REST API: https://ai.google.dev/api/generate-content
-- Groq REST API: https://console.groq.com/docs/api-reference
 - Meta's Automated Data Collection Terms: https://www.facebook.com/legal/automated_data_collection_terms
 
 ## Cấu trúc
@@ -140,17 +147,17 @@ AI đã thực sự trao đổi lời nói.
 
 - **Mỗi agent có trí nhớ độc lập:** `agent_memories` phân vùng theo `agent_id`, nguồn bài học và mức tin cậy (`unverified`/`verified`). Truy xuất theo từ khóa ở máy chủ, không gửi toàn bộ lịch sử lên Claude và không cần vector API.
 - **Học theo sự kiện 24/24 khi máy chủ hoạt động:** các nhiệm vụ hoàn tất và KPI nhập vào tạo `agent_learning_events`; dịch vụ nền đọc sự kiện và tổng kết bộ nhớ nội bộ mỗi phút, chi phí Claude lúc không có công việc **0 USD**. Khi tắt máy, hệ thống ngừng; bật lại xử lý sự kiện còn chờ. Không có khả năng tự duyệt Facebook hoặc tự đọc Insights.
-- **Claude thông minh theo nhu cầu:** có thể đặt Claude làm provider chính, hoặc dùng Gemini/Groq chính và cho phép nâng cấp lên Claude với nhiệm vụ rủi ro/khó xử lý. Model nhẹ mặc định `claude-haiku-5-5`, model nâng cấp `claude-sonnet-5-5`. Nếu model nhẹ trả `NEED_CLAUDE`, hệ thống chỉ thử **một lần nâng cấp**. Không có vòng gọi Claude vô hạn.
-- **Chi phí và bảo mật:** API key Claude mã hóa cùng Gemini/Groq, không được đưa lên Git. `claude_usage` lưu số token và tiền ước tính; hai hạn mức USD/ngày (toàn công ty và mỗi agent) có dự trù ngân sách trước cuộc gọi để ngăn worker vượt số tiền được cấu hình. Ngày được tính theo giờ Việt Nam. Số tiền hiển thị là **ước tính**, không thay hóa đơn thực tế Anthropic. Vẫn cần giới hạn sử dụng và cảnh báo trên Anthropic Console.
+- **Claude tự chọn model:** Claude là nhà cung cấp duy nhất; từng agent tự dùng Haiku hoặc Sonnet tùy nhiệm vụ. Model nhẹ mặc định `claude-haiku-5-5`, model nâng cấp `claude-sonnet-5-5`. Nếu model nhẹ trả `NEED_CLAUDE`, hệ thống chỉ thử **một lần nâng cấp**. Không có vòng gọi Claude vô hạn.
+- **Chi phí và bảo mật:** Claude API key được mã hóa trong dữ liệu cục bộ, không được đưa lên Git. `claude_usage` lưu số token và tiền ước tính; hai hạn mức USD/ngày (toàn công ty và mỗi agent) có dự trù ngân sách trước cuộc gọi để ngăn worker vượt số tiền được cấu hình. Ngày được tính theo giờ Việt Nam. Số tiền hiển thị là **ước tính**, không thay hóa đơn thực tế Anthropic. Vẫn cần giới hạn sử dụng và cảnh báo trên Anthropic Console.
 - **Tiết kiệm thêm:** giới hạn context và output; dùng local memory; tái sử dụng phản hồi với đầu vào *hoàn toàn giống nhau* trong 6 giờ, tách biệt theo agent; bật prompt caching cho prompt ổn định và đủ dài. Anthropic hỗ trợ Batches giảm 50% cho công việc không cần phản hồi ngay, nhưng **V1.3 chưa triển khai Batch API**.
-- **Giao diện mới:** menu `🧠 Bộ não nhân viên` hiển thị bộ nhớ, backlog, lượt học, USD/ngày và khả năng xem bài học. Mục Cài đặt có API key Claude, model Haiku/Sonnet, bật/tắt học, cache, escalation, ngân sách.
+- **Giao diện:** menu `🧠 Bộ não nhân viên` hiển thị bộ nhớ, số lượt học, USD/ngày và lịch sử lựa chọn model thật. Mục Cài đặt chỉ có Claude API key, giới hạn ngân sách/lượt gọi, cache và tự chạy agent.
 
 ### Cách sử dụng Claude
 
-1. Chạy `start_windows.bat`, vào **Cài đặt** → **Claude Brain & Chi phí**.
-2. Nhập `Claude API key` (không nhập trong chat, không ghi vào file `.env` để commit). Có thể chọn Claude là nhà cung cấp AI chính, hoặc để Gemini/Groq và bật **Cho phép agent gọi Claude khi gặp nhiệm vụ khó**.
+1. Chạy `start_windows.bat`, vào **Cài đặt** → **Kết nối Claude AI**.
+2. Nhập duy nhất `Claude API key` (không nhập trong chat hoặc commit lên Git), bấm **Lưu cài đặt**. Có thể bấm **Kiểm tra Claude đã lưu** để gọi Models API (không tốn token sinh văn bản). Phần mềm tự chọn Haiku/Sonnet và tự nâng cấp tối đa một lần khi Haiku không thể hoàn thành.
 3. Đặt ngân sách mặc định `1 USD/ngày` cho công ty và `0.25 USD/ngày` cho mỗi agent; có thể chỉnh giảm về 0 để khóa toàn bộ cuộc gọi Claude.
-4. Vào **Bộ não nhân viên** để xem kinh nghiệm riêng. Bấm **Xử lý bài học chờ** để cập nhật ngay, không tốn token.
+4. Vào **Bộ não nhân viên** để xem kinh nghiệm riêng, model đã gọi gần đây và chi phí. Bấm **Xử lý bài học chờ** để cập nhật ngay, không tốn token.
 
 **Giới hạn quan trọng:** Một agent không tự tạo kiến thức mới từ Internet nếu không được cấp nguồn đáng tin cậy. Kết quả công việc và số liệu nhập thủ công vẫn được đánh dấu chưa xác minh. Chi phí thực có thể thay đổi theo giá và điều khoản Anthropic; báo cáo chỉ theo các lời gọi đi qua phần mềm, không bao gồm các ứng dụng khác dùng cùng API key. Để bộ nhớ chạy xuyên ngày đêm, máy chủ cài phần mềm phải hoạt động liên tục (hoặc triển khai trên máy chủ luôn bật).
 

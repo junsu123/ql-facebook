@@ -1,14 +1,12 @@
-"""Real optional Gemini/Groq model calls and auditable CEO task routing.
-No simulated AI results: without a configured key, tasks wait for configuration.
+"""Claude-only AI routing, encrypted local credentials, auditable CEO tasks.
+No simulated AI results: without a Claude API key, tasks wait for setup.
 """
 from __future__ import annotations
 import json
 import os
 import re
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
-import httpx
 from cryptography.fernet import Fernet, InvalidToken
 from .db import BASE, all_rows, db, log, now, one, run
 
@@ -40,7 +38,7 @@ def load_keys() -> dict:
 
 
 def save_key(provider: str, value: str):
-    if provider not in ('gemini','groq','claude'):
+    if provider != 'claude':
         raise ValueError('Nhà cung cấp không được hỗ trợ')
     keys = load_keys()
     if value:
@@ -61,66 +59,24 @@ def get_key(provider: str) -> str:
 def config() -> dict:
     rows = all_rows('SELECT key,value FROM settings')
     out = {r['key']:r['value'] for r in rows}
-    for provider in ('gemini','groq','claude'):
-        out[f'{provider}_configured'] = bool(get_key(provider))
+    # Old Gemini/Groq values remain encrypted for rollback, but are never used
+    # or included in the UI/API configuration response.
+    for legacy in ('gemini_model','groq_model','claude_cheap_model','claude_hard_model','claude_escalation'):
+        out.pop(legacy, None)
+    out['provider'] = 'claude'
+    out['model_selection'] = 'automatic'
+    out['claude_configured'] = bool(get_key('claude'))
     return out
 
 
-def record_usage(provider, model, request_type):
-    run('INSERT INTO ai_calls(provider,model,request_type,created) VALUES(?,?,?,?)',
-        (provider, model, request_type, now()))
-
-
 def call_llm(system: str, prompt: str, purpose: str = 'task', agent_id: str = 'ceo', hard: bool = False) -> str:
-    cfg = config()
-    provider = cfg.get('provider','gemini')
+    """One Claude-only entrypoint for all staff; model selection stays server-side.
+
+    Haiku handles routine tasks. Sonnet is selected for risk/complexity or on a
+    single explicit Haiku escalation, subject to the existing spending caps.
+    """
     from .brains import ask_claude
-    if provider == 'claude' or (get_key('claude') and cfg.get('claude_escalation','1') == '1' and hard):
-        return ask_claude(agent_id, system, prompt, purpose, hard=hard)
-    key = get_key(provider)
-    if not key:
-        if get_key('claude'):
-            return ask_claude(agent_id,system,prompt,purpose,hard=False)
-        raise ModelError(f'Chưa cấu hình API key {provider}. Vào mục Cài đặt để thêm key.')
-    limit = max(1,min(100000,int(cfg.get('daily_llm_call_limit',200))))
-    count = one("SELECT count(*) AS n FROM ai_calls WHERE created >= ?",(datetime.now(timezone.utc).date().isoformat(),))['n']
-    if count >= limit:
-        raise ModelError('Đã đạt hạn mức số lần gọi AI trong ngày.')
-    try:
-        with httpx.Client(timeout=45) as client:
-            if provider == 'gemini':
-                model = cfg.get('gemini_model') or 'gemini-2.5-flash'
-                url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
-                response = client.post(url,headers={'x-goog-api-key':key},json={
-                    'systemInstruction':{'parts':[{'text':system}]},
-                    'contents':[{'role':'user','parts':[{'text':prompt}]}],
-                    'generationConfig':{'temperature':0.55,'maxOutputTokens':1800}
-                })
-                response.raise_for_status()
-                choices = response.json().get('candidates') or []
-                parts = choices[0].get('content',{}).get('parts',[]) if choices else []
-                text = ''.join(p.get('text','') for p in parts)
-            elif provider == 'groq':
-                model = cfg.get('groq_model') or 'llama-3.3-70b-versatile'
-                response = client.post('https://api.groq.com/openai/v1/chat/completions',
-                    headers={'Authorization':f'Bearer {key}'},json={
-                        'model':model,'messages':[{'role':'system','content':system},{'role':'user','content':prompt}],
-                        'temperature':0.55,'max_tokens':1800
-                    })
-                response.raise_for_status()
-                text = response.json()['choices'][0]['message']['content']
-            else:
-                raise ModelError('Nhà cung cấp không được hỗ trợ')
-    except httpx.HTTPStatusError as e:
-        raise ModelError(f'API {provider} trả lỗi HTTP {e.response.status_code}: {e.response.text[:240]}') from e
-    except (httpx.RequestError, ValueError, KeyError, IndexError) as e:
-        raise ModelError(f'Lỗi khi gọi API {provider}: {str(e)[:240]}') from e
-    if not text.strip():
-        raise ModelError('Mô hình không trả về văn bản.')
-    record_usage(provider,model,purpose)
-    if 'NEED_CLAUDE' in text.upper() and get_key('claude') and cfg.get('claude_escalation','1') == '1':
-        return ask_claude(agent_id,system,prompt,purpose,hard=True)
-    return text.strip()
+    return ask_claude(agent_id, system, prompt, purpose, hard=hard)
 
 
 def parse_json_reply(raw: str):
@@ -157,9 +113,9 @@ def ceo_message(message: str) -> dict:
         'open_tasks':one("SELECT count(*) AS n FROM tasks WHERE status IN ('queued','running')")['n'],
         'drafts':one("SELECT count(*) AS n FROM contents WHERE status='draft'")['n']
     }
-    if not (get_key(config().get('provider','gemini')) or get_key('claude')):
+    if not get_key('claude'):
         tid = create_task('ceo','Yêu cầu của chủ sở hữu',message,source='owner_pending_ai')
-        reply = 'Tôi đã lưu yêu cầu của bạn vào hàng đợi CEO. Cần cấu hình Gemini hoặc Groq trong Cài đặt để CEO phân tích và giao nhiệm vụ bằng AI thật. Tôi chưa thực thi công việc.'
+        reply = 'Tôi đã lưu yêu cầu của bạn vào hàng đợi CEO. Cần nhập Claude API key trong Cài đặt để CEO phân tích và giao nhiệm vụ bằng AI thật. Tôi chưa thực thi công việc.'
         run('INSERT INTO chats(role,body,created) VALUES(?,?,?)',('assistant',reply,now()))
         return {'reply':reply,'task_ids':[tid],'mode':'awaiting_ai_configuration'}
     system = '''Bạn là AI CEO của công ty marketing vận hành Fanpage thuộc sở hữu doanh nghiệp.

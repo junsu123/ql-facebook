@@ -67,7 +67,7 @@ def test_policy_and_learning():
 def test_ceo_without_model_key_does_not_fabricate_work():
     cfg=client.get('/api/bootstrap').json()['settings']
     # This test assumes no externally provisioned key in test environment.
-    if cfg.get('gemini_configured'):
+    if cfg.get('claude_configured'):
         return
     r=client.post('/api/ceo/chat',json={'message':'Giao nhân viên viết kế hoạch 7 ngày cho Fanpage.'})
     assert r.status_code==200
@@ -90,8 +90,7 @@ def test_ceo_campaign_batch_and_auto_run_switch():
     task=next(t for t in client.get('/api/bootstrap').json()['tasks'] if t['source']=='ceo_campaign')
     assert task['page_id']==page['id']
     cfg=client.get('/api/bootstrap').json()['settings']
-    payload={'provider':'gemini','gemini_model':'gemini-2.5-flash','groq_model':'llama-3.3-70b-versatile',
-             'daily_llm_call_limit':20,'auto_run_agents':False,'firefox_path':''}
+    payload={'daily_llm_call_limit':20,'auto_run_agents':False,'firefox_path':''}
     assert client.post('/api/settings',json=payload).status_code==200
     assert client.get('/api/bootstrap').json()['settings']['auto_run_agents']=='0'
 
@@ -117,11 +116,9 @@ def test_brains_independent_memory_and_continuous_local_learning():
 def test_claude_settings_and_encrypted_secret():
     from app.ai import SECRETS_FILE, get_key
     new = client.post('/api/settings',json={
-        'provider':'claude','claude_key':'sk-test-fake-local-only',
-        'claude_cheap_model':'claude-haiku-5-5',
-        'claude_hard_model':'claude-sonnet-5-5',
+        'claude_key':'sk-test-fake-local-only',
         'claude_daily_budget_usd':1.5,'claude_agent_daily_budget_usd':0.4,
-        'claude_escalation':True,'claude_cache_enabled':True,'brain_learning_enabled':True,
+        'claude_cache_enabled':True,'brain_learning_enabled':True,
     })
     assert new.status_code == 200
     cfg = client.get('/api/bootstrap').json()['settings']
@@ -129,8 +126,11 @@ def test_claude_settings_and_encrypted_secret():
     assert 'sk-test' not in str(cfg)
     assert get_key('claude') == 'sk-test-fake-local-only'
     assert b'sk-test-fake-local-only' not in SECRETS_FILE.read_bytes()
-    bad=client.post('/api/settings',json={'provider':'claude','claude_hard_model':'not-a-valid-model'})
-    assert bad.status_code == 400
+    assert cfg['provider']=='claude' and cfg['model_selection']=='automatic'
+    assert 'gemini_model' not in cfg and 'groq_model' not in cfg
+    bad=client.post('/api/settings',json={'claude_hard_model':'claude-opus-5-5'})
+    assert bad.status_code == 422
+    assert client.post('/api/settings',json={'provider':'gemini'}).status_code == 422
 
 
 def test_claude_usage_bill_cache_and_no_repeat_http():
@@ -161,7 +161,7 @@ def test_claude_usage_bill_cache_and_no_repeat_http():
 def test_claude_dollar_cap_rejects_requests_before_network():
     from app.brains import ask_claude
     from app.ai import ModelError
-    changed=client.post('/api/settings',json={'provider':'claude','claude_daily_budget_usd':0,
+    changed=client.post('/api/settings',json={'claude_daily_budget_usd':0,
                                             'claude_agent_daily_budget_usd':0})
     assert changed.status_code==200
     try:
@@ -171,7 +171,7 @@ def test_claude_dollar_cap_rejects_requests_before_network():
     else:
         assert False,'Budget=0 must prohibit a Claude call'
     # Restore budget for other tests.
-    assert client.post('/api/settings',json={'provider':'gemini','claude_daily_budget_usd':1,
+    assert client.post('/api/settings',json={'claude_daily_budget_usd':1,
         'claude_agent_daily_budget_usd':0.25}).status_code==200
 
 
@@ -209,6 +209,6 @@ def test_claude_haiku_escalates_only_once_when_it_requests_help():
         })
     with httpx.Client(transport=httpx.MockTransport(fake)) as mock:
         answer=ask_claude('compliance','Rà soát chính sách nội bộ không có tuyên bố thiếu căn cứ.',
-                          'Tranh chấp cần đối chiếu quy tắc xuất bản.',max_tokens=150,client=mock)
+                          'Hãy tóm tắt các điểm quan trọng trong quy tắc xuất bản.',max_tokens=150,client=mock)
     assert answer=='Giải pháp do Sonnet tổng hợp.'
     assert seen==['claude-haiku-5-5','claude-sonnet-5-5']

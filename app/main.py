@@ -17,14 +17,14 @@ from urllib.parse import urlparse
 from fastapi import FastAPI, Body, HTTPException, Request, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image, UnidentifiedImageError
 
 from .db import BASE, MEDIA_DIR, all_rows, db, initialize, log, now, one, run
 from .ai import (ModelError, ceo_message, config, create_task, execute_task,
                  generate_content, save_key, get_key)
 from .brains import (agent_brain_overview, relevant_memories, learning_tick,
-                     enqueue_learning, spent_report, AGENT_IDS, CLAUDE_PRICING)
+                     enqueue_learning, spent_report, AGENT_IDS)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
                       close_profile, confirm_login, delete_profile, executable)
 from .firefox_installer import (FirefoxInstallError, start_install as start_firefox_install,
@@ -32,7 +32,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.3.2',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.4.0',docs_url='/api/docs',redoc_url=None)
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
 app.mount('/media',StaticFiles(directory=MEDIA_DIR),name='media')
@@ -59,7 +59,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.3.2','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.4.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/bootstrap')
 def bootstrap():
@@ -95,39 +95,55 @@ def bootstrap():
     }
 
 class SettingsChange(BaseModel):
-    provider:str='gemini'
-    gemini_model:str='gemini-2.5-flash'
-    groq_model:str='llama-3.3-70b-versatile'
-    daily_llm_call_limit:int=Field(default=200,ge=1,le=10000)
-    auto_run_agents:bool=False
-    firefox_path:str=''
-    gemini_key:str|None=None
-    groq_key:str|None=None
+    # Only Claude is configurable. Extra legacy provider/model fields are rejected
+    # instead of silently re-enabling another provider.
+    model_config = ConfigDict(extra='forbid')
     claude_key:str|None=None
-    claude_cheap_model:str='claude-haiku-5-5'
-    claude_hard_model:str='claude-sonnet-5-5'
-    claude_escalation:bool=True
-    claude_cache_enabled:bool=True
-    brain_learning_enabled:bool=True
-    claude_daily_budget_usd:float=Field(default=1.0,ge=0,le=1000)
-    claude_agent_daily_budget_usd:float=Field(default=0.25,ge=0,le=1000)
+    daily_llm_call_limit:int|None=Field(default=None,ge=1,le=10000)
+    auto_run_agents:bool|None=None
+    firefox_path:str|None=None
+    claude_cache_enabled:bool|None=None
+    brain_learning_enabled:bool|None=None
+    claude_daily_budget_usd:float|None=Field(default=None,ge=0,le=1000)
+    claude_agent_daily_budget_usd:float|None=Field(default=None,ge=0,le=1000)
 
 @app.post('/api/settings')
 def update_settings(req:SettingsChange):
-    if req.provider not in ('gemini','groq','claude'):raise HTTPException(400,'Nhà cung cấp không hợp lệ')
-    if req.claude_cheap_model not in CLAUDE_PRICING or req.claude_hard_model not in CLAUDE_PRICING:
-        raise HTTPException(400,'Model Claude không nằm trong danh sách tính phí đã xác minh')
+    values=req.model_dump(exclude_unset=True,exclude_none=True)
+    saved=('daily_llm_call_limit','firefox_path','auto_run_agents',
+           'claude_cache_enabled','brain_learning_enabled',
+           'claude_daily_budget_usd','claude_agent_daily_budget_usd')
     with db() as c:
-        for key in ('provider','gemini_model','groq_model','daily_llm_call_limit','firefox_path',
-                    'auto_run_agents','claude_cheap_model','claude_hard_model','claude_escalation',
-                    'claude_cache_enabled','brain_learning_enabled','claude_daily_budget_usd','claude_agent_daily_budget_usd'):
-            value=('1' if getattr(req,key) else '0') if key in ('auto_run_agents','claude_escalation','claude_cache_enabled','brain_learning_enabled') else str(getattr(req,key))
+        c.execute("INSERT INTO settings(key,value) VALUES('provider','claude') ON CONFLICT(key) DO UPDATE SET value='claude'")
+        for key in saved:
+            if key not in values:
+                continue
+            value=('1' if values[key] else '0') if key in ('auto_run_agents','claude_cache_enabled','brain_learning_enabled') else str(values[key])
             c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',(key,value))
-    for provider in ('gemini','groq','claude'):
-        val=getattr(req,provider+'_key')
-        if val is not None:save_key(provider,val)
-    log('ceo','settings','Chủ sở hữu cập nhật cấu hình hệ thống (không lưu khóa trong log).')
+    if 'claude_key' in values:
+        save_key('claude',values['claude_key'])
+    log('ceo','settings','Đã cập nhật cấu hình Claude tự chọn model và ngân sách (không ghi API key).')
     return {'ok':True,'settings':config()}
+
+@app.post('/api/claude/check')
+def claude_connection_check():
+    """Checks API-key validity and model access via Models API; no inference tokens."""
+    import httpx
+    key=get_key('claude')
+    if not key:raise HTTPException(400,'Bạn chưa nhập Claude API key.')
+    try:
+        with httpx.Client(timeout=15) as client:
+            response=client.get('https://api.anthropic.com/v1/models',headers={
+                'x-api-key':key,'anthropic-version':'2023-06-01'},params={'limit':100})
+        response.raise_for_status()
+        available={m.get('id') for m in response.json().get('data',[]) if isinstance(m,dict)}
+        return {'ok':True,'haiku_available':'claude-haiku-5-5' in available,
+                'sonnet_available':'claude-sonnet-5-5' in available,
+                'note':'Danh sách model khả dụng theo khóa API tại thời điểm kiểm tra; không gọi suy luận.'}
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(400,f'Claude từ chối kiểm tra key: HTTP {e.response.status_code}') from e
+    except (httpx.RequestError,ValueError) as e:
+        raise HTTPException(503,'Không thể kết nối Claude Models API để kiểm tra.') from e
 
 @app.get('/api/brains')
 def brains_overview():
@@ -575,7 +591,7 @@ def scheduler_loop():
             if time.monotonic()-last_brain_cycle>=60:
                 learning_tick(40)
                 last_brain_cycle=time.monotonic()
-            if cfg.get('auto_run_agents')=='1' and (get_key(cfg.get('provider','gemini')) or get_key('claude')):
+            if cfg.get('auto_run_agents')=='1' and get_key('claude'):
                 with _worker_lock:
                     available=max(0,2-len(_submitted))
                 if available:

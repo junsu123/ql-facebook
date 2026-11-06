@@ -94,12 +94,12 @@ function updateOfficeData(){
 function renderCEO(){
   const chat=V('chat');
   return `${heading('Phòng điều hành AI CEO','Bạn chỉ giao việc cho CEO. CEO phân tích mục tiêu và tạo nhiệm vụ cho đội ngũ.',`<button class="btn ghost" data-action="tasks.run-queued">▶ Chạy nhiệm vụ chờ</button><button class="btn primary" data-action="ceo.campaign">✦ Tạo chiến dịch nhiều Page</button>`)}
-  <div class="columns"><div class="card chat-room"><div class="space-between"><div><h2>🧠 Trao đổi trực tiếp với CEO</h2><div class="card-sub">Kết nối ${E(S.data.settings.provider||'chưa có')} ${S.data.settings[S.data.settings.provider+'_configured']?'· Đã có API key':'· Chưa có API key'}</div></div><span class="badge blue">CEO</span></div>
+  <div class="columns"><div class="card chat-room"><div class="space-between"><div><h2>🧠 Trao đổi trực tiếp với CEO</h2><div class="card-sub">Claude AI · ${S.data.settings.claude_configured?'Đã có API key':'Chưa có API key'} · Tự chọn model tiết kiệm</div></div><span class="badge blue">CEO</span></div>
     <div class="chat-messages" id="chatMessages">${chat.length?chat.map(m=>`<div class="chat-msg ${m.role==='user'?'owner':''}"><div class="chat-av">${m.role==='user'?'👤':'🧠'}</div><div><div class="chat-bubble">${E(m.body)}</div><small class="muted">${F(m.created)}</small></div></div>`).join(''):empty('🧠','Bắt đầu giao việc cho CEO','Ví dụ: Lập chiến lược 7 ngày cho các Page về trà thảo mộc.')}</div>
     <form id="chatForm" class="chat-compose"><textarea class="textarea" name="message" maxlength="6000" required placeholder="CEO, hãy lập kế hoạch nội dung cho các Fanpage của công ty..."></textarea><button class="btn primary" ${S.busy?'disabled':''}>${S.busy?'Đang suy luận…':'Giao việc ↗'}</button></form></div>
     <div class="stack"><div class="card"><h2>🎯 Nguyên tắc quản trị</h2><div class="subtle-divider"></div><p>CEO chỉ được giao nhiệm vụ nội bộ, tạo kế hoạch và đề xuất. Nhân viên không được tự nhận đã đăng bài hay thu thập dữ liệu không có thật.</p><div class="status-bubble">🔒 Chỉ tự động hóa nội bộ; không tự thao tác Facebook</div></div>
       <div class="card"><h2>🔍 Công việc gần đây</h2>${V('tasks').slice(0,6).map(t=>`<div class="agent-mini"><div class="agent-face">${V('agents').find(a=>a.id===t.agent_id)?.emoji||'🤖'}</div><div style="flex:1"><strong>${E(short(t.title,50))}</strong><small>${E(agentName(t.agent_id))} · ${F(t.created)}</small></div>${badge(t.status)}</div>`).join('')||empty('📭','Chưa có nhiệm vụ')}</div>
-      <div class="card"><h2>⚙️ Kết nối trí tuệ AI</h2><p class="muted">Cấu hình Gemini hoặc Groq trong phần Cài đặt. Không có API key, CEO chỉ lưu yêu cầu vào hàng đợi và không bịa ra hành động đã thực hiện.</p><button class="btn ghost" data-route="settings">Mở cài đặt AI →</button></div>
+      <div class="card"><h2>⚙️ Kết nối trí tuệ AI</h2><p class="muted">Chỉ cần nhập một Claude API key trong phần Cài đặt. Không có API key, CEO chỉ lưu yêu cầu vào hàng đợi và không bịa ra hành động đã thực hiện.</p><button class="btn ghost" data-route="settings">Mở cài đặt AI →</button></div>
     </div></div>`;
 }
 function firefoxInstallerNotice(){
@@ -219,25 +219,29 @@ function renderBrains(){
   <div class="stat-grid">${stat('🧠','Bộ não',agents.length,'Không dùng chung lịch sử','#9782ff')}${stat('📚','Kinh nghiệm đã lưu',agents.reduce((n,a)=>n+Number(a.memory_count||0),0),'Lưu trên máy chủ của bạn','#64e6b4')}${stat('⏳','Bài học chờ xử lý',agents.reduce((n,a)=>n+Number(a.pending_learning||0),0),'Xử lý nội bộ, không tốn token','#ffc17c')}${stat('💵','Claude hôm nay','$'+Number(cost.today_usd||0).toFixed(4),'Giới hạn $'+Number(cost.daily_limit_usd||0).toFixed(2)+'/ngày','#79c4ff')}</div>
   <div class="card" style="margin-top:17px"><div class="space-between"><h2>🧠 Bộ nhớ riêng từng agent</h2><span class="badge green">Học theo sự kiện</span></div><p class="muted">Dịch vụ học chạy khi máy chủ phần mềm hoạt động. Agent ghi chú kết quả làm việc nhưng chỉ dữ liệu được xác minh mới được đánh dấu xác thực. Không gọi Claude liên tục khi không có nhiệm vụ.</p><div class="table-scroll"><table class="data-table"><thead><tr><th>Nhân viên</th><th>Ghi nhớ</th><th>Đang chờ</th><th>Đã xử lý</th><th>Claude hôm nay</th><th>Chi tiết</th></tr></thead><tbody>
     ${agents.map(a=>`<tr><td><strong>${E(a.name)}</strong></td><td>${Number(a.memory_count||0)}</td><td>${Number(a.pending_learning||0)}</td><td>${Number(a.processed_events||0)}</td><td>$${Number(cost.agents?.[a.id]||0).toFixed(4)}</td><td><button class="btn sm ghost" data-action="brain.memory" data-id="${E(a.id)}">Xem trí nhớ</button></td></tr>`).join('')}</tbody></table></div></div>
+  <div class="card" style="margin-top:17px"><div class="space-between"><h2>🤖 Model đã tự chọn gần đây</h2><span class="badge blue">Tự động</span></div>
+  <p class="muted">Lịch sử gọi Claude thực tế (không bao gồm câu trả lời lấy từ bộ nhớ cache). Model được chọn theo độ khó, không cấu hình thủ công.</p>
+  ${(b.routing?.recent||[]).length?`<div class="table-scroll"><table class="data-table"><thead><tr><th>Nhân viên</th><th>Model</th><th>Nguyên nhân</th><th>Chi phí ước tính</th><th>Trạng thái</th></tr></thead><tbody>
+  ${(b.routing?.recent||[]).map(x=>`<tr><td>${E(agentName(x.agent_id))}</td><td><code>${E(x.model)}</code></td><td>${E(({routine_low_cost:'Việc thường',complex_explicit:'Nhiệm vụ phức tạp',complex_keywords:'Nhiệm vụ có rủi ro',long_complex_plan:'Kế hoạch dài'})[x.route_reason]||x.route_reason||'Từ bản cũ')}</td><td>$${Number(x.cost_usd||0).toFixed(5)}</td><td>${E(x.status)}</td></tr>`).join('')}</tbody></table></div>`:empty('🤖','Chưa có lời gọi Claude','Sau khi nhân viên xử lý nhiệm vụ, bảng sẽ hiển thị model thực sự được sử dụng.')}</div>
   <div class="grid-2" style="margin-top:17px"><div class="card"><h2>⚙️ Tối ưu chi phí Claude</h2><p>① Ưu tiên bộ nhớ và quy tắc cục bộ. ② Dùng model Haiku cho việc thường. ③ Chỉ nâng lên Sonnet khi khó, có yêu cầu hoặc khi model nhỏ không giải quyết được. ④ Tái dùng câu trả lời trùng khớp trong 6 giờ. ⑤ Khóa ngân sách mỗi agent và toàn công ty.</p><button class="btn ghost" data-route="settings">Đi đến cài đặt ngân sách</button></div><div class="card"><h2>🛡️ Điều kiện tự học</h2><p>Học và ghi nhớ 24/24 nghĩa là xử lý các sự kiện khi phần mềm đang chạy, không phải tạo yêu cầu AI liên tục hay tự suy đoán dữ liệu Facebook. Khi tắt máy, hoạt động dừng; sự kiện còn trong database sẽ được xử lý khi mở lại.</p><p class="muted">Dữ liệu mỗi agent lưu riêng. CEO chỉ giao việc và đọc báo cáo, không mặc định xem mọi thông tin nhạy cảm.</p></div></div>`;
 }
 function renderSettings(){
   const cfg=S.data.settings;
-  return `${heading('Cài đặt phần mềm','Tùy chỉnh mô hình AI, hạn mức và đường dẫn Firefox.',`<span class="badge green">🔒 Localhost only</span>`)}
-    <div class="columns"><div class="card"><h2>🧠 AI API Settings</h2><p class="card-sub">API key được mã hóa trong thư mục dữ liệu cục bộ; không đưa vào log hay trả về frontend.</p><form id="settingsForm" style="margin-top:17px">
-    <div class="form-field"><label>Nhà cung cấp AI chính</label><select class="select" name="provider"><option ${selected(cfg.provider,'gemini')} value="gemini">Google Gemini</option><option ${selected(cfg.provider,'groq')} value="groq">Groq</option><option ${selected(cfg.provider,'claude')} value="claude">Anthropic Claude</option></select></div>
-    ${field('Model Gemini','gemini_model',cfg.gemini_model,'text','required')}${field('Gemini API key'+(cfg.gemini_configured?' · Đã lưu':''),'gemini_key','','password','placeholder="Để trống nếu giữ key hiện tại"')}
-    ${field('Model Groq','groq_model',cfg.groq_model,'text','required')}${field('Groq API key'+(cfg.groq_configured?' · Đã lưu':''),'groq_key','','password','placeholder="Để trống nếu giữ key hiện tại"')}
-    <div class="subtle-divider"></div><h2>🔵 Claude Brain & Chi phí</h2><p class="card-sub">Khi Gemini/Groq khó xử lý nhiệm vụ, nhân viên có thể xin hỗ trợ từ Claude. Mặc định ưu tiên model rẻ và tuyệt đối không có vòng gọi API không ngừng.</p>
-    ${field('Claude API key'+(cfg.claude_configured?' · Đã lưu':''),'claude_key','','password','placeholder="Để trống nếu giữ key hiện tại"')}
-    <div class="form-field"><label>Model Claude tiết kiệm</label><select class="select" name="claude_cheap_model">${['claude-haiku-5-5','claude-haiku-4-5','claude-sonnet-5-5','claude-opus-5-5'].map(m=>`<option value="${m}" ${selected(m,cfg.claude_cheap_model)}>${m}</option>`).join('')}</select></div>
-    <div class="form-field"><label>Model Claude xử lý việc khó</label><select class="select" name="claude_hard_model">${['claude-sonnet-5-5','claude-haiku-5-5','claude-haiku-4-5','claude-opus-5-5'].map(m=>`<option value="${m}" ${selected(m,cfg.claude_hard_model)}>${m}</option>`).join('')}</select></div>
-    ${field('Hạn mức Claude toàn công ty (USD/ngày)','claude_daily_budget_usd',cfg.claude_daily_budget_usd||'1.00','number','min="0" max="1000" step="0.01" required')}
-    ${field('Hạn mức Claude mỗi agent (USD/ngày)','claude_agent_daily_budget_usd',cfg.claude_agent_daily_budget_usd||'0.25','number','min="0" max="1000" step="0.01" required')}
-    <label class="brain-option"><input type="checkbox" name="claude_escalation" ${cfg.claude_escalation==='1'?'checked':''}> Cho phép agent gọi Claude khi gặp nhiệm vụ khó</label>
-    <label class="brain-option"><input type="checkbox" name="claude_cache_enabled" ${cfg.claude_cache_enabled==='1'?'checked':''}> Tái sử dụng câu trả lời giống hệt & prompt caching</label>
-    <label class="brain-option"><input type="checkbox" name="brain_learning_enabled" ${cfg.brain_learning_enabled==='1'?'checked':''}> Học và tổng kết sự kiện nội bộ khi phần mềm đang chạy</label>
-    ${field('Giới hạn lượt gọi LLM/ngày','daily_llm_call_limit',cfg.daily_llm_call_limit,'number','min="1" max="10000" required')}<label style="display:flex;align-items:center;gap:10px;margin:8px 0 19px;font-size:13px"><input type="checkbox" name="auto_run_agents" ${cfg.auto_run_agents==='1'?'checked':''}> Tự chạy nhiệm vụ AI trong hàng đợi (có dùng API và hạn mức ngày)</label>
+  const brain=S.data.brain_overview||{};
+  const routing=brain.routing||{};
+  return `${heading('Cài đặt phần mềm','Chỉ cấu hình Claude AI. Nhân viên tự chọn model tiết kiệm theo độ khó nhiệm vụ.',`<span class="badge green">🔒 Localhost only</span>`)}
+    <div class="columns"><div class="card"><h2>🔵 Kết nối Claude AI</h2><p class="card-sub">Chỉ cần một Claude API key cho 9 agent. Lưu key trước khi bấm Kiểm tra. Key được mã hóa trong dữ liệu cục bộ; không hiển thị lại sau khi lưu.</p>
+    <form id="settingsForm" style="margin-top:17px">
+    ${field('Claude API key'+(cfg.claude_configured?' · Đã lưu':''),'claude_key','','password','placeholder="Để trống nếu muốn giữ API key đã lưu"')}
+    <div class="office-note">🧠 <strong>Tự chọn model:</strong> Việc thông thường → <code>${E(routing.routine_model||'claude-haiku-5-5')}</code> (tiết kiệm). Nhiệm vụ khó/rủi ro hoặc cần nâng cấp → <code>${E(routing.complex_model||'claude-sonnet-5-5')}</code>. Không cần chọn model thủ công, không mặc định gọi model đắt nhất.</div>
+    <div class="actions"><button class="btn ghost" type="button" data-action="claude.check">🔎 Kiểm tra Claude đã lưu</button></div>
+    <div class="subtle-divider"></div><h2>💵 Ngân sách và vận hành</h2>
+    ${field('Hạn mức Claude toàn công ty (USD/ngày)','claude_daily_budget_usd',cfg.claude_daily_budget_usd??'1.00','number','min="0" max="1000" step="0.01" required')}
+    ${field('Hạn mức Claude mỗi agent (USD/ngày)','claude_agent_daily_budget_usd',cfg.claude_agent_daily_budget_usd??'0.25','number','min="0" max="1000" step="0.01" required')}
+    ${field('Giới hạn lượt gọi Claude/ngày','daily_llm_call_limit',cfg.daily_llm_call_limit??'200','number','min="1" max="10000" required')}
+    <label class="brain-option"><input type="checkbox" name="claude_cache_enabled" ${cfg.claude_cache_enabled==='1'?'checked':''}> Dùng lại kết quả giống hệt trong 6 giờ & prompt caching</label>
+    <label class="brain-option"><input type="checkbox" name="brain_learning_enabled" ${cfg.brain_learning_enabled==='1'?'checked':''}> Học từ sự kiện nội bộ khi chương trình đang chạy (không tốn Claude khi rảnh)</label>
+    <label class="brain-option"><input type="checkbox" name="auto_run_agents" ${cfg.auto_run_agents==='1'?'checked':''}> Tự chạy hàng đợi agent trong giới hạn ngân sách</label>
     <button class="btn primary block">💾 Lưu cài đặt</button></form></div>
     <div class="stack"><div class="card"><h2>🦊 Firefox</h2><p class="muted">Trạng thái trên máy chạy server: ${S.data.firefox_available?'<span class="badge green">Đã tìm thấy</span>':'<span class="badge red">Chưa tìm thấy</span>'}</p>
     ${S.data.firefox_available?'':firefoxInstallerNotice()}
@@ -394,6 +398,7 @@ async function action(name,id,el){
       if(!p)throw new Error('Hãy chọn Fanpage trước.');
       const r=await api('/api/pages/'+p+'/learn','POST');toast('Đã lưu bài học từ '+r.samples+' dòng số liệu.');modal('🧠 Kết quả học từ dữ liệu',`<p>${E(r.note)}</p>`);break;
     }
+    case 'claude.check':{const r=await api('/api/claude/check','POST');toast(r.ok?('Claude đã kết nối. Haiku: '+(r.haiku_available?'Có':'Không')+'; Sonnet: '+(r.sonnet_available?'Có':'Không')):'Không thể kiểm tra Claude',!r.ok);break;}
     case 'brain.learn-now':{
       const result=await api('/api/brains/learn-now','POST');toast('Đã xử lý '+result.processed+' sự kiện học tập cục bộ, không dùng Claude.');await reload();break;
     }
@@ -424,18 +429,18 @@ document.addEventListener('submit',async e=>{
   }
   if(e.target.id==='settingsForm'||e.target.id==='firefoxForm'){
     e.preventDefault();const f=Object.fromEntries(new FormData(e.target).entries());const current=S.data.settings;
-    const payload={provider:f.provider||current.provider,gemini_model:f.gemini_model||current.gemini_model,
-      groq_model:f.groq_model||current.groq_model,daily_llm_call_limit:Number(f.daily_llm_call_limit||current.daily_llm_call_limit),
-      firefox_path:f.firefox_path??current.firefox_path,auto_run_agents:e.target.id==='settingsForm'?(!!f.auto_run_agents):(current.auto_run_agents==='1'),
-      claude_cheap_model:f.claude_cheap_model||current.claude_cheap_model,claude_hard_model:f.claude_hard_model||current.claude_hard_model,
-      claude_daily_budget_usd:Number(f.claude_daily_budget_usd??current.claude_daily_budget_usd),
-      claude_agent_daily_budget_usd:Number(f.claude_agent_daily_budget_usd??current.claude_agent_daily_budget_usd),
-      claude_escalation:e.target.id==='settingsForm'?(!!f.claude_escalation):(current.claude_escalation==='1'),
-      claude_cache_enabled:e.target.id==='settingsForm'?(!!f.claude_cache_enabled):(current.claude_cache_enabled==='1'),
-      brain_learning_enabled:e.target.id==='settingsForm'?(!!f.brain_learning_enabled):(current.brain_learning_enabled==='1')};
-    if(f.gemini_key?.trim())payload.gemini_key=f.gemini_key.trim();
-    if(f.groq_key?.trim())payload.groq_key=f.groq_key.trim();
-    if(f.claude_key?.trim())payload.claude_key=f.claude_key.trim();
+    const payload={};
+    if(e.target.id==='settingsForm'){
+      payload.daily_llm_call_limit=Number(f.daily_llm_call_limit);
+      payload.claude_daily_budget_usd=Number(f.claude_daily_budget_usd);
+      payload.claude_agent_daily_budget_usd=Number(f.claude_agent_daily_budget_usd);
+      payload.auto_run_agents=!!f.auto_run_agents;
+      payload.claude_cache_enabled=!!f.claude_cache_enabled;
+      payload.brain_learning_enabled=!!f.brain_learning_enabled;
+      if(f.claude_key?.trim())payload.claude_key=f.claude_key.trim();
+    }else if(e.target.id==='firefoxForm'){
+      payload.firefox_path=f.firefox_path??current.firefox_path;
+    }
     try{await api('/api/settings','POST',payload);await reload();toast('Đã lưu cấu hình.');}catch(err){toast(err.message,true);}
   }
 });

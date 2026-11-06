@@ -117,9 +117,7 @@ def initialize():
     with db() as c:
         c.executescript(SCHEMA)
         c.executemany('INSERT OR IGNORE INTO agents(id,name,title,description,emoji) VALUES(?,?,?,?,?)', AGENTS)
-        c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('provider','gemini'))
-        c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('gemini_model','gemini-2.5-flash'))
-        c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('groq_model','llama-3.3-70b-versatile'))
+        c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('provider','claude'))
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('daily_llm_call_limit','200'))
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('auto_run_agents','0'))
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)', ('firefox_path',''))

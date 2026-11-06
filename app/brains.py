@@ -21,8 +21,8 @@ import httpx
 
 from .db import db, now, one, all_rows, run
 
-# Current public Anthropic API IDs. Rates in USD per million tokens, editable
-# by maintainers if pricing changes. Base rates apply to ordinary messages.
+# Anthropic published API IDs/rates as checked in Nov 2026.
+# Review prices before production; invoices can differ from estimates.
 # Haiku 5.5 has a lower tier for prompts below 100k tokens.
 CLAUDE_PRICING = {
     'claude-haiku-5-5': (0.10, 0.50),
@@ -79,7 +79,8 @@ CREATE TABLE IF NOT EXISTS claude_usage (
  estimated_reservation_usd REAL NOT NULL DEFAULT 0,
  cost_usd REAL NOT NULL DEFAULT 0, input_tokens INTEGER NOT NULL DEFAULT 0,
  output_tokens INTEGER NOT NULL DEFAULT 0, cache_read_tokens INTEGER NOT NULL DEFAULT 0,
- cache_write_tokens INTEGER NOT NULL DEFAULT 0, created TEXT NOT NULL, finished_at TEXT
+ cache_write_tokens INTEGER NOT NULL DEFAULT 0, created TEXT NOT NULL, finished_at TEXT,
+ route_reason TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS ix_claude_usage_day ON claude_usage(created,agent_id,status);
 CREATE TABLE IF NOT EXISTS brain_response_cache (
@@ -92,11 +93,12 @@ CREATE TABLE IF NOT EXISTS brain_response_cache (
 def init_brains():
     with db() as c:
         c.executescript(BRAIN_SCHEMA)
+        # Existing V1.3 databases must remain usable; never delete local memory.
+        columns={row[1] for row in c.execute('PRAGMA table_info(claude_usage)')}
+        if 'route_reason' not in columns:
+            c.execute("ALTER TABLE claude_usage ADD COLUMN route_reason TEXT NOT NULL DEFAULT ''")
         c.executemany('INSERT OR IGNORE INTO agent_brain_state(agent_id) VALUES (?)',[(a,) for a in AGENT_IDS])
         defaults = {
-            'claude_escalation':'1',
-            'claude_cheap_model':DEFAULT_CHEAP,
-            'claude_hard_model':DEFAULT_HARD,
             'claude_daily_budget_usd':'1.00',
             'claude_agent_daily_budget_usd':'0.25',
             'claude_cache_enabled':'1',
@@ -114,6 +116,25 @@ def budget_settings():
 def is_hard_problem(instructions: str) -> bool:
     raw=(instructions or '').lower()
     return any(w in raw for w in HARD_MARKERS)
+
+
+def route_claude_model(agent_id: str, purpose: str, prompt: str, *, hard: bool=False) -> tuple[str,str]:
+    """Deterministic, no-extra-API-call model routing for each agent.
+
+    The low-cost model is used unless the task is explicitly risky/complex.
+    If Haiku cannot finish, it may return NEED_CLAUDE for ONE Sonnet call.
+    This classification is heuristic and not a substitute for human approval.
+    """
+    if agent_id not in AGENT_IDS:
+        raise ValueError('Agent không tồn tại')
+    if hard:
+        return DEFAULT_HARD, 'complex_explicit'
+    if is_hard_problem(prompt):
+        return DEFAULT_HARD, 'complex_keywords'
+    # Long multi-part instructions are less likely to fit Haiku reliably.
+    if purpose in ('ceo','strategy') and len(prompt) > 6000:
+        return DEFAULT_HARD, 'long_complex_plan'
+    return DEFAULT_CHEAP, 'routine_low_cost'
 
 
 def _tokens_upper(text: str) -> int:
@@ -168,7 +189,7 @@ def _spent_today(c:sqlite3.Connection, agent_id:str|None=None) -> float:
     return float(r['dollars'])
 
 
-def reserve_budget(agent_id:str, model:str, purpose:str, prompt:str,system:str,max_tokens:int) -> tuple[str,float]:
+def reserve_budget(agent_id:str, model:str, purpose:str, prompt:str,system:str,max_tokens:int, route_reason:str='') -> tuple[str,float]:
     if agent_id not in AGENT_IDS:
         raise ValueError('Agent không tồn tại')
     cfg=budget_settings()
@@ -179,12 +200,18 @@ def reserve_budget(agent_id:str, model:str, purpose:str, prompt:str,system:str,m
     with db() as c:
         # BEGIN IMMEDIATE serializes reservations across workers and processes.
         c.execute('BEGIN IMMEDIATE')
+        # Strict request count, shared by all agents and their escalations.
+        max_calls=max(1,int(cfg.get('daily_llm_call_limit','200')))
+        used_calls=c.execute("SELECT COUNT(*) FROM claude_usage WHERE created>=? AND status IN ('reserved','completed')",
+                            (_vietnam_day_start_utc(),)).fetchone()[0]
+        if used_calls>=max_calls:
+            raise ValueError('Đã đạt hạn mức lượt gọi Claude hôm nay.')
         if _spent_today(c)+amount>total_cap+1e-10:
             raise ValueError('Đã hết hạn mức Claude toàn công ty hôm nay.')
         if _spent_today(c,agent_id)+amount>agent_cap+1e-10:
             raise ValueError(f'Agent {agent_id} đã chạm ngân sách Claude ngày.')
-        c.execute('''INSERT INTO claude_usage(id,agent_id,model,purpose,status,estimated_reservation_usd,created)
-                     VALUES(?,?,?,?,?,?,?)''',(rid,agent_id,model,purpose,'reserved',amount,now()))
+        c.execute('''INSERT INTO claude_usage(id,agent_id,model,purpose,status,estimated_reservation_usd,created,route_reason)
+                     VALUES(?,?,?,?,?,?,?,?)''',(rid,agent_id,model,purpose,'reserved',amount,now(),route_reason))
     return rid,amount
 
 
@@ -227,8 +254,7 @@ def ask_claude(agent_id: str,system: str,prompt: str,purpose:str='agent_task',ha
     key=get_key('claude')
     if not key:raise ModelError('Chưa cấu hình Claude API key trong mục Cài đặt.')
     cfg=budget_settings()
-    model=cfg.get('claude_hard_model',DEFAULT_HARD) if hard else cfg.get('claude_cheap_model',DEFAULT_CHEAP)
-    if model not in CLAUDE_PRICING:raise ModelError('Model Claude không hợp lệ trong cài đặt.')
+    model,route_reason=route_claude_model(agent_id,purpose,prompt,hard=hard)
     system=system[:7000];prompt=prompt[:9000]
     max_tokens=min(1600,max(64,int(max_tokens)))
     cache_key=_cache_key(agent_id,model,system,prompt)
@@ -237,7 +263,7 @@ def ask_claude(agent_id: str,system: str,prompt: str,purpose:str='agent_task',ha
         if cached and time.time()-int(cached['created_epoch'])<6*3600:
             return cached['response']
     try:
-        rid,_=reserve_budget(agent_id,model,purpose,prompt,system,max_tokens)
+        rid,_=reserve_budget(agent_id,model,purpose,prompt,system,max_tokens,route_reason)
     except ValueError as e:
         raise ModelError(str(e)) from e
     request={
@@ -264,7 +290,7 @@ def ask_claude(agent_id: str,system: str,prompt: str,purpose:str='agent_task',ha
                        if block.get('type')=='text').strip()
         if not output:raise ModelError('Claude không trả văn bản.')
         _update_usage(rid,'completed',usage,model)
-        if output.strip().upper()=='NEED_CLAUDE' and not hard and cfg.get('claude_escalation','1')=='1':
+        if output.strip().upper()=='NEED_CLAUDE' and model==DEFAULT_CHEAP and not hard:
             # One escalation only; the high-model call is independently budget-checked.
             return ask_claude(agent_id,system,prompt,purpose,hard=True,client=client,max_tokens=max_tokens)
         if cfg.get('claude_cache_enabled','1')=='1':
@@ -346,5 +372,9 @@ def agent_brain_overview():
        (SELECT COUNT(*) FROM agent_memories m WHERE m.agent_id=a.id) AS memory_count,
        (SELECT COUNT(*) FROM agent_learning_events e WHERE e.agent_id=a.id AND e.status='pending') AS pending_learning
        FROM agents a LEFT JOIN agent_brain_state bs ON bs.agent_id=a.id ORDER BY a.rowid''')
+    recent=all_rows('''SELECT agent_id,model,purpose,route_reason,status,cost_usd,created
+                         FROM claude_usage ORDER BY created DESC LIMIT 12''')
     return {'agents':state,'cost':spent_report(),
+            'routing':{'mode':'automatic','routine_model':DEFAULT_CHEAP,
+                       'complex_model':DEFAULT_HARD,'recent':recent},
             'learning_mode':'local_events_while_server_running','claude_calls_when_idle':0}
