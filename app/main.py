@@ -25,10 +25,12 @@ from .ai import (ModelError, ceo_message, config, create_task, execute_task,
                  generate_content, save_key, get_key)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
                       close_profile, confirm_login, delete_profile, executable)
+from .firefox_installer import (FirefoxInstallError, start_install as start_firefox_install,
+                                status as firefox_install_status)
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.0.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.1.0',docs_url='/api/docs',redoc_url=None)
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
 app.mount('/media',StaticFiles(directory=MEDIA_DIR),name='media')
@@ -55,7 +57,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.0.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.1.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/bootstrap')
 def bootstrap():
@@ -76,6 +78,7 @@ def bootstrap():
         'campaigns':all_rows('SELECT * FROM campaigns ORDER BY created DESC LIMIT 30'),
         'settings':config(),
         'firefox_available':bool(executable()),
+        'firefox_installer':firefox_install_status(),
         'counts':{
             'pages':one('SELECT count(*) AS n FROM pages')['n'],
             'accounts':len(accounts),
@@ -114,6 +117,18 @@ def update_settings(req:SettingsChange):
 class NewAccount(BaseModel):
     label:str=''
     auto_open:bool=True
+
+@app.get('/api/firefox/installer')
+def get_firefox_installer():
+    return firefox_install_status()
+
+@app.post('/api/firefox/installer')
+def install_firefox():
+    # Only user-initiated via the local dashboard; the installer itself is GUI + UAC.
+    try:
+        return start_firefox_install()
+    except FirefoxInstallError as err:
+        raise HTTPException(409, str(err))
 
 @app.post('/api/accounts')
 def add_account(req:NewAccount):

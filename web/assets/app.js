@@ -80,15 +80,73 @@ function renderCEO(){
       <div class="card"><h2>⚙️ Kết nối trí tuệ AI</h2><p class="muted">Cấu hình Gemini hoặc Groq trong phần Cài đặt. Không có API key, CEO chỉ lưu yêu cầu vào hàng đợi và không bịa ra hành động đã thực hiện.</p><button class="btn ghost" data-route="settings">Mở cài đặt AI →</button></div>
     </div></div>`;
 }
+function firefoxInstallerNotice(){
+  const state=S.data?.firefox_installer||{};
+  if(state.installed||S.data?.firefox_available){
+    return `<div class="ok-note">✅ Firefox đã được phát hiện trên máy. <span class="meta">${E(state.executable||'')}</span></div>`;
+  }
+  const support=state.support||{};
+  const working=['downloading','verifying','installer_opened','checking'].includes(state.state);
+  const pct=typeof state.percent==='number'?Math.min(100,Math.max(0,state.percent)):null;
+  const detail=state.state==='downloading'?(pct!==null?`Đã tải ${pct}%`:'Đang tải bộ cài…'):
+    state.state==='verifying'?'Đang kiểm tra chữ ký số của Mozilla…':
+    state.state==='installer_opened'?'Trình cài Firefox đã mở. Vui lòng hoàn tất cài đặt và chấp thuận UAC nếu đồng ý.':
+    state.message||'Không tìm thấy Firefox trên máy chạy phần mềm.';
+  return `<div class="card" style="margin-bottom:16px;border-color:rgba(255,187,78,.35)">
+    <h2>🦊 Firefox chưa được cài đặt</h2>
+    <p class="muted">${E(detail)}</p>
+    ${pct!==null&&state.state==='downloading'?`<div style="width:100%;height:9px;border-radius:99px;background:rgba(120,130,155,.25);overflow:hidden"><div style="height:100%;width:${pct}%;background:#8d7bff;transition:width .25s"></div></div>`:''}
+    ${state.error?`<div class="warn">${E(state.error)}</div>`:''}
+    ${!support.supported?`<div class="warn">${E(support.reason||'Cài đặt tự động không khả dụng trên hệ điều hành này.')}</div>`:''}
+    <div class="actions">
+      ${support.supported&&!working?'<button class="btn primary" data-action="firefox.install">⬇️ Tải và cài Firefox</button>':''}
+      <button class="btn ghost" data-action="firefox.recheck">↻ Kiểm tra lại</button>
+      <a class="btn ghost" target="_blank" rel="noopener noreferrer" href="https://www.firefox.com/vi/firefox/new/">Trang Mozilla chính thức</a>
+    </div>
+    <p class="meta">Phần mềm chỉ tải bản Firefox ổn định phù hợp với kiến trúc Windows; xác minh chữ ký số trước khi chạy. Việc cài đặt được thực hiện qua trình cài chính thức, không âm thầm thay đổi máy.</p>
+  </div>`;
+}
+let firefoxPoll=null;
+function startFirefoxInstallerPoll(){
+  if(firefoxPoll)return;
+  firefoxPoll=setInterval(async()=>{
+    try{
+      const x=await api('/api/firefox/installer');
+      if(!S.data)return;
+      S.data.firefox_installer=x;S.data.firefox_available=x.installed;
+      if((S.route==='accounts'||S.route==='settings')&&!document.querySelector('#modal-root .modal'))render();
+      if(x.state==='completed'||x.state==='error'||x.state==='attention'||x.state==='idle'){
+        clearInterval(firefoxPoll);firefoxPoll=null;
+        if(x.state==='completed'){toast('Firefox đã được cài đặt và nhận diện. Bạn có thể tạo tài khoản.');await reload();}
+        else if(x.state==='error')toast(x.error||'Cài Firefox không thành công.',true);
+      }
+    }catch(err){clearInterval(firefoxPoll);firefoxPoll=null;toast(err.message,true);}
+  },1500);
+}
+function firefoxInstallerDialog(){
+  const info=S.data?.firefox_installer;
+  if(info?.installed||S.data?.firefox_available){toast('Firefox đã được cài đặt.');return;}
+  if(!info?.support?.supported){toast(info?.support?.reason||'Không hỗ trợ cài Firefox trên hệ điều hành này.',true);return;}
+  modal('⬇️ Cài đặt Firefox từ Mozilla',
+    `<p>Phần mềm sẽ tự chọn bộ cài Firefox <strong>${E(info.support.architecture)}</strong> cho máy Windows của bạn, tải qua HTTPS và kiểm tra chữ ký số <strong>Mozilla Corporation</strong>.</p>
+     <div class="office-note">Sau khi xác minh, trình cài Firefox sẽ mở để <strong>bạn tự xác nhận cài đặt/UAC</strong>. Không cài đặt âm thầm, không cài extension và không truy cập mật khẩu Facebook.</div>
+     <p class="muted">Nguồn: <a href="https://www.firefox.com/vi/firefox/new/" target="_blank" rel="noopener noreferrer">Mozilla Firefox chính thức</a></p>`,
+    'Tôi đồng ý tải và mở bộ cài',async()=>{
+      await api('/api/firefox/installer','POST');
+      toast('Đang tải bộ cài từ Mozilla…');
+      startFirefoxInstallerPoll();
+    });
+}
 function renderAccounts(){
   const accounts=V('accounts');
   return `${heading('Tài khoản Facebook','Mỗi tài khoản = một Firefox Profile cố định trên máy Windows.',`<button class="btn primary" data-action="account.add">＋ Thêm tài khoản</button>`)}
     <div class="stat-grid">${stat('🦊','Profile hiện có',accounts.length,'Lưu tại máy chủ cục bộ','#b887ff')}${stat('🟢','Firefox đang mở',accounts.filter(a=>a.browser_open).length,'Tiến trình được nhận diện','#74dbae')}${stat('✅','Đã xác nhận thủ công',accounts.filter(a=>a.confirmed).length,'Không xác minh qua Facebook','#7faaff')}${stat('📣','Fanpage đã liên kết',V('pages').filter(p=>p.account_id).length,'Theo khai báo chủ sở hữu','#ffcd83')}</div>
+    ${S.data.firefox_available?'':firefoxInstallerNotice()}
     <div class="warn">⚠️ Phiên đăng nhập Facebook chỉ được bạn xác nhận thủ công. Phần mềm không đọc cookie, không lấy mật khẩu, không cài extension, không khẳng định tự kiểm tra quyền Page.</div>
     <div class="grid-2" style="margin-top:17px">${accounts.length?accounts.map(a=>`<div class="item-card"><div class="space-between"><div><h3>🦊 ${E(a.label)}</h3><div class="meta">${E(a.id)} · ${V('pages').filter(p=>p.account_id===a.id).length} Fanpage</div></div>${badge(a.browser_open?'open':a.status)}</div>
       <p>Đăng nhập: ${a.confirmed?'<span class="badge green">Người dùng đã xác nhận</span>':'<span class="badge yellow">Chưa xác nhận</span>'}</p><p class="meta">Lần xác nhận: ${F(a.last_checked)}</p><p class="meta" style="overflow-wrap:anywhere">📁 ${E(a.profile_path)}</p>
       <div class="actions"><button class="btn sm primary" data-action="account.open" data-id="${a.id}">Mở Firefox</button><button class="btn sm ghost" data-action="account.confirm" data-id="${a.id}">Xác nhận đăng nhập</button><button class="btn sm ghost" data-action="account.reload" data-id="${a.id}">↻ Reload</button><button class="btn sm ghost" data-action="account.close" data-id="${a.id}">Đóng</button><button class="btn sm danger" data-action="account.delete" data-id="${a.id}">Xóa</button></div></div>`).join(''):empty('🦊','Chưa có tài khoản Firefox','Bấm Thêm tài khoản để tạo profile và mở trình duyệt.')}</div>
-    <div class="footer-tip">Nếu Firefox không được phát hiện, tài khoản vẫn được tạo nhưng bạn phải cài Firefox hoặc nhập đường dẫn firefox.exe trong Cài đặt. Không tự đóng khi bạn đang nhập 2FA.</div>`;
+    <div class="footer-tip">Nếu máy chưa có Firefox, hãy tải và cài từ Mozilla bằng nút ở trên trước khi thêm tài khoản. Không tự đóng trình duyệt khi bạn đang nhập 2FA.</div>`;
 }
 function renderPages(){
   const pages=V('pages');
@@ -141,6 +199,7 @@ function renderSettings(){
     ${field('Giới hạn lượt gọi LLM/ngày','daily_llm_call_limit',cfg.daily_llm_call_limit,'number','min="1" max="10000" required')}<label style="display:flex;align-items:center;gap:10px;margin:8px 0 19px;font-size:13px"><input type="checkbox" name="auto_run_agents" ${cfg.auto_run_agents==='1'?'checked':''}> Tự chạy nhiệm vụ AI trong hàng đợi (có dùng API và hạn mức ngày)</label>
     <button class="btn primary block">💾 Lưu cài đặt</button></form></div>
     <div class="stack"><div class="card"><h2>🦊 Firefox</h2><p class="muted">Trạng thái trên máy chạy server: ${S.data.firefox_available?'<span class="badge green">Đã tìm thấy</span>':'<span class="badge red">Chưa tìm thấy</span>'}</p>
+    ${S.data.firefox_available?'':firefoxInstallerNotice()}
     <form id="firefoxForm">${field('Đường dẫn Firefox (tùy chọn)','firefox_path',cfg.firefox_path,'text','placeholder="C:\\Program Files\\Mozilla Firefox\\firefox.exe"')}<button class="btn ghost">Lưu đường dẫn</button></form>
     <div class="office-note">Chạy phần mềm trên chính máy Windows có Firefox. Profile được lưu dưới %LOCALAPPDATA%\\AI-Fanpage-Company\\profiles.</div></div>
     <div class="card"><h2>🔐 Bảo mật</h2><p>Backend chỉ nghe <code>127.0.0.1:8765</code>. Không mở cổng công khai. Tài khoản Facebook đăng nhập trực tiếp trong Firefox, không lưu mật khẩu vào ứng dụng.</p><p class="muted">Bảo vệ toàn bộ thư mục dữ liệu của ứng dụng và khóa mã hóa bằng tài khoản Windows hoặc mã hóa ổ đĩa.</p></div>
@@ -193,6 +252,7 @@ function campaignForm(){
     });
 }
 function accountForm(){
+  if(!S.data?.firefox_available){firefoxInstallerDialog();return;}
   modal('🦊 Thêm tài khoản Facebook',field('Tên dễ nhận biết (có thể bỏ trống)','label','','text','placeholder="Facebook Marketing 01"')+
     '<div class="ok-note">Hệ thống tạo profile riêng và tự mở Firefox để bạn đăng nhập trực tiếp. Không lưu mật khẩu, không cài extension.</div>',
     'Tạo và mở Firefox',async f=>{
@@ -238,6 +298,8 @@ async function action(name,id,el){
     case 'refresh':await reload();toast('Đã cập nhật trạng thái.');break;
     case 'modal.close':closeModal();break;
     case 'account.add':accountForm();break;
+    case 'firefox.install':firefoxInstallerDialog();break;
+    case 'firefox.recheck':{const inst=await api('/api/firefox/installer');S.data.firefox_installer=inst;S.data.firefox_available=inst.installed;render();toast(inst.installed?'Đã tìm thấy Firefox.':'Chưa tìm thấy Firefox, hãy hoàn tất cài đặt.',!inst.installed);break;}
     case 'ceo.campaign':campaignForm();break;
     case 'account.open':await api('/api/accounts/'+id+'/open','POST');await reload();toast('Đã gửi lệnh mở profile Firefox.');break;
     case 'account.reload':await api('/api/accounts/'+id+'/reload','POST');await reload();toast('Firefox đã mở để bạn kiểm tra và xác nhận phiên.');break;
@@ -313,5 +375,5 @@ document.addEventListener('submit',async e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();}});
-(async()=>{try{await reload();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
+(async()=>{try{await reload();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
   try{S.data=await api('/api/bootstrap');if(['office','tasks','accounts','insights'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();

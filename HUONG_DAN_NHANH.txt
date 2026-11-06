@@ -2,7 +2,7 @@ AI FANPAGE COMPANY - HUONG DAN KHOI DONG WINDOWS
 ===============================================
 
 1. Cai Python 3.11 tro len: https://www.python.org/downloads/
-2. Cai Firefox: https://www.firefox.com/
+2. Khong can cai Firefox truoc. Neu may chua co Firefox, vao Tai khoan Firefox > Tai va cai Firefox (chay bo cai Mozilla co xac nhan).
 3. Giai nen file ZIP vao thu muc ban muon.
 4. Nhan DOP CHUOT vao start_windows.bat.
 5. Lan dau, phan mem cai thu vien Python (can Internet).

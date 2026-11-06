@@ -21,8 +21,21 @@ def executable() -> str | None:
     custom = (setting or {}).get('value','').strip()
     candidates=[custom]
     if os.name=='nt':
-        for p in (os.getenv('PROGRAMFILES',''), os.getenv('PROGRAMFILES(X86)','')):
+        for p in (os.getenv('PROGRAMW6432',''), os.getenv('PROGRAMFILES',''),
+                  os.getenv('PROGRAMFILES(X86)',''), os.getenv('LOCALAPPDATA','')):
             if p:candidates.append(str(Path(p)/'Mozilla Firefox'/'firefox.exe'))
+        # Firefox may be installed in a custom directory registered with Windows.
+        try:
+            import winreg
+            key = r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\firefox.exe'
+            for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+                try:
+                    with winreg.OpenKey(hive, key) as reg:
+                        candidates.append(winreg.QueryValueEx(reg, '')[0])
+                except OSError:
+                    pass
+        except ImportError:
+            pass
     candidates.extend([shutil.which('firefox'),shutil.which('firefox.exe')])
     return next((str(Path(p)) for p in candidates if p and Path(p).is_file()),None)
 

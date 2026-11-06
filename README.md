@@ -1,4 +1,4 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.0)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.1)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
@@ -6,13 +6,23 @@ Phần mềm quản trị marketing AI dạng **local-first**, có giao diện v
 
 ## Chạy trên Windows
 
-1. Cài **Python 3.11+** và **Firefox**. Khi cài Python nhớ chọn “Add to PATH” hoặc cài Python Launcher (`py`).
+1. Cài **Python 3.11+**. Firefox chưa cần cài sẵn: phần mềm có chức năng kiểm tra, tải và mở bộ cài chính thức từ Mozilla khi bạn đồng ý. Khi cài Python nhớ chọn “Add to PATH” hoặc cài Python Launcher (`py`).
 2. Giải nén thư mục `ai-fanpage-company` vào ổ đĩa bất kỳ.
 3. Nhấp đúp `start_windows.bat`. Lần đầu script sẽ tạo `.venv` và cài thư viện (cần Internet).
 4. Trình duyệt mặc định mở `http://127.0.0.1:8765` để sử dụng phần mềm. **Chỉ chạy một instance server** trên cùng port 8765.
 5. Vào **Cài đặt** và nhập Gemini hoặc Groq API key để sử dụng agent AI thực. Nếu không có key, CEO sẽ giữ yêu cầu ở trạng thái chờ, không bịa kết quả.
 
 > Lưu ý: Firefox mở trên **máy nơi chạy backend**, không phải máy người dùng khác đang truy cập URL này. Server được cấu hình chỉ cho phép localhost.
+
+### Cơ chế cài Firefox an toàn trên Windows
+
+- Chỉ hỗ trợ cài tự động trên Windows 10/11 phù hợp; Windows cũ và Linux/macOS được hướng dẫn đến trang Mozilla hoặc công cụ cài đặt OS.
+- Chỉ tải bản Firefox Release ổn định từ các máy chủ Mozilla qua HTTPS; không tải từ nguồn thứ ba, không yêu cầu extension.
+- Bắt buộc xác minh Authenticode signer **Mozilla Corporation** và trạng thái chữ ký **Valid** trước khi mở file `.exe`.
+- Mở trình cài giao diện chính thức để người dùng quyết định cài đặt và đồng ý UAC; không dùng cài đặt silent, không vượt quyền quản trị.
+- Nút **Kiểm tra lại** sẽ dò đường dẫn Firefox trong Program Files, LocalAppData và Windows Registry, nên cả bản cài cho người dùng hiện tại cũng được phát hiện.
+- Dữ liệu Firefox profile đang có không bị xóa hay sửa khi dùng tính năng cài Firefox.
+- Nếu quá trình tải/cài bị lỗi, xem cảnh báo và dùng liên kết chính thức <https://www.firefox.com/vi/firefox/new/>.
 
 ## Chạy trên Linux/macOS (phục vụ phát triển)
 
@@ -28,7 +38,7 @@ Giao diện web: `http://127.0.0.1:8765`. OpenAPI: `http://127.0.0.1:8765/api/do
 
 ## Quy trình sử dụng
 
-1. **Tài khoản Firefox** → Thêm tài khoản: phần mềm tạo profile độc lập và cố gắng mở Firefox. Bạn đăng nhập Facebook và hoàn thành 2FA trực tiếp.
+1. **Tài khoản Firefox** → Nếu chưa có Firefox, bấm **Tải và cài Firefox**. Phần mềm chọn bản Windows x86/x64/ARM64, tải từ Mozilla, xác minh chữ ký số Mozilla Corporation rồi mở trình cài chính thức để bạn tự chấp thuận cài đặt. Sau khi nhận diện Firefox, bấm **Thêm tài khoản**: phần mềm tạo profile độc lập và mở Firefox. Bạn đăng nhập Facebook và hoàn thành 2FA trực tiếp.
 2. **Xác nhận đăng nhập**: nhấn nút sau khi đã kiểm tra thủ công. Trạng thái không có nghĩa phần mềm đã đọc/xác nhận danh tính từ Facebook.
 3. **Fanpage** → Thêm Page, URL, ngành hàng, giọng văn, dữ kiện sản phẩm, gắn tài khoản Firefox. Bạn có trách nhiệm bảo đảm có quyền quản trị Page.
 4. **Cài đặt AI** → chọn Gemini hoặc Groq, cung cấp key và model ID khả dụng.
