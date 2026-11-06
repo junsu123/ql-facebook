@@ -15,6 +15,7 @@ AI FANPAGE COMPANY - HUONG DAN KHOI DONG WINDOWS
 CHU Y: Ban V1 KHONG tu dang bai Facebook, khong dung Meta API,
 khong can extension. Phan mem tao va duyet noi dung, lap lich,
 mo dung Firefox profile de ban TU dang, roi xac nhan da dang.
-Van phong 3D la minh hoa chibi co trang thai AI thuc te.
+Van phong 2.5D chibi co nhan vat di lai, trao doi minh hoa.
+Trang thai nhiem vu lay tu backend, khong phai noi chuyen that.
 
 Neu ban can huong dan chi tiet, mo file README.md.

@@ -1,4 +1,4 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.1)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.2)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
@@ -69,7 +69,7 @@ PYOURPAGEID,2026-11-02,980,27,5,1
 ## Kỹ thuật
 
 - Backend: FastAPI + SQLite (WAL), httpx, cryptography, psutil.
-- Frontend: HTML/CSS/JS thuần, không cần Node/npm/CDN; ảnh nền 3D chibi được đóng gói trong `web/assets/`.
+- Frontend: HTML/CSS/JS thuần; văn phòng hoạt hình isometric chạy trên Canvas 2D theo trạng thái nhiệm vụ. Không cần Node/npm/CDN lúc vận hành.
 - Scheduler: một vòng kiểm tra trong process, 10 giây/lần; chỉ chuyển bài sang `ready` để người dùng đăng. Không chạy khi app tắt.
 - AI: REST Gemini `generateContent` hoặc Groq `chat/completions`. Model có thể cấu hình, hạn mức số lần gọi/ngày. Một số model không có sẵn tùy tài khoản API.
 - Agents: CEO, Research, Strategy, Content, Creative, Publishing, Customer, Analytics, Compliance. Mỗi task ghi trạng thái, kết quả, lỗi và activity log.
@@ -80,7 +80,7 @@ PYOURPAGEID,2026-11-02,980,27,5,1
 
 - Không có Meta API nên không thể đảm bảo việc tự lấy Page, xác minh đăng nhập hay phân tích dữ liệu Meta.
 - Tự động hóa UI Facebook khi không được cho phép có thể trái điều khoản. Vì vậy V1 chỉ **hỗ trợ chuẩn bị và xuất bản thủ công**, không có bot thao tác Facebook, không vượt CAPTCHA/2FA, không làm giả hoạt động con người.
-- Văn phòng **phối cảnh 3D dạng ảnh minh họa chibi** với badge và chuyển động CSS cập nhật từ trạng thái agent thật; chưa phải world 3D engine (Three.js) với nhân vật có skeleton animation.
+- Văn phòng **Canvas 2.5D isometric** với nhân vật chibi di chuyển, cử chỉ làm việc và trao đổi minh họa. Đây chưa phải engine WebGL 3D/Three.js với nhân vật rigged và camera xoay tự do. Trạng thái agent lấy từ backend, còn hoạt ảnh không phải bằng chứng trao đổi công việc thật.
 - Bộ lọc nội dung chỉ kiểm tra một số quy tắc và văn bản trùng lặp. `approved` có nghĩa đã qua **quy tắc V1 nội bộ**, không bảo đảm tuân thủ pháp luật/chính sách nền tảng. Bản thảo sản phẩm sức khỏe phải do người có chuyên môn xác minh.
 - Tác vụ publishing của agent tạo hướng dẫn nội bộ, không tự gửi yêu cầu xuất bản.
 - Scheduler chạy khi backend đang hoạt động, không phải dịch vụ OS chạy 24/7. Nếu muốn chạy server ổn định, thiết kế thêm Windows Service.
@@ -110,3 +110,21 @@ start_windows.bat  chạy trên Windows
 start_linux.sh    chạy trên Linux
 requirements.txt  dependencies
 ```
+
+
+## Văn phòng hoạt hình tương tác (V1.2)
+
+Mở **Văn phòng 3D** để xem khu vực làm việc hoạt hình isometric của 9 nhân viên AI tí hon.
+Nhân vật có chuyển động làm việc, đi lại tới khu vực trao đổi, hiển thị bong bóng trò chuyện rồi quay về vị trí.
+Lưu ý quan trọng: **đây là hoạt ảnh trực quan mô phỏng**. Chỉ số nhiệm vụ, trạng thái agent và nhật ký
+được lấy từ backend thật; chuyển động, cử chỉ và hội thoại dạng bong bóng không chứng minh
+AI đã thực sự trao đổi lời nói.
+
+- Nhấn nhân vật hoặc tên nhân viên bên phải để xem nhiệm vụ thực tế.
+- Kéo chuột để di chuyển góc nhìn; cuộn để phóng to, nhấn đúp để đặt lại.
+- Có nút tạm dừng, tăng tốc 1x/1.75x, phóng to, thu nhỏ, đặt lại.
+- Đồng bộ trạng thái backend định kỳ 12 giây **không reset vị trí hoạt họa**.
+- Hoàn toàn chạy offline với Canvas 2D, không tải thư viện JavaScript từ CDN.
+- Tự tắt chuyển động ban đầu khi thiết bị bật `prefers-reduced-motion`.
+
+Đây là chế độ **2.5D isometric mô phỏng 3D**, không phải engine 3D WebGL với mô hình rigged/điều khiển camera tự do.

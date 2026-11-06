@@ -58,16 +58,38 @@ function nav(){
 }
 function stat(icon,name,value,mini,color){return `<div class="stat" style="--color:${color}"><span class="stat-icon">${icon}</span><div class="name">${name}</div><div class="value">${E(value)}</div><div class="mini">${mini}</div></div>`;}
 function renderOffice(){
-  const d=S.data,c=d.counts;const activity=V('activities');
-  const pins=[['ceo','25%','24%'],['research','47%','45%'],['strategy','62%','51%'],['content','29%','77%'],['creative','17%','66%'],['publishing','53%','68%'],['analytics','77%','75%'],['compliance','83%','46%'],['customer','68%','29%']];
-  const pinsHtml=pins.map(([id,l,t],i)=>{const agent=d.agents.find(a=>a.id===id);const busy=agent?.active_tasks>0;const wait=agent?.queued_tasks>0;return `<button class="worker-pin ${busy?'busy':wait?'wait':''}" style="left:${l};top:${t};animation-delay:${i*-.38}s" data-action="agent.details" data-id="${id}"><span class="pulse"></span>${E(agent?.name||id)} ${busy?'⚡':''}</button>`;}).join('');
-  return `${heading('Văn phòng AI 3D','Không gian chibi tí hon, kết nối với trạng thái làm việc thực của các agent.',`<button class="btn primary" data-route="ceo">🧠 Giao việc cho CEO</button>`)}
-    <div class="stat-grid">${stat('📣','Fanpage đã liên kết',c.pages+'/100','Hồ sơ nội bộ','#9782ff')}${stat('🦊','Profile Firefox',c.accounts,'Tài khoản độc lập','#78baff')}${stat('⚡','Nhiệm vụ đang xử lý',c.running,'Đang chạy thực tế','#64e6b4')}${stat('📝','Nội dung chờ xử lý',c.drafts+c.ready,'Bản nháp và bài đến lịch','#ffc17c')}</div>
+  const d=S.data,c=d.counts,activity=V('activities');
+  return `${heading('Văn phòng AI sống động','Nhân vật tí hon 3D phong cách isometric có thể đi lại, trao đổi và làm việc theo trạng thái nhiệm vụ.',`<button class="btn primary" data-route="ceo">🧠 Giao việc cho CEO</button>`)}
+    <div class="stat-grid" id="office-stats">${stat('📣','Fanpage đã liên kết',c.pages+'/100','Hồ sơ nội bộ','#9782ff')}${stat('🦊','Profile Firefox',c.accounts,'Tài khoản độc lập','#78baff')}${stat('⚡','Nhiệm vụ đang xử lý',c.running,'Trạng thái backend','#64e6b4')}${stat('📝','Nội dung chờ xử lý',c.drafts+c.ready,'Bản nháp và bài đến lịch','#ffc17c')}</div>
+    <div class="office-live-toolbar">
+      <div class="office-live-title"><span class="live-mark">✦</span><strong>Văn phòng tí hon trực tiếp</strong><span class="badge blue" id="office-live-state">${c.running?'Có nhân viên đang làm việc':'Đang sẵn sàng'}</span></div>
+      <div class="toolbar"><button class="btn sm ghost" data-action="office.toggle" id="office-toggle">⏸ Tạm dừng</button>
+        <button class="btn sm ghost" data-action="office.speed" id="office-speed">⚡ 1x</button>
+        <button class="btn sm ghost" data-action="office.zoom-in" aria-label="Phóng to">＋</button>
+        <button class="btn sm ghost" data-action="office.zoom-out" aria-label="Thu nhỏ">－</button>
+        <button class="btn sm ghost" data-action="office.reset">⤾ Về mặc định</button></div>
+    </div>
     <div class="office-layout"><div>
-      <div class="office-window"><img alt="Văn phòng 3D hoạt hình người tí hon" src="/assets/office-chibi.jpg"><div class="office-hud"><span class="glass-pill">✦ VIRTUAL AI OFFICE</span><span class="glass-pill">● ${c.running?'Có agent đang xử lý':'Đang chờ nhiệm vụ'}</span></div>${pinsHtml}<div class="office-bottom"><span class="glass-pill">🏢 9 nhân viên AI · 100 hồ sơ Page tối đa</span><span class="glass-pill">🪄 Minh họa chibi + trạng thái trực tiếp</span></div></div>
-      <div class="office-note">Nhân vật hoạt hình và chuyển động giao diện mang tính minh họa. Chấm xanh chỉ xuất hiện khi có nhiệm vụ backend đang chạy; phần mềm không giả lập kết quả làm việc.</div>
-      <div class="grid-2" style="margin-top:16px"><div class="card"><div class="space-between"><h2>📅 Công việc xuất bản</h2><button class="btn sm ghost" data-route="content">Xem lịch →</button></div><div class="subtle-divider"></div><p>${c.scheduled} bài đã lên lịch, ${c.ready} bài đến giờ cần đăng thủ công.</p><p class="card-sub">Không dùng Facebook API hay bot đăng bài. Firefox sẽ mở đúng Page để bạn hoàn tất bước xuất bản.</p></div><div class="card"><div class="space-between"><h2>🧠 Bộ nhớ doanh nghiệp</h2><button class="btn sm ghost" data-route="insights">KPI →</button></div><div class="subtle-divider"></div><p>Đã ghi nhận ${V('metrics').length} dòng KPI gần đây.</p><p class="card-sub">Khi bạn nhập ít nhất 5 dòng KPI cho một Page, hệ thống có thể tạo ghi nhớ bằng phép tính thực.</p></div></div>
-    </div><div class="office-side"><div class="card"><div class="space-between"><h2>👥 Nhân viên đang trực</h2><span class="badge blue">9 Agent</span></div><div class="subtle-divider"></div>${d.agents.map(a=>`<div class="agent-mini"><div class="agent-face">${a.emoji}</div><div style="flex:1"><strong>${E(a.name)}</strong><small>${a.active_tasks?`Đang chạy ${a.active_tasks} nhiệm vụ`:a.queued_tasks?`${a.queued_tasks} nhiệm vụ chờ`:'Sẵn sàng nhận việc'}</small></div><span class="dot ${a.active_tasks?'green':a.queued_tasks?'yellow':''}"></span></div>`).join('')}</div><div class="card"><div class="space-between"><h2>🔔 Nhật ký mới nhất</h2><button class="btn sm ghost" data-route="tasks">Tất cả →</button></div>${activity.length?activity.slice(0,7).map(a=>`<div class="activity-item"><strong>${E(a.agent_name||'Hệ thống')} · ${E(a.kind)}</strong><p>${E(short(a.message,115))}</p><time>${F(a.created)}</time></div>`).join(''):empty('📋','Chưa có hoạt động','Thử tạo tài khoản hoặc giao việc cho CEO.')}</div></div></div>`;
+      <div class="office-live-stage" id="office-live-stage"><div class="office-live-loading">Đang khởi tạo văn phòng hoạt hình...</div></div>
+      <div class="office-note">Nhân vật đi lại, trò chuyện và thao tác bàn làm việc là <strong>chuyển động minh họa</strong>. Chỉ trạng thái nhiệm vụ, số lượng công việc và nhật ký mới là dữ liệu backend thật. Nhấp một nhân viên để xem nhiệm vụ; kéo để di chuyển góc nhìn, cuộn để phóng to.</div>
+      <div class="grid-2" style="margin-top:16px"><div class="card"><div class="space-between"><h2>📅 Công việc xuất bản</h2><button class="btn sm ghost" data-route="content">Xem lịch →</button></div><div class="subtle-divider"></div><p>${c.scheduled} bài đã lên lịch, ${c.ready} bài đến giờ cần đăng thủ công.</p><p class="card-sub">Không dùng Facebook API hay bot đăng bài. Firefox mở đúng Page để bạn hoàn tất xuất bản.</p></div><div class="card"><div class="space-between"><h2>🧠 Bộ nhớ doanh nghiệp</h2><button class="btn sm ghost" data-route="insights">KPI →</button></div><div class="subtle-divider"></div><p>Đã ghi nhận ${V('metrics').length} dòng KPI gần đây.</p><p class="card-sub">Khi đủ số liệu hợp lệ, hệ thống có thể ghi nhớ và tổng hợp kinh nghiệm theo từng Page.</p></div></div>
+    </div><div class="office-side"><div class="card"><div class="space-between"><h2>👥 Nhân viên AI</h2><span class="badge blue">9 Agent</span></div><div class="subtle-divider"></div><div id="office-agent-list">${officeAgentList(d.agents)}</div></div><div class="card"><div class="space-between"><h2>🔔 Nhật ký mới nhất</h2><button class="btn sm ghost" data-route="tasks">Tất cả →</button></div><div id="office-activity-list">${officeActivityList(activity)}</div></div></div></div>`;
+}
+function officeAgentList(agents){
+  return agents.map(a=>`<button class="agent-mini agent-mini-button" data-action="agent.details" data-id="${E(a.id)}" title="Xem ${E(a.name)}">
+    <span class="agent-face">${a.emoji}</span><span style="flex:1;text-align:left"><strong>${E(a.name)}</strong><small>${a.active_tasks?`Đang thực hiện ${a.active_tasks} việc`:a.queued_tasks?`${a.queued_tasks} việc chờ`:'Sẵn sàng nhận việc'}</small></span><span class="dot ${a.active_tasks?'green':a.queued_tasks?'yellow':''}"></span></button>`).join('');
+}
+function officeActivityList(activity){
+  return activity.length?activity.slice(0,7).map(a=>`<div class="activity-item"><strong>${E(a.agent_name||'Hệ thống')} · ${E(a.kind)}</strong><p>${E(short(a.message,115))}</p><time>${F(a.created)}</time></div>`).join(''):empty('📋','Chưa có hoạt động','Thử tạo tài khoản hoặc giao việc cho CEO.');
+}
+function updateOfficeData(){
+  const c=S.data?.counts;if(!c)return;
+  const values=[c.pages+'/100',c.accounts,c.running,c.drafts+c.ready];
+  document.querySelectorAll('#office-stats .stat .value').forEach((x,i)=>x.textContent=values[i]);
+  const status=document.getElementById('office-live-state');if(status)status.textContent=c.running?'Có nhân viên đang làm việc':'Đang sẵn sàng';
+  const staff=document.getElementById('office-agent-list');if(staff)staff.innerHTML=officeAgentList(V('agents'));
+  const activity=document.getElementById('office-activity-list');if(activity)activity.innerHTML=officeActivityList(V('activities'));
+  window.OfficeLive?.update(S.data);
 }
 function renderCEO(){
   const chat=V('chat');
@@ -207,8 +229,13 @@ function renderSettings(){
 }
 function render(){
   if(!S.data)return;
+  window.OfficeLive?.unmount();
   nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,settings:renderSettings};
   document.getElementById('view').innerHTML=(dict[S.route]||renderOffice)();
+  if(S.route==='office'){
+    const scene=window.OfficeLive?.mount(document.getElementById('office-live-stage'),S.data,id=>action('agent.details',id).catch(err=>toast(err.message,true)));
+    const toggle=document.getElementById('office-toggle');if(toggle&&scene?.paused)toggle.textContent='▶ Tiếp tục';
+  }
   if(S.route==='ceo'){const el=document.getElementById('chatMessages');if(el)el.scrollTop=el.scrollHeight;}
 }
 async function reload(){S.data=await api('/api/bootstrap');render();}
@@ -296,6 +323,11 @@ function publishModal(id){
 async function action(name,id,el){
   switch(name){
     case 'refresh':await reload();toast('Đã cập nhật trạng thái.');break;
+    case 'office.toggle':{const paused=window.OfficeLive?.toggle();if(el)el.textContent=paused?'▶ Tiếp tục':'⏸ Tạm dừng';break;}
+    case 'office.speed':{const speed=window.OfficeLive?.speed();if(el)el.textContent='⚡ '+(speed||1)+'x';break;}
+    case 'office.zoom-in':window.OfficeLive?.current?.zoomAt(1.16);break;
+    case 'office.zoom-out':window.OfficeLive?.current?.zoomAt(.86);break;
+    case 'office.reset':window.OfficeLive?.reset();break;
     case 'modal.close':closeModal();break;
     case 'account.add':accountForm();break;
     case 'firefox.install':firefoxInstallerDialog();break;
@@ -376,4 +408,4 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();}});
 (async()=>{try{await reload();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
-  try{S.data=await api('/api/bootstrap');if(['office','tasks','accounts','insights'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
+  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
