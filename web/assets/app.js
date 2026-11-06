@@ -1,11 +1,11 @@
 /* AI Fanpage Company — local-first SPA (no external JS dependencies). */
 'use strict';
 const ROUTES=[
-  ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['pages','📣','100 Fanpage'],
+  ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['growth','🚀','Tăng trưởng 7 ngày'],['pages','📣','100 Fanpage'],
   ['accounts','🦊','Tài khoản Firefox'],['content','📝','Nội dung & Lịch'],
   ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['academy','🎓','Học viện 10M'],['settings','⚙️','Cài đặt']
 ];
-const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all'};
+const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all',growthDetailId:null};
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const F=(date)=>date?new Date(date).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}):'—';
 const short=(s,n=105)=>String(s||'').length>n?String(s).slice(0,n)+'…':String(s||'');
@@ -193,6 +193,75 @@ function renderContent(){
     </div></div>`).join(''):empty('📝','Chưa có nội dung','Tạo bản nháp mới hoặc kết nối AI để viết nội dung theo Page.')}</div>
   <div class="warn">Lịch tự động chuyển bài sang trạng thái “Đến lịch”; không tự nhấn Đăng trên Facebook vì không sử dụng Meta API và không được giả định quyền tự động hóa giao diện.</div>`;
 }
+function renderGrowth(){
+  const campaigns=V('growth_sprints');
+  const active=campaigns.find(x=>x.id===S.growthDetailId)||campaigns[0];
+  const actionButtons=`<button class="btn primary" data-action="growth.new">＋ Lập kế hoạch từ sản phẩm</button>`;
+  const cards=campaigns.length?campaigns.map(g=>{
+    const rep=g.report||{};
+    const target=g.target_new_follows||0;
+    const current=rep.net_new_follows;
+    return `<button class="growth-sprint-option ${active?.id===g.id?'selected':''}" data-action="growth.detail" data-id="${E(g.id)}">
+      <strong>${E(g.product_name)}</strong><span class="meta">${E(g.start_date)} → ${E(g.end_date)} · ${E(g.page_id?pageName(g.page_id):'Chưa gắn Page')}</span>
+      <span class="meta">Mục tiêu: +${target} follow · ${current===null||current===undefined?'Chưa có KPI':('Thực tế: '+(current>=0?'+':'')+current)}</span>
+      <span class="badge ${g.status==='ready'?'green':'yellow'}">${E(g.status==='ready'?'Đã có bản AI':'Khung kế hoạch / đang xử lý')}</span>
+    </button>`;
+  }).join(''):empty('🚀','Chưa có chiến dịch','Nhập tên và thành phần sản phẩm để CEO giao việc cho các agent.');
+  let detail='';
+  if(active){
+    const plan=active.ai_plan?.seven_day_plan?.length===7?active.ai_plan:active.outline;
+    const report=active.report||{};
+    const baseline=active.baseline_followers;
+    detail=`<div class="card growth-detail">
+       <div class="space-between"><div><h2>🎯 ${E(active.product_name)}</h2><p class="meta">${E(active.ingredients)}</p></div><span class="badge ${active.goal_basis==='provisional_experiment'?'yellow':'blue'}">${E(active.goal_basis==='provisional_experiment'?'Mục tiêu giả định':'Mục tiêu nội bộ')}</span></div>
+       <div class="growth-summary">
+         <div><strong>+${active.target_new_follows}</strong><span>Follow mới mục tiêu / 7 ngày</span></div>
+         <div><strong>${report.net_new_follows===null?'—':(report.net_new_follows>=0?'+':'')+report.net_new_follows}</strong><span>Follow mới thực tế (nhập thủ công)</span></div>
+         <div><strong>${report.completion_pct===null?'—':report.completion_pct+'%'}</strong><span>Tiến độ đạt mục tiêu</span></div>
+       </div><p class="meta">Tổng view do bạn nhập: <strong>${report.total_views||0}</strong> · Tương tác: <strong>${report.total_interactions||0}</strong>. Không phải Insights tự lấy từ Facebook.</p>
+       <p class="card-sub">Đây là mục tiêu để thử nghiệm, không phải dự báo hoặc cam kết lượt follow. Chưa kết nối Meta API; KPI chỉ do bạn tự nhập.</p>
+       ${baseline===null?`<div class="warn">Chưa có số người theo dõi ban đầu. Hãy nhập mốc đầu tuần để đo tiến độ.</div><button class="btn ghost" data-action="growth.baseline" data-id="${E(active.id)}">📌 Nhập số follow ban đầu</button>`:''}
+       <div class="actions">${!active.page_id?`<button class="btn ghost" data-action="growth.link" data-id="${E(active.id)}">📣 Gắn Fanpage đã có</button>`:""}<button class="btn primary" data-action="growth.progress" data-id="${E(active.id)}">📊 Cập nhật follow, view trong ngày</button>
+       <button class="btn ghost" data-action="growth.generate" data-id="${E(active.id)}" ${active.status==='generating'?'disabled':''}>🧠 CEO viết lại chiến lược bằng Claude</button>
+       <button class="btn ghost" data-route="tasks">👥 Xem nhiệm vụ</button></div>
+       ${active.ai_error?`<div class="warn">Lỗi tạo kế hoạch AI: ${E(active.ai_error)}</div>`:''}
+       <div class="subtle-divider"></div><h3>🧠 Định vị nội dung</h3><p>${E(plan.positioning||'Đang xác định định vị theo dữ liệu sản phẩm.')}</p>
+       <p class="card-sub">${E(plan.audience_hypothesis||plan.target_audience||'Chưa có số liệu khách hàng; Research phải nghiên cứu thêm.')}</p>
+       <div class="subtle-divider"></div><h3>🎬 Kịch bản & lịch 7 ngày</h3>
+       ${(plan.seven_day_plan||[]).map(d=>`<details class="growth-day" ${d.day===1?'open':''}><summary><strong>Ngày ${Number(d.day)}: ${E(d.topic)}</strong><span class="badge blue">${E(d.format||'reel')} · Mốc kiểm tra +${Math.ceil(active.target_new_follows*d.day/7)} follow</span></summary>
+          <p><strong>Hook:</strong> ${E(d.hook)}</p><ol>${(d.scenes||[]).map(x=>`<li>${E(x)}</li>`).join('')}</ol><p><strong>CTA:</strong> ${E(d.cta)}</p>
+          <p class="meta">${active.ai_plan?'Bản nháp Claude, vẫn cần kiểm duyệt.':'Khung kịch bản miễn phí, chưa được Claude hoàn thiện.'}</p>
+        </details>`).join('')}
+       <div class="subtle-divider"></div><h3>📋 Nhân viên được CEO giao việc (${active.tasks?.length||0})</h3>
+       <div class="growth-agents">${(active.tasks||[]).map(t=>`<div class="growth-agent"><span>${E(agentName(t.agent_id))}</span>${badge(t.status)}<small>${E(short(t.title,92))}</small></div>`).join('')}</div>
+       <div class="subtle-divider"></div><h3>📈 Dữ liệu theo ngày</h3>
+       ${(active.progress||[]).length?`<div class="table-scroll"><table class="data-table"><thead><tr><th>Ngày</th><th>Follow tổng</th><th>View</th><th>Tương tác</th></tr></thead><tbody>${active.progress.map(row=>`<tr><td>${row.day}</td><td>${row.followers_total}</td><td>${row.views}</td><td>${row.interactions}</td></tr>`).join('')}</tbody></table></div>`:empty('📊','Chưa có số liệu','Sau khi đăng thủ công, hãy nhập Insights thật để CEO đối chiếu với mục tiêu.')}
+       <div class="warn">Tất cả kịch bản cần kiểm duyệt nội dung, quyền sử dụng hình ảnh và tuyên bố sản phẩm trước khi xuất bản. Không dùng bot tăng tương tác hoặc tài khoản giả.</div>
+     </div>`;
+  }
+  return `${heading('CEO · Tăng trưởng Fanpage 7 ngày','Nhập tên sản phẩm và thành phần. CEO lập lịch và kịch bản, giao nhiệm vụ 8 agent, theo dõi follow/view thật.',actionButtons)}
+    <div class="grid-2 growth-layout"><div class="card"><h2>📅 Các chiến dịch đang theo dõi</h2><div class="stack">${cards}</div></div><div>${detail||empty('🧠','Chọn chiến dịch','Kế hoạch được lưu cục bộ ngay khi tạo.')}</div></div>`;
+}
+function growthForm(){
+  modal('🚀 CEO xây dựng Page từ sản phẩm',
+    '<p class="muted">Chỉ cần tên sản phẩm và thành phần. Các thông tin khác là tùy chọn giúp CEO đặt chỉ tiêu sát thực tế.</p>'+
+    field('Tên sản phẩm','product_name','','text','required minlength="3" maxlength="180" placeholder="Ví dụ: Trà thảo mộc Ba Kích"')+
+    field('Thành phần sản phẩm','ingredients','','textarea','rows="4" required placeholder="Mỗi thành phần cách nhau bằng dấu phẩy"')+
+    pick('Fanpage đã có (không bắt buộc)','page_id',pageOptions(),'','Chưa gắn Fanpage')+
+    field('Đối tượng khách hàng dự kiến','target_audience','','text','placeholder="Nếu chưa biết, CEO giao Research tìm hiểu"')+
+    field('Tổng follow hiện tại','baseline_followers','','number','min="0" placeholder="Để trống nếu chưa biết"')+
+    field('Follow mới 7 ngày vừa qua','previous_week_new_follows','','number','min="0" placeholder="Có số liệu thì CEO đặt mục tiêu +20%"')+
+    field('Chỉ tiêu tự đặt (+follow/tuần)','goal_override','','number','min="1" placeholder="Để CEO tự đề xuất nếu chưa có"')+
+    '<div class="office-note">Nếu chưa có số liệu: mặc định đặt mục tiêu <strong>thử nghiệm +25 follow/7 ngày</strong>, không phải dự báo. Bản AI chỉ chạy nếu đã cài Claude key và còn ngân sách.</div>',
+    'CEO lập chiến dịch & giao việc',async f=>{
+      const parseOptional=n=>f[n]===''||f[n]===undefined?null:Number(f[n]);
+      const r=await api('/api/growth/sprints','POST',{
+        product_name:f.product_name,ingredients:f.ingredients,page_id:f.page_id||null,
+        target_audience:f.target_audience||'',baseline_followers:parseOptional('baseline_followers'),
+        previous_week_new_follows:parseOptional('previous_week_new_follows'),goal_override:parseOptional('goal_override'),auto_generate:true});
+      S.growthDetailId=r.id;toast('CEO đã lập chiến dịch, tạo 14 nhiệm vụ và 7 khung kịch bản.');
+    });
+}
 function renderTasks(){
   const tasks=V('tasks').filter(t=>S.taskFilter==='all'||t.status===S.taskFilter);
   return `${heading('Nhật ký nhiệm vụ AI','Mỗi nhiệm vụ có nhân viên phụ trách, trạng thái, kết quả và nhật ký.',`<button class="btn primary" data-action="tasks.run-queued">▶ Chạy hàng đợi</button>`)}
@@ -285,7 +354,7 @@ function renderSettings(){
 function render(){
   if(!S.data)return;
   window.OfficeLive?.unmount();
-  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,settings:renderSettings};
+  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,growth:renderGrowth,settings:renderSettings};
   document.getElementById('view').innerHTML=(dict[S.route]||renderOffice)();
   if(S.route==='office'){
     const scene=window.OfficeLive?.mount(document.getElementById('office-live-stage'),S.data,id=>action('agent.details',id).catch(err=>toast(err.message,true)));
@@ -388,6 +457,13 @@ async function action(name,id,el){
     case 'firefox.install':firefoxInstallerDialog();break;
     case 'firefox.recheck':{const inst=await api('/api/firefox/installer');S.data.firefox_installer=inst;S.data.firefox_available=inst.installed;render();toast(inst.installed?'Đã tìm thấy Firefox.':'Chưa tìm thấy Firefox, hãy hoàn tất cài đặt.',!inst.installed);break;}
     case 'ceo.campaign':campaignForm();break;
+    case 'growth.new':growthForm();break;
+    case 'growth.detail':S.growthDetailId=id;render();break;
+    case 'growth.generate':{const g=await api('/api/growth/sprints/'+encodeURIComponent(id)+'/generate','POST');toast(g.status==='submitted'?'Đã gửi yêu cầu Claude cho CEO.':'CEO đang chuẩn bị kịch bản.');setTimeout(reload,1400);break;}
+    case 'growth.link':{modal('Liên kết Fanpage với chiến dịch',pick('Fanpage thuộc công ty','page_id',pageOptions())+'<div class="office-note">Liên kết này chỉ cập nhật dữ liệu nội bộ; không chứng minh quyền quản trị Facebook.</div>', 'Liên kết',async f=>{if(!f.page_id)throw new Error('Hãy chọn Fanpage.');await api('/api/growth/sprints/'+encodeURIComponent(id)+'/page','POST',{page_id:f.page_id});});break;}
+    case 'growth.baseline':{modal('Mốc follow đầu tuần',field('Tổng người theo dõi ban đầu','baseline_followers','','number','min="0" required'), 'Lưu mốc',async f=>api('/api/growth/sprints/'+encodeURIComponent(id)+'/baseline','POST',{baseline_followers:Number(f.baseline_followers)}));break;}
+    case 'growth.progress':{modal('Nhập KPI thực tế cho chiến dịch',field('Ngày thứ mấy (1–7)','day','1','number','min="1" max="7" required')+field('Tổng người theo dõi hiện tại','followers_total','','number','min="0" required')+field('Tổng view trong ngày','views','0','number','min="0" required')+field('Lượt tương tác trong ngày','interactions','0','number','min="0" required')+field('Ghi chú tình hình','notes','','textarea','rows="2"')+'<div class="office-note">KPI do bạn nhập thủ công. Nếu chưa có mốc follower ban đầu, tiến độ chỉ hiển thị sau khi bạn khai báo mốc.</div>', 'Lưu KPI',async f=>api('/api/growth/sprints/'+encodeURIComponent(id)+'/progress','POST',{day:Number(f.day),followers_total:Number(f.followers_total),views:Number(f.views),interactions:Number(f.interactions),notes:f.notes||''}));break;}
+
     case 'account.open':await api('/api/accounts/'+id+'/open','POST');await reload();toast('Đã gửi lệnh mở profile Firefox.');break;
     case 'account.reload':await api('/api/accounts/'+id+'/reload','POST');await reload();toast('Firefox đã mở để bạn kiểm tra và xác nhận phiên.');break;
     case 'account.close':await api('/api/accounts/'+id+'/close','POST');await reload();toast('Đã gửi lệnh đóng profile.');break;
@@ -488,4 +564,4 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();}});
 (async()=>{try{await reload();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
-  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
+  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy','growth'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();

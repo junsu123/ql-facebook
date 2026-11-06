@@ -126,6 +126,8 @@ def initialize():
     init_brains()
     from .academy import init_academy
     init_academy()
+    from .growth import init_growth
+    init_growth()
 
 def log(agent: str, kind: str, message: str, task_id: str | None = None):
     run('INSERT INTO activity(agent_id,kind,message,task_id,created) VALUES(?,?,?,?,?)',

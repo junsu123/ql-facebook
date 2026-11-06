@@ -52,3 +52,14 @@ HOC VIEN 10M TOKEN/NGAY (V1.5):
 - He thong doc tai lieu ban cung cap, luu bo nho rieng cho 9 agent.
 - Khong tu dong quet Facebook. Hoc vien chi goi Claude khi co du lieu moi, khi app dang chay.
 - 10M token KHONG dong nghia mien phi: kiem tra quota va billing thuc te cua nha cung cap.
+
+TANG TRUONG FANPAGE 7 NGAY (V1.6):
+- Mo menu Tang truong 7 ngay > Lap ke hoach tu san pham.
+- Nhap TEN SAN PHAM + THANH PHAN. Fanpage va KPI nen neu co; neu chua co co the lien ket sau.
+- CEO tao 7 kich ban nhap va 14 nhiem vu cho 8 agent, uu tien xu ly.
+- Neu co Claude API Key, cho phep CEO viet lai chien luoc va 7 kich ban de cu the hon.
+- Mac dinh KPI thu nghiem +25 follow/7 ngay KHI KHONG CO DU LIEU NEN; khong phai cam ket.
+- Nhap tong follow dau tuan, cap nhat followers/views/tuong tac moi ngay trong bang KPI.
+- Ngay 3/5/7 neu thap hon muc kiem tra, Analytics duoc giao danh gia lai.
+- Neu chua bat Tu chay agent trong Cai dat, can vao Nhiem vu AI > Chay hang doi.
+- Tuyet doi khong su dung bot follow/view gia, khong tu dang Facebook, khong khang dinh cong dung suc khoe chua xac thuc.

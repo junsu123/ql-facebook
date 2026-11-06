@@ -26,6 +26,8 @@ from .ai import (ModelError, ceo_message, config, create_task, execute_task,
 from .brains import (agent_brain_overview, relevant_memories, learning_tick,
                      enqueue_learning, spent_report, AGENT_IDS)
 from .academy import academy_overview, add_source, academy_tick, recover_interrupted_academy_jobs
+from .growth import (create_sprint, get_sprint, list_sprints, record_progress,
+                     set_baseline, generate_ceo_plan, attach_page)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
                       close_profile, confirm_login, delete_profile, executable)
 from .firefox_installer import (FirefoxInstallError, start_install as start_firefox_install,
@@ -33,7 +35,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.5.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.6.0',docs_url='/api/docs',redoc_url=None)
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
 app.mount('/media',StaticFiles(directory=MEDIA_DIR),name='media')
@@ -62,7 +64,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.5.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.6.0','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/bootstrap')
 def bootstrap():
@@ -81,6 +83,7 @@ def bootstrap():
         'activities':all_rows('SELECT a.*,ag.name AS agent_name FROM activity a LEFT JOIN agents ag ON a.agent_id=ag.id ORDER BY a.id DESC LIMIT 100'),
         'metrics':all_rows('SELECT m.*,p.name AS page_name FROM metrics m JOIN pages p ON m.page_id=p.id ORDER BY m.date DESC LIMIT 300'),
         'campaigns':all_rows('SELECT * FROM campaigns ORDER BY created DESC LIMIT 30'),
+        'growth_sprints':list_sprints(25),
         'settings':config(),
         'brain_overview':agent_brain_overview(),
         'academy':academy_overview(),
@@ -370,6 +373,79 @@ def create_campaign(req:CampaignCreate):
 def list_campaigns():
     return all_rows('SELECT * FROM campaigns ORDER BY created DESC')
 
+# CEO product-to-Fanpage 7-day growth sprint. No Facebook scraping/posting.
+class GrowthSprintInput(BaseModel):
+    product_name:str=Field(min_length=3,max_length=180)
+    ingredients:str=Field(min_length=2,max_length=5000)
+    page_id:str|None=None
+    target_audience:str=Field(default='',max_length=500)
+    baseline_followers:int|None=Field(default=None,ge=0,le=1000000)
+    previous_week_new_follows:int|None=Field(default=None,ge=0,le=1000000)
+    goal_override:int|None=Field(default=None,ge=1,le=1000000)
+    start_date:str|None=None
+    auto_generate:bool=True
+
+@app.post('/api/growth/sprints')
+def new_growth_sprint(req:GrowthSprintInput):
+    try:
+        sprint=create_sprint(**req.model_dump(exclude={'auto_generate'}))
+    except ValueError as err:
+        raise HTTPException(400,str(err)) from err
+    if req.auto_generate and get_key('claude'):
+        # Generate AI draft in background; HTTP returns the persisted local plan.
+        executor.submit(generate_ceo_plan,sprint['id'])
+        sprint['ai_generation_queued']=True
+    else:
+        sprint['ai_generation_queued']=False
+    return sprint
+
+@app.get('/api/growth/sprints')
+def growth_sprints():
+    return list_sprints(30)
+
+@app.get('/api/growth/sprints/{sid}')
+def growth_sprint_detail(sid:str):
+    result=get_sprint(sid)
+    if not result:raise HTTPException(404,'Không tìm thấy chiến dịch.')
+    return result
+
+@app.post('/api/growth/sprints/{sid}/generate')
+def regenerate_growth_sprint(sid:str):
+    if not get_sprint(sid):raise HTTPException(404,'Không tìm thấy chiến dịch.')
+    if not get_key('claude'):raise HTTPException(400,'Hãy cấu hình Claude API key trước.')
+    if one('SELECT status FROM growth_sprints WHERE id=?',(sid,))['status']=='generating':
+        return {'status':'already_running'}
+    executor.submit(generate_ceo_plan,sid)
+    return {'status':'submitted','note':'CEO sẽ tạo kế hoạch AI, không đăng Facebook tự động.'}
+
+class GrowthPageInput(BaseModel):
+    page_id:str=Field(min_length=2,max_length=100)
+
+@app.post('/api/growth/sprints/{sid}/page')
+def growth_link_page(sid:str,req:GrowthPageInput):
+    try:return attach_page(sid,req.page_id)
+    except ValueError as err:raise HTTPException(400,str(err)) from err
+
+class GrowthBaselineInput(BaseModel):
+    baseline_followers:int=Field(ge=0,le=1000000)
+
+@app.post('/api/growth/sprints/{sid}/baseline')
+def growth_baseline(sid:str,req:GrowthBaselineInput):
+    try:return set_baseline(sid,req.baseline_followers)
+    except ValueError as err:raise HTTPException(400,str(err)) from err
+
+class GrowthProgressInput(BaseModel):
+    day:int=Field(ge=1,le=7)
+    followers_total:int=Field(ge=0,le=1000000)
+    views:int=Field(default=0,ge=0,le=1000000000)
+    interactions:int=Field(default=0,ge=0,le=1000000000)
+    notes:str=Field(default='',max_length=1000)
+
+@app.post('/api/growth/sprints/{sid}/progress')
+def growth_progress(sid:str,req:GrowthProgressInput):
+    try:return record_progress(sid,**req.model_dump())
+    except ValueError as err:raise HTTPException(400,str(err)) from err
+
 @app.post('/api/tasks')
 def new_task(req:TaskNew):
     try:tid=create_task(req.agent_id,req.title,req.instructions,req.page_id,source='owner')
@@ -398,7 +474,7 @@ def run_task(task_id:str):
 
 @app.post('/api/tasks/run-queued')
 def run_queued():
-    tasks=all_rows("SELECT id FROM tasks WHERE status='queued' AND agent_id != 'ceo' ORDER BY created LIMIT 20")
+    tasks=all_rows("SELECT id FROM tasks WHERE status='queued' AND agent_id != 'ceo' ORDER BY CASE WHEN source='ceo_growth_sprint' THEN 0 ELSE 1 END, created LIMIT 20")
     n=sum(1 for t in tasks if _submit(t['id']))
     return {'submitted':n}
 
@@ -647,7 +723,7 @@ def scheduler_loop():
                 with _worker_lock:
                     available=max(0,2-len(_submitted))
                 if available:
-                    queued=all_rows("SELECT id FROM tasks WHERE status='queued' AND agent_id!='ceo' ORDER BY created LIMIT ?",(available,))
+                    queued=all_rows("SELECT id FROM tasks WHERE status='queued' AND agent_id!='ceo' ORDER BY CASE WHEN source='ceo_growth_sprint' THEN 0 ELSE 1 END, created LIMIT ?",(available,))
                     for task in queued:_submit(task['id'])
         except Exception:pass
 

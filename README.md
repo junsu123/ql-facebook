@@ -1,8 +1,18 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.5.0)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.6.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
 > **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. Chỉ cấu hình Claude API; tự chọn model theo loại nhiệm vụ, giữ giới hạn ngân sách.
+
+## V1.6.0 – CEO xây Fanpage từ tên sản phẩm + thành phần (Growth Sprint 7 ngày)
+
+- **Chỉ cần nhập tên sản phẩm và thành phần** trong menu **Tăng trưởng 7 ngày**. Có thể chọn Fanpage sẵn có hoặc liên kết sau, chọn đối tượng mục tiêu và bổ sung số liệu nền.
+- CEO tạo ngay **kế hoạch 7 ngày và 7 khung kịch bản** (hook, 3 cảnh, CTA), sau đó giao 14 nhiệm vụ cho 8 phòng ban: Research, Strategy, 7 Content, Creative, Publishing, Customer, Analytics, Compliance. Các nhiệm vụ tăng trưởng được ưu tiên trong hàng đợi AI.
+- Khi đã cấu hình Claude key, CEO có thể biên soạn lại chiến lược và kịch bản bằng Claude trong một lượt gọi có giới hạn token và ngân sách. Nếu không có key hoặc hết hạn mức, bản khung vẫn được giữ lại và ghi rõ chưa được AI hoàn thiện.
+- **Mục tiêu follow/tuần:** Khi không có dữ liệu lịch sử, tạo mục tiêu thử nghiệm +25 người theo dõi mới; khi có số follow mới của tuần trước, thử nghiệm tăng mục tiêu +20%; hoặc chủ sở hữu tự nhập mục tiêu. Đây là chỉ tiêu giả định, không bảo đảm kết quả.
+- Nhập **tổng followers, view và tương tác thực tế mỗi ngày** để theo dõi tiến độ. Vào các ngày 3, 5 hoặc 7, nếu thấp hơn mốc tiến độ, CEO chỉ giao thêm một nhiệm vụ Analytics đánh giá lại mỗi ngày (không tạo tác vụ trùng khi sửa KPI).
+- **Không có Meta API và không tự đăng bài.** Page và số liệu do người dùng liên kết/nhập thủ công; những tuyên bố về sức khỏe phải được kiểm chứng trước khi xuất bản. Không tạo follow/view giả, không đăng spam hoặc giả lập kết quả khách hàng.
+- Tài liệu tham khảo chính thức từ Meta: <https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/> và <https://www.facebook.com/business/help/397273916756139>.
 
 ## V1.5.0 – Học viện AI 10 triệu token/ngày (nguồn có quyền sử dụng)
 
