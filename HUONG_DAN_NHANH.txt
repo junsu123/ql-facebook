@@ -77,3 +77,10 @@ PHIEN BAN 1.8: HOC VIEN 10M DUNG MIRAIAPI
 - CEO/agent thuc thi nhiem vu van su dung Claude API truc tiep.
 - Quota hoc vien = (input + output x 5) x ratio model; theo doi tai miraiapi.com/usage/.
 - Chi bat hoc khi da cung cap tai lieu duoc phep su dung; khong can dua key vao log, Github hay chat.
+
+V1.9: TEST MIRAIAPI TRUC TIEP
+- Mo Cai dat > MiraiAPI - Hoc vien 10M, nhap API key, ten model va he so quota.
+- Nhan nut "Test goi API Mirai (ton it quota)". Phan mem tu luu cau hinh Mirai va gui mot yeu cau ngan.
+- Xem ket qua: model, tra loi, thoi gian, input/output token, quota.
+- Neu khong ket noi: kiem tra API key, model, han muc va mang.
+- LU UY: moi lan nhan test co the ton quota; day khong phai chi la GET danh sach model.

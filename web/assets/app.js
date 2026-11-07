@@ -342,7 +342,9 @@ function renderSettings(){
     ${field('MiraiAPI Key'+(cfg.mirai_configured?' · Đã lưu':''),'mirai_key','','password','placeholder="Để trống để giữ key đã lưu" autocomplete="off"')}
     ${field('Model MiraiAPI cho Học viện','academy_mirai_model',cfg.academy_mirai_model||'claude-opus-4.8','text','placeholder="Dùng tên model được phép của key" required')}
     ${field('Hệ số quota của model (từ bảng giá MiraiAPI)','academy_mirai_ratio',cfg.academy_mirai_ratio||'1','number','min="0.01" max="100" step="0.01" required')}
-    <div class="actions"><button class="btn ghost" type="button" data-action="mirai.check">🔎 Kiểm tra MiraiAPI và các model</button></div>
+    <div class="actions"><button class="btn ghost" type="button" data-action="mirai.check">🔎 Xem danh sách model (không tốn token suy luận)</button>
+    <button class="btn primary" type="button" data-action="mirai.test-call">⚡ Test gọi API Mirai (tốn ít quota)</button></div>
+    <div class="office-note" id="mirai-test-result" role="status" aria-live="polite">Nhập API Key, model và hệ số quota rồi bấm Test. Cấu hình MiraiAPI sẽ được lưu trước khi kiểm tra. Kết quả hiển thị ở đây.</div>
     <p class="muted">Quota được tính (input + output × 5) × hệ số model. Hệ số mặc định 1 chỉ là giá trị mẫu; hãy xác nhận trên <a href="https://miraiapi.com/usage/#models" target="_blank" rel="noopener noreferrer">MiraiAPI Model & giá</a> trước khi bật học.</p>
     ${field('Hạn mức quota MiraiAPI/ngày','academy_daily_token_limit',cfg.academy_daily_token_limit??'10000000','number','min="10000" max="100000000" step="10000" required')}
     ${field('Khoảng cách giữa các bước học (giây)','academy_interval_seconds',cfg.academy_interval_seconds??'35','number','min="10" max="3600" required')}
@@ -515,6 +517,35 @@ async function action(name,id,el){
       const r=await api('/api/pages/'+p+'/learn','POST');toast('Đã lưu bài học từ '+r.samples+' dòng số liệu.');modal('🧠 Kết quả học từ dữ liệu',`<p>${E(r.note)}</p>`);break;
     }
     case 'mirai.check':{const r=await api('/api/mirai/check','POST');toast(r.ok?('MiraiAPI kết nối. Model khả dụng: '+(r.models||[]).slice(0,10).join(', ')):'Không thể kiểm tra MiraiAPI',!r.ok);break;}
+    case 'mirai.test-call':{
+      const button=el;
+      const form=document.getElementById('settingsForm');
+      const output=document.getElementById('mirai-test-result');
+      const fields=new FormData(form);
+      const model=String(fields.get('academy_mirai_model')||'').trim();
+      const ratio=Number(fields.get('academy_mirai_ratio'));
+      if(!model||!Number.isFinite(ratio)||ratio<0.01||ratio>100)throw new Error('Hãy nhập model và hệ số quota hợp lệ.');
+      const settings={academy_mirai_model:model,academy_mirai_ratio:ratio};
+      const freshKey=String(fields.get('mirai_key')||'').trim();
+      if(freshKey)settings.mirai_key=freshKey;
+      button.disabled=true;
+      button.textContent='⏳ Đang gọi MiraiAPI...';
+      if(output)output.textContent='Đang gửi yêu cầu ngắn để xác minh API thực tế. Có thể phát sinh một ít quota.';
+      try{
+        await api('/api/settings','POST',settings);
+        const r=await api('/api/mirai/test-call','POST');
+        const used=r.quota_status==='actual_usage'?`${Number(r.quota_used).toLocaleString('vi-VN')} quota`:`dự trù ${Number(r.quota_used).toLocaleString('vi-VN')} quota`;
+        if(output)output.innerHTML='<strong>✅ Test API thành công</strong><div>Model: '+E(r.model)+' · Phản hồi: '+E(r.reply)+'</div><div>Thời gian: '+Number(r.latency_ms)+' ms · Input: '+(r.prompt_tokens??'không có')+' · Output: '+(r.completion_tokens??'không có')+' · '+E(used)+'</div><small>'+E(r.note||'')+'</small>';
+        toast('MiraiAPI gọi model thành công. '+used);
+        const previous=await api('/api/bootstrap');
+        S.data=previous;
+      }catch(err){
+        if(output)output.innerHTML='<strong>❌ Không gọi được MiraiAPI</strong><div>'+E(err.message)+'</div><small>Kiểm tra API Key, model, hạn mức và mạng. API key không được hiển thị.</small>';
+        toast(err.message,true);
+      }finally{button.disabled=false;button.textContent='⚡ Test gọi API Mirai (tốn ít quota)';}
+      break;
+    }
+
     case 'claude.check':{const r=await api('/api/claude/check','POST');toast(r.ok?('Claude đã kết nối. Haiku: '+(r.haiku_available?'Có':'Không')+'; Sonnet: '+(r.sonnet_available?'Có':'Không')):'Không thể kiểm tra Claude',!r.ok);break;}
     case 'academy.toggle':{const was=!!S.data.academy?.enabled;await api('/api/settings','POST',{academy_enabled:!was});toast(was?'Đã tạm dừng học tự động.':'Đã bật học tự động khi server đang chạy.');await reload();break;}
     case 'academy.step':{const x=await api('/api/academy/step','POST');toast(x.status==='started'?'Đã gửi một bước học vào hàng đợi.':'Học viện đang xử lý.');setTimeout(reload,1500);break;}

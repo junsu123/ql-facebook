@@ -26,7 +26,7 @@ from .ai import (ModelError, ceo_message, config, create_task, execute_task,
 from .brains import (agent_brain_overview, relevant_memories, learning_tick,
                      enqueue_learning, spent_report, AGENT_IDS)
 from .academy import academy_overview, add_source, academy_tick, recover_interrupted_academy_jobs
-from .mirai import available_models, mirai_report, init_mirai
+from .mirai import available_models, mirai_report, init_mirai, test_mirai_completion
 from .growth import (create_sprint, get_sprint, list_sprints, record_progress,
                      set_baseline, generate_ceo_plan, attach_page)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
@@ -36,7 +36,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.8.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.9.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -78,7 +78,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.8.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.9.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -198,6 +198,15 @@ def claude_connection_check():
 def mirai_connection_check():
     try:
         return available_models()
+    except ModelError as exc:
+        raise HTTPException(400,str(exc)) from exc
+
+@app.post('/api/mirai/test-call')
+def mirai_test_call():
+    # Explicitly invoked, paid inference test. The service reads the saved key
+    # and model; neither the key nor raw provider payload is sent to the UI.
+    try:
+        return test_mirai_completion()
     except ModelError as exc:
         raise HTTPException(400,str(exc)) from exc
 

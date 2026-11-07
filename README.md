@@ -1,8 +1,18 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.8.0)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.9.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
 > **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. CEO dùng Claude API trực tiếp; Học viện 10M dùng MiraiAPI riêng với giới hạn quota.
+
+## V1.9.0 – Nút Test gọi API Mirai thật từ giao diện
+
+- Vào **Cài đặt → MiraiAPI – Học viện 10M**, nhập `MiraiAPI Key`, tên model và hệ số quota. Bấm **⚡ Test gọi API Mirai (tốn ít quota)**.
+- Nút sẽ lưu riêng ba trường MiraiAPI vừa nhập, sau đó **gửi một yêu cầu suy luận ngắn** tới `POST https://api.miraiapi.com/v1/chat/completions` (khác với nút “Xem danh sách model” chỉ gọi `GET /models`).
+- Phản hồi hiển thị **thành công/thất bại, model, câu trả lời, thời gian (ms), input/output tokens, quota thực hoặc quota dự trù**. Có lỗi key/model/rate limit sẽ hiển thị HTTP code phù hợp. Không trả lại/hiển thị API key từ backend.
+- Dự trù quota trước khi thử (không gửi khi đã quá giới hạn nội bộ 10M). Trường hợp nhà cung cấp không trả `usage`, hệ thống giữ phần dự trù để tránh tính thiếu. **Mỗi lần nhấn có thể tiêu quota và phát sinh phí ở MiraiAPI.**
+- Giới hạn câu hỏi kiểm tra và `max_tokens=64` để tiết kiệm. Test chỉ xác minh model đang cấu hình trả lời được; **không kiểm chứng chính xác số dư quota trên tài khoản MiraiAPI**.
+- Không thay đổi Claude API cho CEO, Firefox profiles, dữ liệu SQLite hay phần Học viện trước đây.
+- Kiểm thử backend bằng MockTransport; kiểm tra nút trong Chromium bằng mock API. **Chưa kiểm thử với API Key MiraiAPI thật**.
 
 ## V1.8.0 – Học viện 10M dùng riêng MiraiAPI (miraiapi.com)
 

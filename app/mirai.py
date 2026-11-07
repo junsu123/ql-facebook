@@ -9,6 +9,7 @@ from __future__ import annotations
 import math
 import re
 import sqlite3
+import time
 import uuid
 from datetime import datetime, timezone, timedelta
 
@@ -105,7 +106,7 @@ def _finish(rid:str,status:str,*,in_tokens:int=0,out_tokens:int=0,quota:int=0,so
 
 
 def ask_mirai(agent_id:str,system:str,prompt:str,purpose:str='academy_training',
-              *,max_tokens:int=850,client:httpx.Client|None=None)->str:
+              *,max_tokens:int=850,client:httpx.Client|None=None,return_receipt:bool=False)->str|dict:
     """Academy request using MiraiAPI OpenAI-compatible chat completions.
 
     No implicit retries and no network call when quota is exceeded. A timeout
@@ -126,6 +127,7 @@ def ask_mirai(agent_id:str,system:str,prompt:str,purpose:str='academy_training',
     max_tokens=max(64,min(1800,int(max_tokens)))
     system=system[:8000];prompt=prompt[:10000]
     rid,estimated=_reserve(agent_id,purpose,system,prompt,max_tokens,model,ratio)
+    started=time.monotonic()
     payload={'model':model,'messages':[{'role':'system','content':system},
               {'role':'user','content':prompt}], 'max_tokens':max_tokens,'stream':False}
     try:
@@ -157,10 +159,21 @@ def ask_mirai(agent_id:str,system:str,prompt:str,purpose:str='academy_training',
         out_count=usage.get('completion_tokens',usage.get('output_tokens'))
         if in_count is None or out_count is None:
             _finish(rid,'unknown',source='missing_usage')
+            in_count=out_count=None
+            quota=estimated
+            quota_status='reserved_unknown_usage'
         else:
             in_count=max(0,int(in_count));out_count=max(0,int(out_count))
             quota=math.ceil((in_count+out_count*5)*ratio)
             _finish(rid,'completed',in_tokens=in_count,out_tokens=out_count,quota=quota,source='api_usage')
+            quota_status='actual_usage'
+        if return_receipt:
+            return {'ok':True,'provider':'MiraiAPI','model':model,'reply':content.strip()[:320],
+                    'latency_ms':round((time.monotonic()-started)*1000),
+                    'prompt_tokens':in_count,'completion_tokens':out_count,
+                    'quota_used':quota,'quota_status':quota_status,
+                    'note':('Quota tính từ usage trả về.' if quota_status=='actual_usage'
+                            else 'Không có usage trong phản hồi. Đã giữ quota dự trù để tránh vượt hạn mức.')}
         return content.strip()
     except ModelError:
         raise
@@ -186,3 +199,16 @@ def available_models(*,client:httpx.Client|None=None) -> dict:
         return {'ok':True,'models':models[:250], 'note':'Model đúng theo key. Hệ số quota cần đối chiếu tại trang Model & giá của MiraiAPI.'}
     except (httpx.RequestError,ValueError,KeyError) as ex:
         raise ModelError('Không thể kết nối MiraiAPI Models API; kiểm tra Base URL và mạng.') from ex
+
+
+def test_mirai_completion(*,client:httpx.Client|None=None)->dict:
+    """A real, small paid request. Never return the API key to the frontend.
+
+    Unlike the existing GET /models check, this verifies the configured model
+    actually answers POST /chat/completions. Account quota may be charged.
+    """
+    return ask_mirai('research',
+                     'Bạn đang kiểm tra kết nối API. Chỉ trả lời ngắn gọn.',
+                     'Phản hồi một từ: OK',
+                     purpose='connection_test',max_tokens=64,
+                     client=client,return_receipt=True)
