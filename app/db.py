@@ -132,6 +132,8 @@ def initialize():
     init_growth()
     from .source_harvester import init_harvester
     init_harvester()
+    from .design import init_design
+    init_design()
 
 def log(agent: str, kind: str, message: str, task_id: str | None = None):
     run('INSERT INTO activity(agent_id,kind,message,task_id,created) VALUES(?,?,?,?,?)',

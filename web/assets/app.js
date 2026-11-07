@@ -2,7 +2,7 @@
 'use strict';
 const ROUTES=[
   ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['growth','🚀','Tăng trưởng 7 ngày'],['pages','📣','100 Fanpage'],
-  ['accounts','🦊','Tài khoản Firefox'],['content','📝','Nội dung & Lịch'],
+  ['accounts','🦊','Tài khoản Firefox'],['design','🎨','Thiết kế poster'],['content','📝','Nội dung & Lịch'],
   ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['academy','🎓','Học viện 10M'],['knowledge','📖','Kho kiến thức đã học'],['settings','⚙️','Cài đặt']
 ];
 const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all',growthDetailId:null,knowledge:{kind:'all',agent_id:'',q:'',confidence:'all',offset:0,limit:25,loading:false,loaded:false,requestId:0,overview:null,records:null,sourceOffset:0}};
@@ -192,6 +192,53 @@ function renderContent(){
     <button class="btn sm ghost" data-action="content.media" data-id="${p.id}">🖼️ Thêm ảnh</button>
     </div></div>`).join(''):empty('📝','Chưa có nội dung','Tạo bản nháp mới hoặc kết nối AI để viết nội dung theo Page.')}</div>
   <div class="warn">Lịch tự động chuyển bài sang trạng thái “Đến lịch”; không tự nhấn Đăng trên Facebook vì không sử dụng Meta API và không được giả định quyền tự động hóa giao diện.</div>`;
+}
+function renderDesign(){
+  const records=S.data?.design?.items||[];
+  const brain=S.data?.design?.brain||{};
+  const projectCards=records.length?records.map(p=>`<div class="card poster-project">
+    <div class="space-between"><h2>${E(p.product_name)}</h2><span class="badge ${p.provider==='claude'?'blue':'green'}">${p.provider==='claude'?'Claude concept':'Bố cục nội bộ'}</span></div>
+    <p class="muted">${E(p.layout_name)} · ${E(p.layout_type)} · ${F(p.created)}</p>
+    <p class="card-sub">${E(short(p.ingredients,175))}</p>
+    <div class="poster-grid">${(p.outputs||[]).map(o=>`<div class="poster-output">
+      <img loading="lazy" src="${E(o.url)}" alt="Poster ${E(o.ratio)} cho ${E(p.product_name)}">
+      <div class="space-between"><strong>${E(o.ratio)}</strong><span class="muted">${o.width}×${o.height}</span></div>
+      <div class="toolbar"><a class="btn sm ghost" href="${E(o.url)}" download="${E(p.product_name.replace(/[^\w\p{L} -]/gu,'').slice(0,35))}-${E(o.ratio.replace(':','x'))}.png">⬇ PNG</a>
+        <button class="btn sm ghost" data-action="design.review" data-id="${E(o.id)}">⭐ ${o.rating?'Đã chấm '+o.rating+'/5':'Đánh giá'}</button></div>
+    </div>`).join('')}</div>
+    <p class="office-note">Nguồn ảnh sản phẩm do bạn tải lên; ảnh bao bì không được AI tạo lại. Ghi chú về cách chọn bố cục: ${E(p.guidance||'Không có')}</p>
+  </div>`).join(''):empty('🖼️','Chưa có poster','Nhập tên, thành phần và tải ảnh sản phẩm 3D để tạo poster PNG thật.');
+  return `${heading('Thiết kế poster AI','Một agent thiết kế dùng Claude để tham khảo bố cục, sau đó ghi nhớ các mẫu poster được bạn đánh giá tốt.')}
+  <div class="grid-2 poster-top">
+    <div class="card"><h2>🎨 Tạo poster từ ảnh sản phẩm</h2>
+      <form id="designForm" class="stack">
+      ${field('Tên sản phẩm','product_name','','text','minlength="2" maxlength="180" required placeholder="Trà thảo mộc Ba Kích"')}
+      ${field('Thành phần (phân tách bằng dấu phẩy)','ingredients','','textarea','rows="4" maxlength="1800" required placeholder="Ba kích, đinh lăng, đông trùng hạ thảo..."')}
+      <div class="form-field"><label>Ảnh sản phẩm 3D (PNG/JPG/WEBP, tối đa 12MB)</label><input class="input" name="image" type="file" accept="image/png,image/jpeg,image/webp" required><span class="muted">PNG nền trong suốt cho kết quả đẹp nhất. Giữ nguyên chữ và màu bao bì.</span></div>
+      <div class="form-field"><label>Tỷ lệ xuất ảnh (chọn nhiều)</label><div class="poster-ratio-picker">
+      ${[['1:1','1024×1024'],['9:16','1080×1920'],['16:9','1600×900']].map(([value,res])=>`<label><input type="checkbox" name="ratios" value="${value}" ${value==='1:1'?'checked':''}><strong>${value}</strong><small>${res}</small></label>`).join('')}</div></div>
+      <div class="grid-2">
+        <div class="form-field"><label>Loại poster</label><select name="layout_type" class="select"><option value="overview">Tổng quan sản phẩm</option><option value="ingredients">Thành phần</option><option value="offer">Giới thiệu / ưu đãi (không tự thêm giá)</option></select></div>
+        <div class="form-field"><label>Chế độ thiết kế</label><select name="mode" class="select"><option value="auto">Tự động – Claude khi cần</option><option value="claude">Bắt buộc hỏi Claude</option><option value="local">Tự thiết kế – không gọi Claude</option></select></div>
+      </div>
+      ${pick('Liên kết Fanpage (tùy chọn)','page_id',pageOptions())}
+      ${field('Ghi chú ý tưởng (không tự in lên poster)','note','','textarea','rows="2" maxlength="1000"')}
+      <button class="btn primary" type="submit" id="designSubmit">✦ Tạo poster PNG</button>
+      <p class="card-sub">Nền xám ghi #777973. Vùng trên cùng ở chính giữa 150×80 px luôn trống. Ảnh xuất thật, không phải prompt. Không tự viết công dụng sức khỏe hoặc tuyên bố điều trị.</p>
+      </form>
+    </div>
+    <div class="card"><h2>🧠 Bộ não Agent thiết kế</h2>
+      <div class="stat-grid poster-stats">
+        ${stat('🏅','Level',brain.level??0,'Cấp độ chọn bố cục','#ae98ff')}
+        ${stat('⭐','Mẫu tốt',brain.positive_reviews??0,'Đánh giá từ 4/5','#e9c38f')}
+      </div>
+      <p class="muted">${brain.next_level_positive?`Cần tổng cộng ${brain.next_level_positive} đánh giá tốt để đạt cấp tiếp theo.`:'Đã đạt cấp bố cục cao nhất hiện có.'}</p>
+      <div class="office-note">Level chỉ phản ánh lượng phản hồi tốt. Agent học lựa chọn layout và mẫu bố cục, <strong>không tự huấn luyện mô hình hình ảnh mới</strong>. Khi chọn “Tự thiết kế”, công cụ Pillow dựng poster ngay trên máy, không dùng token Claude.</div>
+      <p class="muted">Claude chỉ phân tích concept khi cần, sử dụng API key và ngân sách Claude hiện tại. Một concept dùng chung cho cả ba tỷ lệ.</p>
+      <p class="muted">Các poster được lưu tại thư mục dữ liệu trên máy, không tải ảnh sản phẩm của bạn lên GitHub.</p>
+    </div>
+  </div><div class="space-between"><h2>📚 Thư viện poster đã tạo</h2><button class="btn ghost sm" data-action="design.refresh">↻ Làm mới</button></div>
+  <div class="stack">${projectCards}</div>`;
 }
 function renderGrowth(){
   const campaigns=V('growth_sprints');
@@ -434,7 +481,7 @@ function renderSettings(){
 function render(){
   if(!S.data)return;
   window.OfficeLive?.unmount();
-  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,knowledge:renderKnowledge,growth:renderGrowth,settings:renderSettings};
+  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,design:renderDesign,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,knowledge:renderKnowledge,growth:renderGrowth,settings:renderSettings};
   document.getElementById('view').innerHTML=(dict[S.route]||renderOffice)();
   if(S.route==='office'){
     const scene=window.OfficeLive?.mount(document.getElementById('office-live-stage'),S.data,id=>action('agent.details',id).catch(err=>toast(err.message,true)));
@@ -532,6 +579,16 @@ async function action(name,id,el){
     case 'office.zoom-in':window.OfficeLive?.current?.zoomAt(1.16);break;
     case 'office.zoom-out':window.OfficeLive?.current?.zoomAt(.86);break;
     case 'office.reset':window.OfficeLive?.reset();break;
+    case 'design.refresh':{await reload();toast('Đã cập nhật thư viện thiết kế.');break;}
+    case 'design.review':{
+      modal('⭐ Đánh giá chất lượng poster',`<p>Agent sử dụng phản hồi này để chọn bố cục tốt hơn trong những lần tiếp theo. Không giả định ảnh có CTR cao nếu chưa nhập KPI.</p>
+        <div class="form-field"><label>Số sao</label><select class="select" name="rating"><option value="5">5 – Rất tốt</option><option value="4">4 – Tốt</option><option value="3">3 – Bình thường</option><option value="2">2 – Cần sửa</option><option value="1">1 – Kém</option></select></div>
+        ${field('Nhận xét','comment','','textarea','rows="3" maxlength="500"')}`,
+        'Lưu đánh giá',async f=>{
+          await api('/api/design/outputs/'+encodeURIComponent(id)+'/review','POST',{rating:Number(f.rating),comment:f.comment||''});
+          toast('Đã lưu đánh giá để agent học chọn bố cục.');
+        });break;
+    }
     case 'modal.close':closeModal();break;
     case 'account.add':accountForm();break;
     case 'firefox.install':firefoxInstallerDialog();break;
@@ -673,6 +730,18 @@ document.addEventListener('click',async e=>{
   try{await action(target.dataset.action,target.dataset.id,target);}catch(err){toast(err.message,true);}finally{if(target.isConnected)target.disabled=false;}
 });
 document.addEventListener('submit',async e=>{
+  if(e.target.id==='designForm'){
+    e.preventDefault();const form=e.target;const button=form.querySelector('[type=submit]');
+    const data=new FormData(form);
+    const ratios=data.getAll('ratios');if(!ratios.length){toast('Hãy chọn ít nhất một tỷ lệ ảnh.',true);return;}
+    data.delete('ratios');data.append('ratios',ratios.join(','));
+    if(!data.get('image')?.size){toast('Hãy tải ảnh sản phẩm 3D.',true);return;}
+    button.disabled=true;button.textContent='⏳ Đang tạo poster...';
+    try{const result=await api('/api/design/projects','POST',data);
+      toast('Đã tạo '+result.outputs.length+' poster PNG ('+result.concept_provider+').');await reload();
+    }catch(err){toast(err.message,true);}finally{if(button.isConnected){button.disabled=false;button.textContent='✦ Tạo poster PNG';}}
+    return;
+  }
   if(e.target.id==='chatForm'){
     e.preventDefault();if(S.busy)return;const input=e.target.elements.message;const msg=input.value.trim();if(!msg)return;
     S.busy=true;render();try{const r=await api('/api/ceo/chat','POST',{message:msg});await reload();if(r.mode==='error')toast('CEO AI gặp lỗi: xem trả lời trong hội thoại.',true);}
@@ -717,7 +786,7 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();if(route==='knowledge')loadKnowledge();}});
 (async()=>{try{await reload();if(S.route==='knowledge')await loadKnowledge();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
-  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy','growth'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
+  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy','growth','design'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
 
 
 // Keep the currently open dashboard in sync with a restarted local backend.

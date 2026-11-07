@@ -1,3 +1,7 @@
+# AI Fanpage Company V1.13 – Agent thiết kế poster PNG
+
+Đã thêm menu **Thiết kế poster**. Xem mục **V1.13.0** bên dưới để sử dụng.
+
 # V1.11 – Kho kiến thức đã học: xem và xuất toàn bộ dữ liệu thật
 
 - Thêm menu **📖 Kho kiến thức đã học** và nút mở nhanh từ **Học viện 10M** và **Bộ não nhân viên**.
@@ -111,6 +115,17 @@ Phần mềm quản trị marketing AI dạng **local-first**, có giao diện v
 - Bộ tính ngân sách Claude có dự phòng múi giờ UTC+07:00 nếu dữ liệu IANA không tồn tại, tránh lỗi `/api/bootstrap` HTTP 500 khi mở giao diện.
 - Công cụ `diagnose_windows.bat` kiểm tra tình trạng timezone/tzdata.
 - Nếu đang chạy V1.3.1, thực hiện `git pull origin main` rồi **đóng cửa sổ máy chủ cũ** và khởi động lại bằng `start_windows.bat` để tự cài dependency. Có thể sửa ngay bằng `.venv\Scripts\python.exe -m pip install tzdata` trong thư mục dự án.
+
+## V1.13.0 – AI Design Agent: Poster sản phẩm từ ảnh 3D
+
+- Menu **Thiết kế poster**: nhập tên sản phẩm, thành phần, tải ảnh 3D PNG/JPEG/WEBP (tối đa 12 MB), chọn một hoặc cả ba tỷ lệ **1:1 (1024×1024), 9:16 (1080×1920), 16:9 (1600×900)** rồi bấm **Tạo poster PNG**.
+- **Poster được xuất thành file ảnh PNG thực** bằng Pillow, không chỉ là prompt. Ảnh sản phẩm gốc được đưa vào poster bằng phương pháp thay đổi kích thước giữ nguyên tỷ lệ; không sử dụng generative image model để sửa chữ, màu sắc hay nội dung bao bì. Ưu tiên dùng ảnh sản phẩm đã tách nền PNG để tránh nền JPG hình chữ nhật.
+- Màu nền mặc định **#777973**. Vùng **150×80 px ở chính giữa sát mép trên** luôn đồng màu nền, không có chữ, họa tiết hay khung. Dùng các dữ kiện người dùng cung cấp, **không tự thêm công dụng sức khỏe, giá bán hoặc khẳng định điều trị**.
+- Ba chế độ: **Tự động** (Claude hỗ trợ bố cục khi chưa đủ mẫu được đánh giá và có key), **Bắt buộc Claude** (báo lỗi nếu gọi Claude không thành công), **Tự thiết kế** (chỉ dùng mẫu nội bộ, không tốn token Claude). Một concept Claude được dùng cho toàn bộ tỷ lệ chọn trong cùng một lần tạo.
+- **Bộ não thiết kế** lưu project, bố cục, nguồn concept và ảnh xuất. Nút **Đánh giá 1–5 sao** ghi phản hồi; khi có đủ mẫu tốt, phần mềm ưu tiên mẫu layout nhận được phản hồi tích cực. Các level 0–3 chỉ là chỉ báo kinh nghiệm chọn bố cục, **không phải mô hình hình ảnh đã được huấn luyện hay bằng chứng CTR cao**.
+- Dữ liệu ảnh nằm trong `%LOCALAPPDATA%\AI-Fanpage-Company\media\design\` (Windows) hoặc `AIFC_DATA_DIR/media/design`, không đẩy ảnh và API keys lên GitHub. Thư viện ảnh được duy trì khi cập nhật code.
+- API nội bộ: `GET /api/design/projects`, `POST /api/design/projects` (multipart), `GET /api/design/brain`, `POST /api/design/outputs/{output_id}/review`. Các endpoint chỉ chạy trên localhost như những API quản trị khác.
+- Chưa có generative image model riêng để vẽ lại đồ họa/phông nền mới; phần mềm dùng **layout engine Pillow** và Claude chỉ tư vấn concept. Chưa tự động xuất bản Facebook.
 
 ## Chạy trên Windows
 

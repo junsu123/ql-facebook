@@ -3,6 +3,7 @@ Start: python -m uvicorn app.main:app --host 127.0.0.1 --port 8765
 """
 from __future__ import annotations
 import csv
+import json
 import io
 import os
 import re
@@ -14,8 +15,9 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, Body, HTTPException, Request, UploadFile, File, Query
+from fastapi import FastAPI, Body, HTTPException, Request, UploadFile, File, Query, Form
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image, UnidentifiedImageError
@@ -30,6 +32,7 @@ from .knowledge import (browse_knowledge, knowledge_overview, source_detail,
                         list_sources as list_knowledge_sources, export_knowledge)
 from .mirai import available_models, mirai_report, init_mirai, test_mirai_completion
 from .source_harvester import overview as harvester_overview, import_original_courses, fetch_approved_batch
+from .design import (create_posters, list_projects, submit_feedback, design_stats)
 from .growth import (create_sprint, get_sprint, list_sprints, record_progress,
                      set_baseline, generate_ceo_plan, attach_page)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
@@ -39,7 +42,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.12.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.13.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -83,7 +86,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.12.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.13.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -125,6 +128,7 @@ def bootstrap():
         'brain_overview':agent_brain_overview(),
         'academy':academy_overview(),
         'harvester':harvester_overview(),
+        'design':list_projects(20),
         'firefox_available':bool(executable()),
         'firefox_installer':firefox_install_status(),
         'counts':{
@@ -769,6 +773,43 @@ def cancel_schedule(cid:str):
     if item['status'] not in ('scheduled','ready'):raise HTTPException(400,'Không có lịch đang hoạt động')
     run('UPDATE contents SET status=?,scheduled_at=NULL,updated=? WHERE id=?',('approved',now(),cid))
     return {'ok':True}
+
+class PosterReview(BaseModel):
+    rating: int = Field(ge=1,le=5)
+    comment: str = Field(default='',max_length=500)
+
+@app.get('/api/design/projects')
+def design_projects():
+    return list_projects(40)
+
+@app.get('/api/design/brain')
+def design_brain():
+    return design_stats()
+
+@app.post('/api/design/projects')
+async def design_create(
+    image: UploadFile = File(...), product_name: str = Form(...),
+    ingredients: str = Form(...), ratios: str = Form('1:1'),
+    layout_type: str = Form('overview'), mode: str = Form('auto'),
+    note: str = Form(''), page_id: str = Form(''),
+):
+    if image.content_type not in ('image/png','image/jpeg','image/webp','application/octet-stream'):
+        raise HTTPException(400,'Chỉ hỗ trợ ảnh PNG, JPEG, WEBP.')
+    raw=await image.read(12*1024*1024+1)
+    if len(raw)>12*1024*1024:
+        raise HTTPException(400,'Ảnh không được vượt quá 12MB.')
+    try:
+        return await run_in_threadpool(create_posters, product_name,ingredients,raw,
+                    [part.strip() for part in ratios.split(',')],layout_type,mode,note,page_id or None)
+    except ValueError as e:
+        raise HTTPException(400,str(e)) from e
+
+@app.post('/api/design/outputs/{output_id}/review')
+def design_review(output_id:str, data:PosterReview):
+    try:
+        return submit_feedback(output_id,data.rating,data.comment)
+    except ValueError as e:
+        raise HTTPException(404 if 'Không tìm thấy' in str(e) else 400,str(e)) from e
 
 @app.post('/api/media')
 async def upload_media(file:UploadFile=File(...)):
