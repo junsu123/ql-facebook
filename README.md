@@ -1,3 +1,12 @@
+# V1.11 – Kho kiến thức đã học: xem và xuất toàn bộ dữ liệu thật
+
+- Thêm menu **📖 Kho kiến thức đã học** và nút mở nhanh từ **Học viện 10M** và **Bộ não nhân viên**.
+- Hiển thị đầy đủ 5 nhóm: tóm tắt tài liệu, bài học chuyên môn từng agent, kết quả thực hành/phản biện, bộ nhớ riêng của agent và ghi chú bộ nhớ Fanpage. Chỉ hiện bản ghi đã lưu trong SQLite, không giả lập số liệu.
+- Tìm kiếm nội dung, lọc theo agent, loại kiến thức và tình trạng xác minh; phân trang 25 mục, xem nguyên văn bài học hoặc tài liệu nguồn (không cắt sau 100 kết quả).
+- Xuất **CSV (Excel tiếng Việt)** hoặc **JSONL** chứa tất cả bản ghi khớp bộ lọc, xử lý dạng stream để tránh tải toàn bộ vào RAM. File không chứa API key, cookie Firefox hoặc nhật ký nội bộ của model.
+- Thể hiện rõ **chưa xác minh độc lập** với kết quả đào tạo MiraiAPI/Claude; nguồn gốc là tài liệu do chủ sở hữu nhập. Việc hoàn thành bài tập không đồng nghĩa kiến thức đó đã được Meta hay chuyên gia kiểm chứng.
+- Chỉ đọc dữ liệu từ database trên máy nơi phần mềm chạy. ChatGPT không thể thấy bộ nhớ đã học trên máy của bạn nếu bạn chưa xuất hoặc chia sẻ dữ liệu đó.
+
 # Bản V1.10 – Học cường độ cao qua MiraiAPI (mục tiêu 10M quota/ngày)
 
 - Sau **Test gọi API Mirai thành công**, nếu bật **Học tập tối đa**, Học viện tự kích hoạt và bắt đầu xử lý hàng đợi tài liệu khi backend chạy.
@@ -7,7 +16,7 @@
 - **Không thể cam kết dùng hết đúng 10M quota/ngày** nếu không đủ nguồn học có ích, API rate limit/hết quota thật hoặc backend tắt. Không tạo hội thoại rỗng chỉ để tiêu quota.
 - Đặt giới hạn tiền tại nhà cung cấp MiraiAPI để tránh phát sinh chi phí ngoài dự kiến. Tài liệu chỉ được gửi lên MiraiAPI sau khi bạn xác nhận quyền sử dụng.
 
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.10.0)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.11.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 

@@ -3,9 +3,9 @@
 const ROUTES=[
   ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['growth','🚀','Tăng trưởng 7 ngày'],['pages','📣','100 Fanpage'],
   ['accounts','🦊','Tài khoản Firefox'],['content','📝','Nội dung & Lịch'],
-  ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['academy','🎓','Học viện 10M'],['settings','⚙️','Cài đặt']
+  ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['academy','🎓','Học viện 10M'],['knowledge','📖','Kho kiến thức đã học'],['settings','⚙️','Cài đặt']
 ];
-const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all',growthDetailId:null};
+const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all',growthDetailId:null,knowledge:{kind:'all',agent_id:'',q:'',confidence:'all',offset:0,limit:25,loading:false,loaded:false,requestId:0,overview:null,records:null,sourceOffset:0}};
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const F=(date)=>date?new Date(date).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}):'—';
 const short=(s,n=105)=>String(s||'').length>n?String(s).slice(0,n)+'…':String(s||'');
@@ -284,7 +284,7 @@ function renderBrains(){
   const b=S.data?.brain_overview||{};
   const cost=b.cost||{};
   const agents=b.agents||[];
-  return `${heading('Bộ não 9 nhân viên AI','Mỗi agent học từ sự kiện nội bộ, lưu bộ nhớ độc lập và chỉ gọi Claude khi thật sự cần.',`<button class="btn primary" data-action="brain.learn-now">↻ Xử lý bài học chờ</button>`)}
+  return `${heading('Bộ não 9 nhân viên AI','Mỗi agent học từ sự kiện nội bộ, lưu bộ nhớ độc lập và chỉ gọi Claude khi thật sự cần.',`<button class="btn ghost" data-route="knowledge">📖 Xem toàn bộ kiến thức</button><button class="btn primary" data-action="brain.learn-now">↻ Xử lý bài học chờ</button>`)}
   <div class="stat-grid">${stat('🧠','Bộ não',agents.length,'Không dùng chung lịch sử','#9782ff')}${stat('📚','Kinh nghiệm đã lưu',agents.reduce((n,a)=>n+Number(a.memory_count||0),0),'Lưu trên máy chủ của bạn','#64e6b4')}${stat('⏳','Bài học chờ xử lý',agents.reduce((n,a)=>n+Number(a.pending_learning||0),0),'Xử lý nội bộ, không tốn token','#ffc17c')}${stat('💵','Claude hôm nay','$'+Number(cost.today_usd||0).toFixed(4),'Giới hạn $'+Number(cost.daily_limit_usd||0).toFixed(2)+'/ngày','#79c4ff')}</div>
   <div class="card" style="margin-top:17px"><div class="space-between"><h2>🧠 Bộ nhớ riêng từng agent</h2><span class="badge green">Học theo sự kiện</span></div><p class="muted">Dịch vụ học chạy khi máy chủ phần mềm hoạt động. Agent ghi chú kết quả làm việc nhưng chỉ dữ liệu được xác minh mới được đánh dấu xác thực. Không gọi Claude liên tục khi không có nhiệm vụ.</p><div class="table-scroll"><table class="data-table"><thead><tr><th>Nhân viên</th><th>Ghi nhớ</th><th>Đang chờ</th><th>Đã xử lý</th><th>Claude hôm nay</th><th>Chi tiết</th></tr></thead><tbody>
     ${agents.map(a=>`<tr><td><strong>${E(a.name)}</strong></td><td>${Number(a.memory_count||0)}</td><td>${Number(a.pending_learning||0)}</td><td>${Number(a.processed_events||0)}</td><td>$${Number(cost.agents?.[a.id]||0).toFixed(4)}</td><td><button class="btn sm ghost" data-action="brain.memory" data-id="${E(a.id)}">Xem trí nhớ</button></td></tr>`).join('')}</tbody></table></div></div>
@@ -299,7 +299,7 @@ function renderAcademy(){
   const limit=Number(a.daily_token_limit||10000000),used=Number(u.used_quota_today||0),pct=Math.min(100,Math.max(0,used/Math.max(limit,1)*100));
   const trainingCount=Number(c.jobs_done||0),totalJobs=Number(c.jobs||0);
   const practiceDone=Number(c.practice_done||0),practiceTotal=Number(c.practice_total||0);
-  return `${heading('Học viện AI · 10 triệu quota/ngày','9 nhân viên học từ tài liệu có nguồn, tóm tắt chung một lần rồi ghi nhớ theo chuyên môn. Không tự quét Facebook.',`<button class="btn ghost" data-action="academy.toggle">${a.enabled?"⏸ Tạm dừng học tự động":"▶ Bật học tự động"}</button><button class="btn primary" data-action="academy.step">▶ Học một bước ngay</button>`)}
+  return `${heading('Học viện AI · 10 triệu quota/ngày','9 nhân viên học từ tài liệu có nguồn, tóm tắt chung một lần rồi ghi nhớ theo chuyên môn. Không tự quét Facebook.',`<button class="btn ghost" data-route="knowledge">📖 Xem kiến thức đã học</button><button class="btn ghost" data-action="academy.toggle">${a.enabled?"⏸ Tạm dừng học tự động":"▶ Bật học tự động"}</button><button class="btn primary" data-action="academy.step">▶ Học một bước ngay</button>`)}
     <div class="stat-grid">${stat('📚','Nguồn đã nạp',c.sources||0,'Tài liệu có quyền sử dụng','#9782ff')}${stat('🧩','Đoạn kiến thức',c.chunks||0,`${c.digests_done||0} đã tóm tắt`,'#64e6b4')}${stat('🎓','Thực hành',practiceDone+'/'+practiceTotal,`${c.practice_queued||0} chờ luyện`,'#ffc17c')}${stat('🪙','Quota MiraiAPI hôm nay',Number(used).toLocaleString('vi-VN'),`Đích tối đa: ${limit.toLocaleString('vi-VN')}`,'#79c4ff')}</div>
     <div class="card" style="margin-top:18px"><div class="space-between"><h2>📈 Hạn mức quota MiraiAPI</h2><span class="badge ${a.enabled?'green':'yellow'}">${a.enabled?'Đang bật học tự động':'Học tự động đang tắt'}</span></div>
        <p class="muted">${a.intensive_mode?'⚡ Chế độ học tích cực: đọc nguồn → rút bài học → thực hành theo chuyên môn.':'Học tiêu chuẩn.'} Kết nối: ${a.connection_verified?'✅ Đã test model':'⚠️ Chưa xác minh bằng Test API'} · ${Number(a.pending_steps||0)} bước chờ. Dừng khi hết kiến thức, không tạo yêu cầu rỗng.</p>
@@ -326,6 +326,64 @@ function renderAcademy(){
     </div></div>`;
 }
 
+// Unified knowledge history: source digests, agent lessons, practice, private
+// agent memories and Page memories. Records come only from SQLite, never UI mock data.
+const KNOWLEDGE_KINDS=[['all','Tất cả loại'],['digest','Tóm tắt nguồn'],['lesson','Bài học agent'],['practice','Thực hành / phản biện'],['agent_memory','Trí nhớ agent'],['page_memory','Trí nhớ Fanpage']];
+const knowledgeKindLabel=k=>KNOWLEDGE_KINDS.find(x=>x[0]===k)?.[1]||k;
+function knowledgeParams(includePage=false){
+  const k=S.knowledge;
+  const p=new URLSearchParams({kind:k.kind,agent_id:k.agent_id,q:k.q,confidence:k.confidence});
+  if(includePage){p.set('limit',String(k.limit));p.set('offset',String(k.offset));}
+  return p.toString();
+}
+async function loadKnowledge(){
+  const k=S.knowledge,requestId=++k.requestId;
+  k.loading=true;k.error='';render();
+  try{
+    const [overview,records]=await Promise.all([
+      api('/api/knowledge/overview'),api('/api/knowledge/records?'+knowledgeParams(true))]);
+    if(k.requestId!==requestId)return;
+    k.overview=overview;k.records=records;k.loaded=true;k.loading=false;
+  }catch(error){
+    if(k.requestId!==requestId)return;
+    k.loading=false;k.error=error.message;
+  }
+  if(S.route==='knowledge')render();
+}
+function renderKnowledge(){
+  const k=S.knowledge,o=k.overview||{},r=k.records||{},total=Number(r.total||0);
+  const start=total?k.offset+1:0,end=Math.min(k.offset+(r.items||[]).length,total);
+  const opts=(choices,v)=>choices.map(([value,label])=>`<option value="${E(value)}" ${selected(value,v)}>${E(label)}</option>`).join('');
+  const rows=(r.items||[]).map(record=>`<article class="knowledge-record">
+    <div class="space-between"><div class="knowledge-meta"><span class="badge blue">${E(knowledgeKindLabel(record.kind))}</span><span>${record.agent_name?'🤖 '+E(record.agent_name):record.page_name?'📣 '+E(record.page_name):'📚 Kiến thức chung'}</span></div><small class="muted">${F(record.created)}</small></div>
+    <h3>${E(record.title)}</h3><p class="knowledge-excerpt">${E(short(record.body,330))}</p>
+    <div class="knowledge-footer"><span class="${record.confidence==='verified'?'knowledge-verified':'knowledge-unverified'}">${record.confidence==='verified'?'✓ Đã xác minh':'◌ Chưa xác minh độc lập'}</span>
+      <span class="muted">${E(short(record.source_title||record.source_ref||'Không có nguồn chi tiết',95))}</span>
+      <button class="btn ghost sm" data-action="knowledge.view" data-id="${E(record.id)}">Xem toàn bộ →</button></div>
+  </article>`).join('');
+  const linkCsv='/api/knowledge/export?'+knowledgeParams(false)+'&fmt=csv';
+  const linkJson='/api/knowledge/export?'+knowledgeParams(false)+'&fmt=jsonl';
+  return `${heading('Kho kiến thức đã học','Xem nội dung thực sự lưu trong Học viện, bộ não agent và bộ nhớ Fanpage. Không bao gồm suy nghĩ nội bộ của model.',
+    `<button class="btn ghost" data-action="knowledge.refresh">↻ Làm mới</button><button class="btn ghost" data-action="knowledge.sources">📁 Tài liệu nguồn</button><a class="btn ghost" href="${E(linkJson)}">↓ JSONL đầy đủ</a><a class="btn primary" href="${E(linkCsv)}">↓ Xuất toàn bộ CSV</a>`)}
+    <div class="stat-grid">${stat('📖','Bản ghi kiến thức',o.total_records??'—','Gồm 5 loại, có thể trùng ý','#9782ff')}
+      ${stat('🎓','Bài học agent',o.by_kind?.lesson??'—','Kết quả đào tạo đã xong','#64e6b4')}
+      ${stat('🧪','Lượt thực hành',o.by_kind?.practice??'—','Tình huống mô phỏng','#ffc17c')}
+      ${stat('📚','Nguồn tài liệu',o.sources??'—','Tài liệu chủ sở hữu đã nạp','#79c4ff')}</div>
+    <div class="card" style="margin-top:17px"><h2>🔎 Tìm kiếm toàn bộ bộ nhớ</h2>
+      <form id="knowledgeFilter" class="knowledge-filter">
+        <div class="form-field"><label>Từ khóa</label><input class="input" name="q" value="${E(k.q)}" maxlength="160" placeholder="Tìm trong nội dung, tiêu đề và nguồn..."></div>
+        <div class="form-field"><label>Loại kiến thức</label><select class="select" name="kind">${opts(KNOWLEDGE_KINDS,k.kind)}</select></div>
+        <div class="form-field"><label>Nhân viên AI</label><select class="select" name="agent_id"><option value="">Tất cả nhân viên</option>${V('agents').map(a=>`<option value="${E(a.id)}" ${selected(a.id,k.agent_id)}>${E(a.name)}</option>`).join('')}</select></div>
+        <div class="form-field"><label>Độ tin cậy</label><select class="select" name="confidence">${opts([['all','Tất cả'],['verified','Đã xác minh'],['unverified','Chưa xác minh']],k.confidence)}</select></div>
+        <button type="submit" class="btn primary">Tìm kiếm</button>
+      </form><div class="office-note">${E(o.note||'Chỉ hiển thị dữ liệu lưu trong database. Bài học AI sinh ra chưa phải kết quả Facebook đã được kiểm chứng.')}</div></div>
+    <div class="card" style="margin-top:17px"><div class="space-between"><h2>🗂 Kết quả học tập</h2><span class="muted">${k.loading?'Đang tải...':`${start}–${end} / ${total.toLocaleString('vi-VN')} bản ghi`}</span></div>
+      ${k.error?`<div class="warn">${E(k.error)}</div>`:k.loading?empty('⏳','Đang tải bộ nhớ','Lấy dữ liệu từ SQLite cục bộ...'):
+      rows||empty('📭','Chưa có bài học phù hợp','Bạn có thể nạp tài liệu tại Học viện 10M hoặc bỏ bộ lọc để xem tất cả.')}
+      <div class="knowledge-pagination"><button class="btn ghost sm" data-action="knowledge.prev" ${k.offset===0||k.loading?'disabled':''}>← Trang trước</button><span class="muted">${k.offset?Math.floor(k.offset/k.limit)+1:1} / ${Math.max(1,Math.ceil(total/k.limit))}</span><button class="btn ghost sm" data-action="knowledge.next" ${!r.has_more||k.loading?'disabled':''}>Trang sau →</button></div>
+      <p class="card-sub">Tải CSV/JSONL xuất <strong>tất cả bản ghi khớp bộ lọc</strong>, không chỉ những bản ghi đang hiển thị trên trang. Không xuất API key hoặc cookie.</p>
+    </div>`;
+}
 function renderSettings(){
   const cfg=S.data.settings;
   const brain=S.data.brain_overview||{};
@@ -369,7 +427,7 @@ function renderSettings(){
 function render(){
   if(!S.data)return;
   window.OfficeLive?.unmount();
-  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,growth:renderGrowth,settings:renderSettings};
+  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,knowledge:renderKnowledge,growth:renderGrowth,settings:renderSettings};
   document.getElementById('view').innerHTML=(dict[S.route]||renderOffice)();
   if(S.route==='office'){
     const scene=window.OfficeLive?.mount(document.getElementById('office-live-stage'),S.data,id=>action('agent.details',id).catch(err=>toast(err.message,true)));
@@ -378,7 +436,7 @@ function render(){
   if(S.route==='ceo'){const el=document.getElementById('chatMessages');if(el)el.scrollTop=el.scrollHeight;}
 }
 async function reload(){S.data=await api('/api/bootstrap');render();}
-function navigate(route){if(!ROUTES.some(r=>r[0]===route))return;S.route=route;location.hash=route;render();window.scrollTo({top:0,behavior:'smooth'});}
+function navigate(route){if(!ROUTES.some(r=>r[0]===route))return;S.route=route;location.hash=route;render();if(route==='knowledge')loadKnowledge();window.scrollTo({top:0,behavior:'smooth'});}
 function pageForm(page=null){
   modal(page?'Sửa hồ sơ Fanpage':'Thêm Fanpage',
     field('Tên Fanpage','name',page?.name||'','text','required minlength="2"')+field('Đường dẫn Facebook','url',page?.url||'','url','placeholder="https://www.facebook.com/your-page" required')+
@@ -554,6 +612,33 @@ async function action(name,id,el){
     case 'claude.check':{const r=await api('/api/claude/check','POST');toast(r.ok?('Claude đã kết nối. Haiku: '+(r.haiku_available?'Có':'Không')+'; Sonnet: '+(r.sonnet_available?'Có':'Không')):'Không thể kiểm tra Claude',!r.ok);break;}
     case 'academy.toggle':{const was=!!S.data.academy?.enabled;await api('/api/settings','POST',{academy_enabled:!was});toast(was?'Đã tạm dừng học tự động.':'Đã bật học tự động khi server đang chạy.');await reload();break;}
     case 'academy.step':{const x=await api('/api/academy/step','POST');toast(x.status==='started'?'Đã gửi một bước học vào hàng đợi.':'Học viện đang xử lý.');setTimeout(reload,1500);break;}
+    case 'knowledge.refresh':{await loadKnowledge();break;}
+    case 'knowledge.prev':{S.knowledge.offset=Math.max(0,S.knowledge.offset-S.knowledge.limit);await loadKnowledge();break;}
+    case 'knowledge.next':{if(S.knowledge.records?.has_more){S.knowledge.offset+=S.knowledge.limit;await loadKnowledge();}break;}
+    case 'knowledge.view':{
+      const item=S.knowledge.records?.items?.find(x=>x.id===id);
+      if(!item)throw new Error('Bản ghi không còn trong danh sách đang xem.');
+      const origin=item.source_id?`<button type="button" class="btn ghost sm" data-action="knowledge.source" data-id="${E(item.source_id)}">📄 Xem tài liệu gốc</button>`:'';
+      modal('📖 '+knowledgeKindLabel(item.kind),`<h3>${E(item.title)}</h3><p class="muted">${E(item.agent_name||item.page_name||'Kiến thức chung')} · ${F(item.created)}</p>
+        <p class="muted">Nguồn: ${E(item.source_title||item.source_ref||'Không có nguồn chi tiết')} · ${item.confidence==='verified'?'Đã xác minh':'Chưa xác minh độc lập'}</p>
+        <div class="knowledge-full">${E(item.body)}</div><div class="actions">${origin}</div>`);
+      break;
+    }
+    case 'knowledge.source':{
+      const doc=await api('/api/knowledge/sources/'+encodeURIComponent(id));
+      modal('📄 '+doc.title,`<p class="muted">Nguồn: ${E(doc.source_ref||'Tài liệu nội bộ')} · ${Number(doc.chunks||0)} đoạn · ${F(doc.created)}</p><div class="knowledge-full">${E(doc.body)}</div>`);
+      break;
+    }
+    case 'knowledge.sources':{
+      const off=S.knowledge.sourceOffset;
+      const r=await api('/api/knowledge/sources?limit=30&offset='+off);
+      modal('📁 Tài liệu Học viện',`<p class="muted">Tổng cộng ${Number(r.total||0)} tài liệu · đang xem ${r.total?off+1:0}–${off+(r.items||[]).length}. Nhấn tài liệu để đọc toàn bộ bản gốc.</p>
+        ${r.items?.length?r.items.map(x=>`<div class="activity-item"><button type="button" class="btn ghost sm" data-action="knowledge.source" data-id="${E(x.id)}">${E(x.title)}</button><p>${E(short(x.source_ref||'Nguồn nội bộ',90))} · ${x.chunks} đoạn · ${x.lessons} bài học</p></div>`).join(''):empty('📭','Chưa có tài liệu')}
+        <div class="knowledge-pagination"><button type="button" class="btn ghost sm" data-action="knowledge.sources-prev" ${off===0?'disabled':''}>← Trước</button><button type="button" class="btn ghost sm" data-action="knowledge.sources-next" ${r.has_more?'':'disabled'}>Sau →</button></div>`);
+      break;
+    }
+    case 'knowledge.sources-prev':{S.knowledge.sourceOffset=Math.max(0,S.knowledge.sourceOffset-30);await action('knowledge.sources');break;}
+    case 'knowledge.sources-next':{S.knowledge.sourceOffset+=30;await action('knowledge.sources');break;}
     case 'brain.learn-now':{
       const result=await api('/api/brains/learn-now','POST');toast('Đã xử lý '+result.processed+' sự kiện học tập cục bộ, không dùng Claude.');await reload();break;
     }
@@ -581,6 +666,13 @@ document.addEventListener('submit',async e=>{
     e.preventDefault();if(S.busy)return;const input=e.target.elements.message;const msg=input.value.trim();if(!msg)return;
     S.busy=true;render();try{const r=await api('/api/ceo/chat','POST',{message:msg});await reload();if(r.mode==='error')toast('CEO AI gặp lỗi: xem trả lời trong hội thoại.',true);}
     catch(err){toast(err.message,true)}finally{S.busy=false;render();}
+  }
+  if(e.target.id==='knowledgeFilter'){
+    e.preventDefault();
+    const f=Object.fromEntries(new FormData(e.target).entries());
+    S.knowledge.kind=f.kind||'all';S.knowledge.agent_id=f.agent_id||'';
+    S.knowledge.confidence=f.confidence||'all';S.knowledge.q=(f.q||'').trim();
+    S.knowledge.offset=0;await loadKnowledge();return;
   }
   if(e.target.id==='academyForm'){
     e.preventDefault();const values=Object.fromEntries(new FormData(e.target).entries());
@@ -612,8 +704,8 @@ document.addEventListener('submit',async e=>{
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
-window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();}});
-(async()=>{try{await reload();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
+window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();if(route==='knowledge')loadKnowledge();}});
+(async()=>{try{await reload();if(S.route==='knowledge')await loadKnowledge();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
   try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy','growth'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
 
 
@@ -639,3 +731,6 @@ async function watchBackendRestart(){
 }
 watchBackendRestart();
 setInterval(watchBackendRestart,3000);
+// Keep knowledge readings fresh while new lessons arrive, but never disturb a
+// user's search input or an open full-text document.
+setInterval(()=>{if(S.route==='knowledge' && !S.knowledge.loading && !document.querySelector('#modal-root .modal') && !document.activeElement?.matches('input,textarea,select'))loadKnowledge();},30000);

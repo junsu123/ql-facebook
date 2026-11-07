@@ -86,3 +86,9 @@ V1.9: TEST MIRAIAPI TRUC TIEP
 - LU UY: moi lan nhan test co the ton quota; day khong phai chi la GET danh sach model.
 
 V1.10: Vào Cài đặt → MiraiAPI, nhập key/model/hệ số quota, chọn Học tập tối đa, nhấn Test API. Nếu thành công, Học viện tự bật. Vào Học viện 10M nạp tài liệu hợp lệ; agent được học, thực hành và phân bổ quota theo dữ liệu. Không đảm bảo dùng hết 10M nếu thiếu tài liệu hay dịch vụ giới hạn.
+
+V1.11: KHO KIEN THUC DA HOC
+- Vao menu "Kho kien thuc da hoc" de xem 5 loai kien thuc: tom tat, bai hoc, thuc hanh, tri nho agent va tri nho Fanpage.
+- Tim kiem, loc theo agent va do tin cay; bam "Xem toan bo" de xem nguyen van ket qua da luu va nguon goc.
+- Bam "Xuat toan bo CSV" hoac "JSONL day du" de tai tat ca ket qua dung bo loc (khong chi trang dang xem).
+- Khi Hoi hoc chua co tai lieu/ket qua, man hinh hien chua co du lieu, khong tao bai hoc gia.

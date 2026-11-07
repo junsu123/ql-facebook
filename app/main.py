@@ -14,8 +14,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, Body, HTTPException, Request, UploadFile, File
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, Body, HTTPException, Request, UploadFile, File, Query
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image, UnidentifiedImageError
@@ -26,6 +26,8 @@ from .ai import (ModelError, ceo_message, config, create_task, execute_task,
 from .brains import (agent_brain_overview, relevant_memories, learning_tick,
                      enqueue_learning, spent_report, AGENT_IDS)
 from .academy import academy_overview, add_source, academy_tick, recover_interrupted_academy_jobs
+from .knowledge import (browse_knowledge, knowledge_overview, source_detail,
+                        list_sources as list_knowledge_sources, export_knowledge)
 from .mirai import available_models, mirai_report, init_mirai, test_mirai_completion
 from .growth import (create_sprint, get_sprint, list_sprints, record_progress,
                      set_baseline, generate_ceo_plan, attach_page)
@@ -36,7 +38,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.10.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.11.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -78,7 +80,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.10.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.11.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -273,6 +275,52 @@ def run_academy_step():
             return {'status':'already_running'}
         _academy_future=executor.submit(academy_tick)
     return {'status':'started'}
+
+@app.get('/api/knowledge/overview')
+def get_knowledge_overview():
+    """Counts over the complete local learning history (no model call)."""
+    return knowledge_overview()
+
+@app.get('/api/knowledge/records')
+def get_knowledge_records(kind:str='all',agent_id:str='',q:str='',confidence:str='all',
+                          limit:int=Query(default=25,ge=1,le=100),
+                          offset:int=Query(default=0,ge=0,le=1000000)):
+    try:
+        return browse_knowledge(kind=kind,agent_id=agent_id,q=q,confidence=confidence,
+                                limit=limit,offset=offset)
+    except ValueError as exc:
+        raise HTTPException(400,str(exc)) from exc
+
+@app.get('/api/knowledge/export')
+def download_knowledge(fmt:str='csv',kind:str='all',agent_id:str='',q:str='',confidence:str='all'):
+    """Export all matching learned records, not merely the first page.
+
+    Response is streamed so large academy databases do not exhaust server RAM.
+    """
+    try:
+        # Validate query *before* returning a streaming response (HTTP 400).
+        browse_knowledge(kind=kind,agent_id=agent_id,q=q,confidence=confidence,limit=1,offset=0)
+        if fmt not in ('csv','jsonl'):raise ValueError('Định dạng xuất không hợp lệ.')
+        stream=export_knowledge(fmt=fmt,kind=kind,agent_id=agent_id,q=q,confidence=confidence)
+    except ValueError as exc:
+        raise HTTPException(400,str(exc)) from exc
+    return StreamingResponse(stream,media_type='text/csv; charset=utf-8' if fmt=='csv'
+        else 'application/x-ndjson; charset=utf-8',headers={
+        'Content-Disposition':f'attachment; filename="ai-fanpage-knowledge.{fmt}"',
+        'Cache-Control':'no-store',
+        'X-Content-Type-Options':'nosniff'})
+
+@app.get('/api/knowledge/sources')
+def get_knowledge_sources(q:str='',limit:int=Query(default=30,ge=1,le=100),
+                          offset:int=Query(default=0,ge=0,le=1000000)):
+    try:return list_knowledge_sources(q=q,limit=limit,offset=offset)
+    except ValueError as exc:raise HTTPException(400,str(exc)) from exc
+
+@app.get('/api/knowledge/sources/{source_id}')
+def get_knowledge_source(source_id:str):
+    item=source_detail(source_id)
+    if not item:raise HTTPException(404,'Không tìm thấy tài liệu.')
+    return item
 
 @app.get('/api/brains')
 def brains_overview():
