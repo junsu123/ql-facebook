@@ -38,7 +38,7 @@ def load_keys() -> dict:
 
 
 def save_key(provider: str, value: str):
-    if provider != 'claude':
+    if provider not in ('claude','mirai'):
         raise ValueError('Nhà cung cấp không được hỗ trợ')
     keys = load_keys()
     if value:
@@ -66,6 +66,7 @@ def config() -> dict:
     out['provider'] = 'claude'
     out['model_selection'] = 'automatic'
     out['claude_configured'] = bool(get_key('claude'))
+    out['mirai_configured'] = bool(get_key('mirai'))
     return out
 
 

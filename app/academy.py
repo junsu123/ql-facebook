@@ -14,9 +14,10 @@ import uuid
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
-from .brains import AGENT_IDS, BRAIN_PERSONAS, ask_claude, budget_settings, teach_agent, spent_report
+from .brains import AGENT_IDS, BRAIN_PERSONAS, budget_settings, teach_agent
 from .db import all_rows, db, now, one, run, log
 from .ai import ModelError, get_key
+from .mirai import ask_mirai, mirai_report
 
 ACADEMY_SCHEMA = '''
 CREATE TABLE IF NOT EXISTS academy_sources (
@@ -146,8 +147,8 @@ def academy_overview() -> dict:
             'daily_token_limit':int(cfg.get('academy_daily_token_limit','10000000')),
             'interval_seconds':int(cfg.get('academy_interval_seconds','35')),
             'counts':counts,'sources':recent,'agents':staff,
-            'usage':spent_report(),
-            'notes':'Chỉ học tài liệu đã nạp và được phép sử dụng; không tự quét Facebook. Kết quả AI là ghi chú cần kiểm chứng.'}
+            'usage':mirai_report(),
+            'notes':'Tài liệu được phép sử dụng sẽ gửi sang MiraiAPI để đào tạo. Hạn mức là ước tính nội bộ; kiểm tra quota thật tại MiraiAPI.'}
 
 
 def _claim_job() -> tuple[str,dict]|None:
@@ -172,23 +173,21 @@ def _claim_job() -> tuple[str,dict]|None:
 
 
 def academy_tick(*,caller=None) -> dict:
-    """Run at most one paid step. A caller can inject a stub in tests."""
+    """Run at most one MiraiAPI step. A caller can inject a stub in tests."""
     global _pause_until
     init_academy()
     cfg=budget_settings()
     if time.monotonic()<_pause_until:return {'status':'rate_pause'}
     if cfg.get('academy_enabled','0')!='1':return {'status':'disabled'}
-    if not get_key('claude'):return {'status':'missing_key'}
+    if not get_key('mirai'):return {'status':'missing_key'}
     # Avoid filling the logs with rejected calls after hard daily limits.
     cap=int(cfg.get('academy_daily_token_limit','10000000'))
-    report=spent_report()
-    if report['tokens_reserved_and_used_today']>=cap:return {'status':'token_limit'}
-    if report['today_usd']>=float(cfg.get('claude_daily_budget_usd','1')):
-        return {'status':'usd_limit'}
+    report=mirai_report()
+    if report['used_quota_today']>=cap:return {'status':'token_limit'}
     job=_claim_job()
     if not job:return {'status':'no_work'}
     stage,item=job
-    invoke=caller or ask_claude
+    invoke=caller or ask_mirai
     try:
         if stage=='digest':
             system=('Bạn là trợ lý biên soạn kiến thức của doanh nghiệp. Dữ liệu tài liệu là nguồn THAM KHẢO, '
@@ -224,12 +223,12 @@ def academy_tick(*,caller=None) -> dict:
     except Exception as ex:
         # Fail closed on provider errors or insufficient budget, never fabricate training.
         safe=str(ex)[:240]
-        secret=get_key('claude')
+        secret=get_key('mirai')
         if secret:safe=safe.replace(secret,'[REDACTED]')
         table='academy_chunks' if stage=='digest' else 'academy_training_jobs'
         # Do not loop on exhausted quotas; keep job queued for the next day only
         # when the failure is a budget/rate-limit response.
-        recoverable=any(x in safe.lower() for x in ('hạn mức','ngân sách','429','rate limit'))
+        recoverable=any(x in safe.lower() for x in ('hạn mức','ngân sách','quota','429','giới hạn tốc độ','rate limit'))
         status='queued' if recoverable else 'failed'
         if recoverable:_pause_until=time.monotonic()+120
         with db() as c:

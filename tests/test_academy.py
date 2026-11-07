@@ -35,15 +35,15 @@ def test_digest_then_agent_learning_without_real_api(monkeypatch):
         c.execute('DELETE FROM academy_sources')
         c.execute('DELETE FROM claude_usage')
     src=add_source('Kiểm thử quy trình 24 giờ', 'Hướng dẫn làm nội dung Facebook có ích. '*80,agents=['research','content'])
-    save_key('claude','sk-test-academy-no-network')
+    save_key('mirai','sk-test-academy-no-network')
     r=client.post('/api/settings',json={'academy_enabled':True,'academy_daily_token_limit':10_000_000,
         'claude_daily_budget_usd':100,'claude_agent_daily_budget_usd':50})
     assert r.status_code==200
     calls=[]
-    def mock_claude(agent,system,prompt,purpose,max_tokens):
+    def mock_mirai(agent,system,prompt,purpose,max_tokens):
         calls.append((agent,purpose))
         return 'Kiến thức tóm tắt có nguồn; chỉ áp dụng quy tắc sau khi xác minh và tuân thủ chính sách Meta.'
-    outcomes=[academy_tick(caller=mock_claude) for _ in range(src['chunks']+src['jobs'])]
+    outcomes=[academy_tick(caller=mock_mirai) for _ in range(src['chunks']+src['jobs'])]
     assert any(x['status']=='digested' for x in outcomes)
     assert any(x['status']=='trained' for x in outcomes)
     assert len(calls)==src['chunks']+src['jobs']

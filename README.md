@@ -1,8 +1,25 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.7.0)
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.8.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
-> **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. Chỉ cấu hình Claude API; tự chọn model theo loại nhiệm vụ, giữ giới hạn ngân sách.
+> **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. CEO dùng Claude API trực tiếp; Học viện 10M dùng MiraiAPI riêng với giới hạn quota.
+
+## V1.8.0 – Học viện 10M dùng riêng MiraiAPI (miraiapi.com)
+
+- **Tách nhà cung cấp:** CEO và 8 agent vẫn dùng khóa Claude trực tiếp; toàn bộ yêu cầu biên soạn và đào tạo trong Học viện 10M được gửi tới **MiraiAPI**. Không làm thay đổi các nhiệm vụ CEO.
+- **Kết nối chính thức:** Base URL `https://api.miraiapi.com/v1` và `POST /chat/completions` (OpenAI-compatible, `Authorization: Bearer <key>`). **Không nhầm** với dịch vụ `mirapi.ai`.
+- Cài đặt có thêm **MiraiAPI Key** (mã hóa riêng), **model** và **hệ số quota của model**. Tên model phải được cấp cho key; trước khi bật học, kiểm tra trong mục `Model & giá` của `https://miraiapi.com/usage/`. Có nút lấy danh sách model từ `/v1/models` nếu provider hỗ trợ.
+- **10 triệu quota quy đổi/ngày**, không phải 10 triệu token nguyên gốc: `quota = (prompt_tokens + completion_tokens * 5) * model_ratio`. Hệ số mặc định 1 là ví dụ, cần điền đúng hệ số model đang dùng. Báo cáo là **ước tính nội bộ**, quota/hạn dùng thật xem ở trang MiraiAPI.
+- Giao dịch dự trù quota trước khi gửi request, khóa SQLite `BEGIN IMMEDIATE` tránh nhiều agent vượt hạn mức; ghi lại số token thực khi có usage. Khi timeout hoặc không có usage, giữ phần quota dự trù để kiểm tra lại thay vì tự gửi lại.
+- Cơ chế học vẫn chỉ nạp văn bản có quyền sử dụng, tóm tắt chung rồi đào tạo 9 agent; không tự truy cập Facebook, không gọi model để cố tiêu hết hạn mức. Nguồn tài liệu đào tạo được chuyển tới nhà cung cấp MiraiAPI khi bạn bật học.
+- **Chưa kiểm thử bằng MiraiAPI key thật**; chỉ có mock API. Số liệu quota nội bộ không thay thế kiểm tra hạn dùng và quota trong tài khoản MiraiAPI. Khi provider thay đổi định dạng hoặc quy tắc, cần cập nhật connector.
+
+### Kích hoạt MiraiAPI
+
+1. Vào `Cài đặt`, nhập **MiraiAPI Key** vào phần Học viện (không điền vào ô Claude), model được cấp quyền và **hệ số ratio** đúng theo trang `https://miraiapi.com/usage/#models`.
+2. Bấm **Lưu**, chọn **Kiểm tra MiraiAPI và các model**; nếu dịch vụ không hỗ trợ liệt kê model, hãy đối chiếu tên model trong tài khoản.
+3. Giới hạn quota mặc định 10.000.000/ngày, bật Học viện, nạp dữ liệu có quyền và bấm học một bước. CEO vẫn dùng khóa Claude trực tiếp như cũ.
+4. Theo dõi `Học viện 10M` và trang kiểm tra quota chính thức; ngừng học nếu quota nội bộ hoặc hạn mức thực không đủ.
 
 ## V1.7.0 – Tự khởi động lại khi có code mới tải về
 
@@ -30,7 +47,7 @@ Phần mềm quản trị marketing AI dạng **local-first**, có giao diện v
 - **Không có Meta API và không tự đăng bài.** Page và số liệu do người dùng liên kết/nhập thủ công; những tuyên bố về sức khỏe phải được kiểm chứng trước khi xuất bản. Không tạo follow/view giả, không đăng spam hoặc giả lập kết quả khách hàng.
 - Tài liệu tham khảo chính thức từ Meta: <https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/> và <https://www.facebook.com/business/help/397273916756139>.
 
-## V1.5.0 – Học viện AI 10 triệu token/ngày (nguồn có quyền sử dụng)
+## V1.5.0 – Học viện Claude cũ (đã thay bằng MiraiAPI ở V1.8)
 
 - Menu **Học viện 10M**: nạp tài liệu văn bản có nguồn, chống trùng bằng SHA-256, cắt đoạn 4.000 ký tự và tạo bài huấn luyện riêng cho 9 agent.
 - **Tóm tắt dùng chung một lần mỗi đoạn** rồi tạo bài học theo vai trò CEO/Research/Strategy/Content/Creative/Publishing/Customer/Analytics/Compliance. Bài học lưu bộ nhớ riêng theo nguồn, **chưa tự xác thực là sự thật**.

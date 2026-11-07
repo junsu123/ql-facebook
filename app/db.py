@@ -126,6 +126,8 @@ def initialize():
     init_brains()
     from .academy import init_academy
     init_academy()
+    from .mirai import init_mirai
+    init_mirai()
     from .growth import init_growth
     init_growth()
 

@@ -296,16 +296,16 @@ function renderBrains(){
 }
 function renderAcademy(){
   const a=S.data.academy||{},c=a.counts||{},u=a.usage||{};
-  const limit=Number(a.daily_token_limit||10000000),used=Number(u.tokens_reserved_and_used_today||0),pct=Math.min(100,Math.max(0,used/Math.max(limit,1)*100));
+  const limit=Number(a.daily_token_limit||10000000),used=Number(u.used_quota_today||0),pct=Math.min(100,Math.max(0,used/Math.max(limit,1)*100));
   const trainingCount=Number(c.jobs_done||0),totalJobs=Number(c.jobs||0);
-  return `${heading('Học viện AI · 10 triệu token/ngày','9 nhân viên học từ tài liệu có nguồn, tóm tắt chung một lần rồi ghi nhớ theo chuyên môn. Không tự quét Facebook.',`<button class="btn ghost" data-action="academy.toggle">${a.enabled?"⏸ Tạm dừng học tự động":"▶ Bật học tự động"}</button><button class="btn primary" data-action="academy.step">▶ Học một bước ngay</button>`)}
-    <div class="stat-grid">${stat('📚','Nguồn đã nạp',c.sources||0,'Tài liệu có quyền sử dụng','#9782ff')}${stat('🧩','Đoạn kiến thức',c.chunks||0,`${c.digests_done||0} đã tóm tắt`,'#64e6b4')}${stat('🎓','Bài huấn luyện',trainingCount+'/'+totalJobs,`${c.jobs_queued||0} đang chờ`,'#ffc17c')}${stat('🪙','Token hôm nay',Number(used).toLocaleString('vi-VN'),`Hạn mức: ${limit.toLocaleString('vi-VN')}`,'#79c4ff')}</div>
-    <div class="card" style="margin-top:18px"><div class="space-between"><h2>📈 Hạn mức token Claude</h2><span class="badge ${a.enabled?'green':'yellow'}">${a.enabled?'Đang bật học tự động':'Học tự động đang tắt'}</span></div>
-       <p class="muted">Hệ thống theo dõi input + output + cache từ usage API và token dự trù của yêu cầu đang chạy. Quota không đồng nghĩa API miễn phí.</p>
+  return `${heading('Học viện AI · 10 triệu quota/ngày','9 nhân viên học từ tài liệu có nguồn, tóm tắt chung một lần rồi ghi nhớ theo chuyên môn. Không tự quét Facebook.',`<button class="btn ghost" data-action="academy.toggle">${a.enabled?"⏸ Tạm dừng học tự động":"▶ Bật học tự động"}</button><button class="btn primary" data-action="academy.step">▶ Học một bước ngay</button>`)}
+    <div class="stat-grid">${stat('📚','Nguồn đã nạp',c.sources||0,'Tài liệu có quyền sử dụng','#9782ff')}${stat('🧩','Đoạn kiến thức',c.chunks||0,`${c.digests_done||0} đã tóm tắt`,'#64e6b4')}${stat('🎓','Bài huấn luyện',trainingCount+'/'+totalJobs,`${c.jobs_queued||0} đang chờ`,'#ffc17c')}${stat('🪙','Quota MiraiAPI hôm nay',Number(used).toLocaleString('vi-VN'),`Hạn mức: ${limit.toLocaleString('vi-VN')}`,'#79c4ff')}</div>
+    <div class="card" style="margin-top:18px"><div class="space-between"><h2>📈 Hạn mức quota MiraiAPI</h2><span class="badge ${a.enabled?'green':'yellow'}">${a.enabled?'Đang bật học tự động':'Học tự động đang tắt'}</span></div>
+       <p class="muted">Hệ thống ước tính quota = (input + 5 × output) × hệ số model. Yêu cầu đang chạy giữ khoản dự trù để tránh vượt hạn mức.</p>
        <div class="academy-progress"><div class="academy-progress-fill" style="width:${pct}%"></div></div>
-       <div class="space-between"><strong>${used.toLocaleString('vi-VN')} / ${limit.toLocaleString('vi-VN')} token</strong><span class="muted">${pct.toFixed(2)}%</span></div>
-       <p class="card-sub">Ngân sách USD còn được kiểm soát độc lập: $${Number(u.today_usd||0).toFixed(4)} / $${Number(u.daily_limit_usd||0).toFixed(2)} hôm nay. Nếu chạm hạn mức USD hoặc thiếu nguồn học, hệ thống không tự tiêu token để lấp đầy chỉ tiêu.</p>
-       <div class="warn">Đây là giới hạn nội bộ, không phải thông tin quota thật từ Anthropic. Hãy kiểm tra giới hạn và hóa đơn trong Claude Console. ${Number(S.data.settings.daily_llm_call_limit||200)<1000?'Giới hạn '+E(S.data.settings.daily_llm_call_limit||'200')+' lượt gọi/ngày đang khá thấp để dùng nhiều triệu token; có thể tăng ở Cài đặt nếu hạn mức thực cho phép.':''}</div>
+       <div class="space-between"><strong>${used.toLocaleString('vi-VN')} / ${limit.toLocaleString('vi-VN')} quota</strong><span class="muted">${pct.toFixed(2)}%</span></div>
+       <p class="card-sub">Model Học viện: <strong>${E(u.model||'chưa cấu hình')}</strong> · hệ số quota: <strong>${Number(u.model_ratio||1)}</strong>. Học viện không trừ ngân sách Claude trực tiếp; quota thực tế do MiraiAPI quyết định.</p>
+       <div class="warn">Đây là quota <strong>ước tính nội bộ</strong>, không phải số dư đã xác minh. Kiểm tra quota thực tại <a href="https://miraiapi.com/usage/" target="_blank" rel="noopener noreferrer">miraiapi.com/usage</a>. Mỗi model có hệ số khác nhau; nhập đúng hệ số từ bảng Model &amp; giá. ${u.configured?'':'<strong>Chưa có MiraiAPI Key.</strong>'}</div>
     </div>
     <div class="grid-2" style="margin-top:17px"><div class="card"><h2>📥 Nạp nguồn đào tạo</h2><p class="muted">Dán tài liệu bạn sở hữu hoặc được phép sử dụng. Bản này nhận văn bản thuần tối đa 300.000 ký tự/lần; không tự thu thập dữ liệu Facebook.</p>
       <form id="academyForm">
@@ -327,7 +327,7 @@ function renderSettings(){
   const cfg=S.data.settings;
   const brain=S.data.brain_overview||{};
   const routing=brain.routing||{};
-  return `${heading('Cài đặt phần mềm','Chỉ cấu hình Claude AI. Nhân viên tự chọn model tiết kiệm theo độ khó nhiệm vụ.',`<span class="badge green">🔒 Localhost only</span>`)}
+  return `${heading('Cài đặt phần mềm','CEO dùng Claude trực tiếp; Học viện 10M dùng MiraiAPI độc lập.',`<span class="badge green">🔒 Localhost only</span>`)}
     <div class="columns"><div class="card"><h2>🔵 Kết nối Claude AI</h2><p class="card-sub">Chỉ cần một Claude API key cho 9 agent. Lưu key trước khi bấm Kiểm tra. Key được mã hóa trong dữ liệu cục bộ; không hiển thị lại sau khi lưu.</p>
     <form id="settingsForm" style="margin-top:17px">
     ${field('Claude API key'+(cfg.claude_configured?' · Đã lưu':''),'claude_key','','password','placeholder="Để trống nếu muốn giữ API key đã lưu"')}
@@ -337,9 +337,16 @@ function renderSettings(){
     ${field('Hạn mức Claude toàn công ty (USD/ngày)','claude_daily_budget_usd',cfg.claude_daily_budget_usd??'1.00','number','min="0" max="1000" step="0.01" required')}
     ${field('Hạn mức Claude mỗi agent (USD/ngày)','claude_agent_daily_budget_usd',cfg.claude_agent_daily_budget_usd??'0.25','number','min="0" max="1000" step="0.01" required')}
     ${field('Giới hạn lượt gọi Claude/ngày','daily_llm_call_limit',cfg.daily_llm_call_limit??'200','number','min="1" max="10000" required')}
-    ${field('Hạn mức token toàn công ty/ngày','academy_daily_token_limit',cfg.academy_daily_token_limit??'10000000','number','min="10000" max="100000000" step="10000" required')}
+    <div class="subtle-divider"></div><h2>🎓 MiraiAPI – chỉ dùng cho Học viện 10M</h2>
+    <p class="muted">Base URL cố định: <code>https://api.miraiapi.com/v1</code> (không phải mirapi.ai). Key được lưu mã hóa riêng với Claude. Nguồn tài liệu của học viện sẽ được gửi đến MiraiAPI sau khi bạn bật tự học.</p>
+    ${field('MiraiAPI Key'+(cfg.mirai_configured?' · Đã lưu':''),'mirai_key','','password','placeholder="Để trống để giữ key đã lưu" autocomplete="off"')}
+    ${field('Model MiraiAPI cho Học viện','academy_mirai_model',cfg.academy_mirai_model||'claude-opus-4.8','text','placeholder="Dùng tên model được phép của key" required')}
+    ${field('Hệ số quota của model (từ bảng giá MiraiAPI)','academy_mirai_ratio',cfg.academy_mirai_ratio||'1','number','min="0.01" max="100" step="0.01" required')}
+    <div class="actions"><button class="btn ghost" type="button" data-action="mirai.check">🔎 Kiểm tra MiraiAPI và các model</button></div>
+    <p class="muted">Quota được tính (input + output × 5) × hệ số model. Hệ số mặc định 1 chỉ là giá trị mẫu; hãy xác nhận trên <a href="https://miraiapi.com/usage/#models" target="_blank" rel="noopener noreferrer">MiraiAPI Model & giá</a> trước khi bật học.</p>
+    ${field('Hạn mức quota MiraiAPI/ngày','academy_daily_token_limit',cfg.academy_daily_token_limit??'10000000','number','min="10000" max="100000000" step="10000" required')}
     ${field('Khoảng cách giữa các bước học (giây)','academy_interval_seconds',cfg.academy_interval_seconds??'35','number','min="10" max="3600" required')}
-    <label class="brain-option"><input type="checkbox" name="academy_enabled" ${cfg.academy_enabled==='1'?'checked':''}> Bật Học viện AI tự học khi server đang chạy (có thể phát sinh phí Claude)</label>
+    <label class="brain-option"><input type="checkbox" name="academy_enabled" ${cfg.academy_enabled==='1'?'checked':''}> Bật Học viện AI bằng MiraiAPI khi server đang chạy (có thể tiêu quota MiraiAPI)</label>
     <label class="brain-option"><input type="checkbox" name="claude_cache_enabled" ${cfg.claude_cache_enabled==='1'?'checked':''}> Dùng lại kết quả giống hệt trong 6 giờ & prompt caching</label>
     <label class="brain-option"><input type="checkbox" name="brain_learning_enabled" ${cfg.brain_learning_enabled==='1'?'checked':''}> Học từ sự kiện nội bộ khi chương trình đang chạy (không tốn Claude khi rảnh)</label>
     <label class="brain-option"><input type="checkbox" name="auto_run_agents" ${cfg.auto_run_agents==='1'?'checked':''}> Tự chạy hàng đợi agent trong giới hạn ngân sách</label>
@@ -507,6 +514,7 @@ async function action(name,id,el){
       if(!p)throw new Error('Hãy chọn Fanpage trước.');
       const r=await api('/api/pages/'+p+'/learn','POST');toast('Đã lưu bài học từ '+r.samples+' dòng số liệu.');modal('🧠 Kết quả học từ dữ liệu',`<p>${E(r.note)}</p>`);break;
     }
+    case 'mirai.check':{const r=await api('/api/mirai/check','POST');toast(r.ok?('MiraiAPI kết nối. Model khả dụng: '+(r.models||[]).slice(0,10).join(', ')):'Không thể kiểm tra MiraiAPI',!r.ok);break;}
     case 'claude.check':{const r=await api('/api/claude/check','POST');toast(r.ok?('Claude đã kết nối. Haiku: '+(r.haiku_available?'Có':'Không')+'; Sonnet: '+(r.sonnet_available?'Có':'Không')):'Không thể kiểm tra Claude',!r.ok);break;}
     case 'academy.toggle':{const was=!!S.data.academy?.enabled;await api('/api/settings','POST',{academy_enabled:!was});toast(was?'Đã tạm dừng học tự động.':'Đã bật học tự động khi server đang chạy.');await reload();break;}
     case 'academy.step':{const x=await api('/api/academy/step','POST');toast(x.status==='started'?'Đã gửi một bước học vào hàng đợi.':'Học viện đang xử lý.');setTimeout(reload,1500);break;}
@@ -556,6 +564,9 @@ document.addEventListener('submit',async e=>{
       payload.claude_cache_enabled=!!f.claude_cache_enabled;
       payload.brain_learning_enabled=!!f.brain_learning_enabled;
       if(f.claude_key?.trim())payload.claude_key=f.claude_key.trim();
+      if(f.mirai_key?.trim())payload.mirai_key=f.mirai_key.trim();
+      payload.academy_mirai_model=(f.academy_mirai_model||'').trim();
+      payload.academy_mirai_ratio=Number(f.academy_mirai_ratio);
     }else if(e.target.id==='firefoxForm'){
       payload.firefox_path=f.firefox_path??current.firefox_path;
     }

@@ -7,7 +7,7 @@ AI FANPAGE COMPANY - HUONG DAN KHOI DONG WINDOWS
 4. Nhan DOP CHUOT vao start_windows.bat.
 5. Lan dau, phan mem cai thu vien Python (can Internet).
 6. Neu trinh duyet chua tu mo, truy cap http://127.0.0.1:8765
-7. Vao Cai dat de nhap DUY NHAT Claude API key; Agent tu chon model tiet kiem.
+7. Vao Cai dat de nhap Claude API key cho CEO/agent; Hoc vien 10M dung MiraiAPI key rieng.
 8. Vao Tai khoan Firefox > Them tai khoan. Firefox mo cho ban dang nhap thu cong.
 9. Vao Fanpage > Them Page + du lieu san pham.
 10. Vao AI CEO > Tao chien dich nhieu Page > Chay hang doi.
@@ -70,3 +70,10 @@ CAP NHAT VA KHOI DONG LAI TU DONG (V1.7):
 3. Phan mem se doi tac vu AI ket thuc, tu khoi dong lai backend va refresh giao dien.
 4. Neu loi, xem %%LOCALAPPDATA%%\AI-Fanpage-Company\logs\startup.log.
 5. Khong xoa data, profiles, .venv hoac reset git --hard.
+
+PHIEN BAN 1.8: HOC VIEN 10M DUNG MIRAIAPI
+- Vao Cai dat > MiraiAPI – chi dung cho Hoc vien 10M, nhap key, model va he so quota.
+- Base URL co dinh: https://api.miraiapi.com/v1, khong dung dich vu mirapi.ai.
+- CEO/agent thuc thi nhiem vu van su dung Claude API truc tiep.
+- Quota hoc vien = (input + output x 5) x ratio model; theo doi tai miraiapi.com/usage/.
+- Chi bat hoc khi da cung cap tai lieu duoc phep su dung; khong can dua key vao log, Github hay chat.

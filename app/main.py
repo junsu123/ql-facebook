@@ -26,6 +26,7 @@ from .ai import (ModelError, ceo_message, config, create_task, execute_task,
 from .brains import (agent_brain_overview, relevant_memories, learning_tick,
                      enqueue_learning, spent_report, AGENT_IDS)
 from .academy import academy_overview, add_source, academy_tick, recover_interrupted_academy_jobs
+from .mirai import available_models, mirai_report, init_mirai
 from .growth import (create_sprint, get_sprint, list_sprints, record_progress,
                      set_baseline, generate_ceo_plan, attach_page)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
@@ -35,7 +36,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.7.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.8.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -77,7 +78,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.7.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.8.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -137,6 +138,9 @@ class SettingsChange(BaseModel):
     # instead of silently re-enabling another provider.
     model_config = ConfigDict(extra='forbid')
     claude_key:str|None=None
+    mirai_key:str|None=None
+    academy_mirai_model:str|None=Field(default=None,min_length=1,max_length=100,pattern=r'^[A-Za-z0-9][A-Za-z0-9._:-]*$')
+    academy_mirai_ratio:float|None=Field(default=None,ge=0.01,le=100)
     daily_llm_call_limit:int|None=Field(default=None,ge=1,le=10000)
     auto_run_agents:bool|None=None
     firefox_path:str|None=None
@@ -154,7 +158,8 @@ def update_settings(req:SettingsChange):
     saved=('daily_llm_call_limit','firefox_path','auto_run_agents',
            'claude_cache_enabled','brain_learning_enabled',
            'claude_daily_budget_usd','claude_agent_daily_budget_usd',
-           'academy_daily_token_limit','academy_enabled','academy_interval_seconds')
+           'academy_daily_token_limit','academy_enabled','academy_interval_seconds',
+           'academy_mirai_model','academy_mirai_ratio')
     with db() as c:
         c.execute("INSERT INTO settings(key,value) VALUES('provider','claude') ON CONFLICT(key) DO UPDATE SET value='claude'")
         for key in saved:
@@ -164,7 +169,9 @@ def update_settings(req:SettingsChange):
             c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',(key,value))
     if 'claude_key' in values:
         save_key('claude',values['claude_key'])
-    log('ceo','settings','Đã cập nhật cấu hình Claude tự chọn model và ngân sách (không ghi API key).')
+    if 'mirai_key' in values:
+        save_key('mirai',values['mirai_key'])
+    log('ceo','settings','Đã cập nhật cấu hình Claude và MiraiAPI Học viện (không ghi API key).')
     return {'ok':True,'settings':config()}
 
 @app.post('/api/claude/check')
@@ -186,6 +193,17 @@ def claude_connection_check():
         raise HTTPException(400,f'Claude từ chối kiểm tra key: HTTP {e.response.status_code}') from e
     except (httpx.RequestError,ValueError) as e:
         raise HTTPException(503,'Không thể kết nối Claude Models API để kiểm tra.') from e
+
+@app.post('/api/mirai/check')
+def mirai_connection_check():
+    try:
+        return available_models()
+    except ModelError as exc:
+        raise HTTPException(400,str(exc)) from exc
+
+@app.get('/api/mirai/usage')
+def get_mirai_usage():
+    return mirai_report()
 
 @app.get('/api/academy')
 def get_academy():
@@ -214,8 +232,8 @@ def run_academy_step():
     global _academy_future
     if config().get('academy_enabled','0')!='1':
         raise HTTPException(400,'Hãy bật Học viện AI trước khi bắt đầu học.')
-    if not get_key('claude'):
-        raise HTTPException(400,'Hãy cấu hình Claude API key trước.')
+    if not get_key('mirai'):
+        raise HTTPException(400,'Hãy cấu hình MiraiAPI Key cho Học viện trước.')
     with _academy_lock:
         if _academy_future and not _academy_future.done():
             return {'status':'already_running'}
@@ -743,7 +761,7 @@ def scheduler_loop():
             if time.monotonic()-last_brain_cycle>=60:
                 learning_tick(40)
                 last_brain_cycle=time.monotonic()
-            if cfg.get('academy_enabled','0')=='1' and get_key('claude'):
+            if cfg.get('academy_enabled','0')=='1' and get_key('mirai'):
                 interval=max(10,int(cfg.get('academy_interval_seconds','35')))
                 if time.monotonic()-last_academy_cycle>=interval:
                     with _academy_lock:
