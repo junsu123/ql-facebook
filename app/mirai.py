@@ -1,11 +1,12 @@
-"""MiraiAPI-only academy transport and independently metered quota ledger.
+"""MiraiAPI transport shared by the Academy and the Design Agent.
 
-The regular CEO / staff path still uses the direct Anthropic Claude key.
-MiraiAPI (`miraiapi.com`, NOT `mirapi.ai`) receives ONLY academy material
-explicitly submitted by the owner. Never transmit a credential in an error.
+CEO / ordinary staff tasks continue to use a separate direct Anthropic key;
+the Academy and poster design both consume MiraiAPI quota from one ledger.
+No credentials or image payloads are logged.
 """
 from __future__ import annotations
 
+import base64
 import math
 import re
 import sqlite3
@@ -84,12 +85,12 @@ def mirai_report() -> dict:
             'configured':bool(get_key('mirai')),
             'details':{x['status']:{'calls':x['n'],'input_tokens':x['input_tokens'],
                       'output_tokens':x['output_tokens']} for x in rows},
-            'note':'Quota ước tính từ usage API và hệ số đã nhập. Đối chiếu số dư thật tại miraiapi.com/usage/.'}
+            'note':'Quota từ học viện, test API và thiết kế poster đều dùng chung hạn mức MiraiAPI. Đối chiếu số dư tại miraiapi.com/usage/.'}
 
 
-def _reserve(agent_id:str, purpose:str, system:str, prompt:str, max_tokens:int, model:str, ratio:float)->tuple[str,int]:
+def _reserve(agent_id:str, purpose:str, system:str, prompt:str, max_tokens:int, model:str, ratio:float, *, extra_input_tokens:int=0)->tuple[str,int]:
     # Estimate conservatively before network request to avoid quota overshoot.
-    input_upper=len((system+'\n'+prompt).encode('utf-8'))+256
+    input_upper=len((system+'\n'+prompt).encode('utf-8'))+256+max(0,int(extra_input_tokens))
     reserved=math.ceil((input_upper + max_tokens*5)*ratio)
     with db() as c:
         c.execute('BEGIN IMMEDIATE')
@@ -188,6 +189,103 @@ def ask_mirai(agent_id:str,system:str,prompt:str,purpose:str='academy_training',
         # Timeouts/transport drops can occur after upstream has billed the call.
         _finish(rid,'unknown',source='request_unconfirmed')
         raise ModelError('Không xác định kết quả MiraiAPI; đã giữ quota dự trù, vui lòng kiểm tra trạng thái kết nối.') from ex
+
+
+def ask_mirai_design_vision(system: str, prompt: str, image_bytes: bytes, mime: str,
+                            *, client: httpx.Client|None=None, max_tokens: int=2000) -> dict:
+    """One Claude-vision concept request through MiraiAPI's OpenAI interface.
+
+    Uses the SAME persisted key, model, model ratio and 10M quota ledger as the
+    academy. This endpoint never falls back to Anthropic, never retries, and
+    never stores or logs the base64 image in API call history.
+    """
+    key=get_key('mirai')
+    if not key:
+        raise ModelError('Chưa cấu hình MiraiAPI Key. Vào Cài đặt > MiraiAPI trước khi thiết kế.')
+    init_mirai()
+    cfg={row['key']:row['value'] for row in all_rows('SELECT key,value FROM settings')}
+    model=cfg.get('academy_mirai_model',DEFAULT_MODEL).strip()
+    if not MODEL_RE.fullmatch(model) or not model.lower().startswith('claude-'):
+        raise ModelError('Hãy chọn một model Claude có hỗ trợ ảnh trong cấu hình MiraiAPI.')
+    try:
+        ratio=float(cfg.get('academy_mirai_ratio',str(DEFAULT_RATIO)))
+    except ValueError as exc:
+        raise ModelError('Hệ số quota MiraiAPI không hợp lệ.') from exc
+    if not math.isfinite(ratio) or not 0.01 <= ratio <= 100:
+        raise ModelError('Hệ số quota MiraiAPI phải từ 0.01 đến 100.')
+    if mime not in ('image/jpeg','image/png','image/webp') or not image_bytes:
+        raise ModelError('Ảnh gửi MiraiAPI không hợp lệ.')
+    # Images consume provider-dependent vision tokens. Reserve extra headroom;
+    # this is a safety ESTIMATE, not a guarantee of exact upstream billing.
+    image_reserve_tokens=max(16000,math.ceil(len(image_bytes)/24))
+    max_tokens=max(100,min(3000,int(max_tokens)))
+    system=system[:8000]
+    prompt=prompt[:12000]
+    rid,estimated=_reserve('creative','design_direct',system,prompt,max_tokens,
+                           model,ratio,extra_input_tokens=image_reserve_tokens)
+    encoded=base64.b64encode(image_bytes).decode('ascii')
+    payload={
+       'model':model,'max_tokens':max_tokens,'stream':False,
+       'messages':[{'role':'system','content':system},
+          {'role':'user','content':[
+             {'type':'text','text':prompt},
+             {'type':'image_url','image_url':{'url':f'data:{mime};base64,{encoded}'}}
+          ]}]
+    }
+    headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'}
+    try:
+        if client is None:
+            with httpx.Client(timeout=90,follow_redirects=False) as session:
+                response=session.post(MIRAI_BASE+'/chat/completions',headers=headers,json=payload)
+        else:
+            response=client.post(MIRAI_BASE+'/chat/completions',headers=headers,json=payload)
+    except httpx.RequestError as exc:
+        _finish(rid,'unknown',source='vision_network_unconfirmed')
+        raise ModelError('Không rõ MiraiAPI đã xử lý yêu cầu ảnh hay chưa. Đã giữ quota dự trù, không gọi lại tự động.') from exc
+
+    if response.status_code >= 400:
+        _finish(rid,'failed',source='vision_http_'+str(response.status_code))
+        if response.status_code in (401,403):
+            raise ModelError(f'MiraiAPI từ chối khóa API hoặc model (HTTP {response.status_code}).')
+        if response.status_code==429:
+            raise ModelError('MiraiAPI đang giới hạn tốc độ (HTTP 429).')
+        if response.status_code==400:
+            raise ModelError('MiraiAPI từ chối yêu cầu (HTTP 400). Hãy kiểm tra model Claude có hỗ trợ ảnh Vision.')
+        raise ModelError(f'MiraiAPI trả HTTP {response.status_code}.')
+
+    try:
+        response_json=response.json()
+        choices=response_json.get('choices') or []
+        content=choices[0]['message'].get('content') if choices else None
+        if isinstance(content,list):
+            content='\n'.join(part.get('text','') for part in content if isinstance(part,dict))
+        usage=response_json.get('usage') or {}
+        in_count=usage.get('prompt_tokens',usage.get('input_tokens'))
+        out_count=usage.get('completion_tokens',usage.get('output_tokens'))
+    except (ValueError,KeyError,TypeError,IndexError,AttributeError) as exc:
+        _finish(rid,'unknown',source='vision_invalid_response')
+        raise ModelError('MiraiAPI trả cấu trúc phản hồi không hợp lệ. Đã giữ quota dự trù để đối soát.') from exc
+
+    if in_count is None or out_count is None:
+        quota=estimated
+        in_count=out_count=None
+        quota_status='reserved_unknown_usage'
+        _finish(rid,'unknown',source='vision_missing_usage')
+    else:
+        try:
+            in_count=max(0,int(in_count));out_count=max(0,int(out_count))
+        except (ValueError,TypeError) as exc:
+            _finish(rid,'unknown',source='vision_invalid_usage')
+            raise ModelError('MiraiAPI trả số token không hợp lệ; giữ quota dự trù.') from exc
+        quota=math.ceil((in_count+out_count*5)*ratio)
+        quota_status='actual_usage'
+        _finish(rid,'completed',in_tokens=in_count,out_tokens=out_count,
+                quota=quota,source='api_usage_vision')
+    if not isinstance(content,str) or not content.strip():
+        raise ModelError('MiraiAPI không trả nội dung concept, nhưng yêu cầu có thể đã tiêu quota.')
+    return {'text':content.strip(),'model':model,'input_tokens':in_count,
+            'output_tokens':out_count,'quota_used':quota,'quota_status':quota_status,
+            'provider':'miraiapi'}
 
 
 def available_models(*,client:httpx.Client|None=None) -> dict:

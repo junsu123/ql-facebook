@@ -1,6 +1,17 @@
-# AI Fanpage Company V1.14 – Claude Direct Design + Agent Memory
+# AI Fanpage Company V1.15 – Claude Design qua MiraiAPI
 
-Đã thêm menu **Thiết kế poster**. Xem mục **V1.14** bên dưới để sử dụng.
+## V1.15 – Thiết kế poster gọi Claude qua MiraiAPI
+
+- **Thiết kế poster → Gọi Claude qua MiraiAPI**: dùng **MiraiAPI key đã lưu**, model Claude trong **Cài đặt → MiraiAPI**, và endpoint chính thức `https://api.miraiapi.com/v1/chat/completions`. Chức năng này KHÔNG còn gọi thẳng `api.anthropic.com`.
+- Tên sản phẩm, thành phần, prompt và **ảnh xem trước JPEG** được gửi tới MiraiAPI dưới dạng nội dung Vision theo chuẩn OpenAI-compatible. Cần chọn **model Claude hỗ trợ ảnh** và có quyền dùng trong key MiraiAPI; nếu nhà cung cấp không hỗ trợ định dạng ảnh/model, sẽ báo lỗi mà không tự gọi nơi khác.
+- Nhận JSON concept, lưu vào cơ sở dữ liệu cùng nguồn `miraiapi`, model, input/output token và quota đã tính. Agent Sáng tạo lưu kinh nghiệm; PNG 1:1 / 9:16 / 16:9 được dựng cục bộ bằng Pillow từ ảnh nguồn, không gọi API lần nữa.
+- Chế độ **Tạo poster nhanh → Claude** cũng dùng MiraiAPI cho phần tư vấn bố cục. Chế độ **Tự thiết kế** không gọi API. CEO và nhiệm vụ thường ngày vẫn dùng Claude trực tiếp như thiết lập cũ, **chỉ luồng thiết kế poster được đổi**.
+- **Học viện 10M và thiết kế poster sử dụng chung MiraiAPI key và quota ledger** (quota = `(input + 5 × output) × ratio model`). Nếu thiếu `usage` hoặc kết nối thất bại không rõ kết quả, giữ khoản dự trù để tránh gọi trùng. Quota ảnh chỉ có thể **ước lượng trước**, hãy đối chiếu hạn mức thực tại MiraiAPI.
+- Không tải ảnh sản phẩm lên GitHub. Tuy nhiên khi nhấn nút, **ảnh xem trước, tên sản phẩm, thành phần và prompt sẽ được gửi cho dịch vụ MiraiAPI**. Không gửi dữ liệu nhạy cảm hoặc ảnh chưa được cấp phép.
+- Các concept đã lưu ở V1.14 vẫn được giữ nguyên và ghi nhận nguồn cũ `anthropic_direct`; không xóa media, API key hoặc Firefox profile khi cập nhật. Chưa thử request ảnh bằng MiraiAPI key thật nên không bảo đảm model của bạn có Vision.
+
+Tài liệu nhà cung cấp: <https://miraiapi.com/usage/>.
+
 
 # V1.11 – Kho kiến thức đã học: xem và xuất toàn bộ dữ liệu thật
 
@@ -116,7 +127,7 @@ Phần mềm quản trị marketing AI dạng **local-first**, có giao diện v
 - Công cụ `diagnose_windows.bat` kiểm tra tình trạng timezone/tzdata.
 - Nếu đang chạy V1.3.1, thực hiện `git pull origin main` rồi **đóng cửa sổ máy chủ cũ** và khởi động lại bằng `start_windows.bat` để tự cài dependency. Có thể sửa ngay bằng `.venv\Scripts\python.exe -m pip install tzdata` trong thư mục dự án.
 
-## V1.14 – Prompt tạo ảnh và gọi Claude trực tiếp
+## V1.14 (lịch sử) – Prompt tạo ảnh và gọi Claude trực tiếp, đã được V1.15 thay thế
 
 - Trong **Thiết kế poster**, nhập tên sản phẩm, thành phần, tải ảnh 3D gốc, viết **Prompt tạo ảnh** và bấm **Gọi Claude trực tiếp**.
 - Backend gửi yêu cầu đến **Anthropic Claude Messages API** qua key Claude đã lưu (KHÔNG qua MiraiAPI), kèm một ảnh xem trước JPEG đã thu nhỏ. Claude trả về JSON cấu trúc gồm concept, headline, bullets, CTA, prompt ảnh và lựa chọn bố cục cho **1:1 / 9:16 / 16:9**.

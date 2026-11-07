@@ -112,3 +112,12 @@ V1.14 – GỌI CLAUDE TRỰC TIẾP TRONG THIẾT KẾ POSTER
 5. Bấm Dùng kết quả để tạo poster để dựng PNG 1:1, 9:16, 16:9.
 6. Đánh giá ảnh bằng sao để agent học sở thích bố cục.
 LƯU Ý: Claude tư vấn nội dung/bố cục, không sinh ảnh pixel bằng API này.
+
+V1.15: DESIGN AGENT GOI CLAUDE QUA MIRAIAPI
+- Cai dat > MiraiAPI: nhap key, model Claude co Vision, ratio quota dung; Luu va Test ket noi.
+- Thiet ke poster > Nhap ten/thanh phan, tai anh 3D, prompt > Goi Claude qua MiraiAPI.
+- Model nhan anh thong qua POST https://api.miraiapi.com/v1/chat/completions.
+- Tool luu JSON concept va bo nho agent; bam Dung ket qua de tao poster.
+- Chi design dung Mirai; CEO va cac agent lam viec khac van dung Claude truc tiep.
+- Quota Mirai dung chung voi Hoc vien 10M; xem usage tai miraiapi.com/usage/.
+- Anh xem truoc va du lieu san pham se duoc gui cho MiraiAPI khi nhan nut.

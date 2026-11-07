@@ -1,4 +1,4 @@
-"""Product poster designer: local pixel-safe rendering, optional Claude layout adviser.
+"""Product poster designer: local pixel-safe rendering, optional MiraiAPI Claude layout adviser.
 
 Claude does not render image pixels; Pillow composes verified user inputs and the
 uploaded product photo. Memory learns layout preferences from explicit reviews;
@@ -165,13 +165,17 @@ def _choose_layout(layout_type, guidance=''):
 
 def _claude_layout(product_name, ingredients, layout_type, note, default_layout):
     """One optional Claude request per project, never per aspect ratio."""
-    from .ai import call_llm, parse_json_reply
+    from .ai import parse_json_reply
+    from .mirai import ask_mirai
     safe_input=json.dumps({'product_name': product_name, 'ingredients': ingredients,
                            'user_note': note,'type':layout_type,'layout_options': sorted(LAYOUTS)},ensure_ascii=False)
     system=('Bạn là chuyên gia bố cục poster. Trả về một JSON duy nhất gồm layout (hero/editorial/minimal), '
             'guidance (không quá 220 ký tự, chỉ mô tả bố cục), không viết claim/công dụng mới. '
             'Bạn KHÔNG tạo ra ảnh, chỉ tư vấn bố cục. Tránh mọi tuyên bố y tế chưa có chứng cứ.')
-    raw=call_llm(system,safe_input,'poster_concept',agent_id='creative')
+    selected=one("SELECT value FROM settings WHERE key='academy_mirai_model'")
+    if selected and not selected['value'].lower().startswith('claude-'):
+        raise ValueError('Chọn model Claude trong Cài đặt MiraiAPI để tư vấn bố cục.')
+    raw=ask_mirai('creative',system,safe_input,purpose='design_layout',max_tokens=350)
     obj=parse_json_reply(raw)
     layout=obj.get('layout',default_layout)
     if layout not in LAYOUTS:layout=default_layout
@@ -288,16 +292,16 @@ def create_posters(product_name: str, ingredients: str, image_bytes: bytes, rati
     provider='local'
     from .ai import get_key
     must_ask = mode=='claude'
-    should_ask = must_ask or (mode=='auto' and design_stats()['level']<2 and bool(get_key('claude')))
+    should_ask = must_ask or (mode=='auto' and design_stats()['level']<2 and bool(get_key('mirai')))
     if should_ask:
         try:
             layout,guidance=_claude_layout(product_name,ingredients,layout_type,note,layout)
-            provider='claude'
+            provider='miraiapi_layout'
         except Exception as exc:
             if must_ask:
                 (DESIGN_DIR/source_filename).unlink(missing_ok=True)
-                raise ValueError('Không nhận được concept từ Claude: '+str(exc)[:200]) from exc
-            guidance='Claude tạm thời không khả dụng; sử dụng bố cục cục bộ.'
+                raise ValueError('Không nhận được bố cục Claude qua MiraiAPI: '+str(exc)[:200]) from exc
+            guidance='MiraiAPI không khả dụng; sử dụng bố cục cục bộ.'
     project_id='D'+uuid.uuid4().hex[:12].upper()
     created=now()
     images=[]

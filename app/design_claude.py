@@ -1,7 +1,7 @@
-"""Direct Claude visual brief workflow.
+"""Claude visual brief workflow through MiraiAPI.
 
 1. Owner uploads an image and a product prompt.
-2. Claude Vision returns *only* structured text / a design brief; no image pixels.
+2. Claude Vision accessed through MiraiAPI returns a text design brief.
 3. The unchanged source photo and verified JSON are saved for later rendering.
 4. A separate action renders PNG posters locally with Pillow, without another API call.
 
@@ -20,9 +20,9 @@ from typing import Any
 import httpx
 from PIL import Image
 
-from .ai import ModelError, get_key
-from .brains import (_update_usage, enqueue_learning, reserve_budget,
-                     route_claude_model, teach_agent)
+from .ai import ModelError
+from .brains import enqueue_learning, teach_agent
+from .mirai import ask_mirai_design_vision
 from .db import db, now, one, all_rows, log
 from .design import (_image_from_bytes, DESIGN_DIR, RATIOS, LAYOUTS, TYPES,
                      render_poster, design_stats)
@@ -69,7 +69,10 @@ CREATE TABLE IF NOT EXISTS design_claude_concepts (
  user_prompt TEXT NOT NULL, image_filename TEXT NOT NULL,
  result_json TEXT NOT NULL, model TEXT NOT NULL,
  input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0,
- page_id TEXT, created TEXT NOT NULL
+ page_id TEXT, created TEXT NOT NULL,
+ provider TEXT NOT NULL DEFAULT 'anthropic_direct',
+ quota_used INTEGER NOT NULL DEFAULT 0,
+ quota_status TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS ix_design_claude_created ON design_claude_concepts(created);
 CREATE TABLE IF NOT EXISTS design_concept_projects (
@@ -83,6 +86,15 @@ CREATE TABLE IF NOT EXISTS design_concept_projects (
 def initialize_concepts():
     with db() as con:
         con.executescript(CREATE_SQL)
+        # Existing V1.14 concepts are preserved and attributed to their original API.
+        columns={c[1] for c in con.execute('PRAGMA table_info(design_claude_concepts)')}
+        for col,definition in (
+            ('provider',"TEXT NOT NULL DEFAULT 'anthropic_direct'"),
+            ('quota_used','INTEGER NOT NULL DEFAULT 0'),
+            ('quota_status',"TEXT NOT NULL DEFAULT ''"),
+        ):
+            if col not in columns:
+                con.execute(f'ALTER TABLE design_claude_concepts ADD COLUMN {col} {definition}')
 
 
 def _prepare_preview(original: Image.Image) -> tuple[bytes, str]:
@@ -126,53 +138,27 @@ def _validate_result(obj: Any) -> dict:
     return obj
 
 
-def _make_request(model, prompt, preview, mime):
-    image_block={'type':'image','source':{'type':'base64','media_type':mime,
-              'data':base64.b64encode(preview).decode('ascii')}}
-    return {'model':model,'max_tokens':MAX_OUTPUT_TOKENS,'system':SYSTEM,
-            'messages':[{'role':'user','content':[image_block,{'type':'text','text':prompt}]}],
-            'output_config':{'format':{'type':'json_schema','schema':DESIGN_SCHEMA}}}
+def _mirai_message(prompt,preview,mime,*,client=None):
+    """Receive and validate one Claude-vision JSON result billed by MiraiAPI.
 
-
-def _claude_message(model, prompt, preview, mime, *, client=None):
-    """One real Anthropic Messages request; return raw JSON and usage.
-
-    Financial reservation includes a conservative additional estimate for image
-    input; ambiguous transport errors preserve reservation instead of retrying.
+    A valid response is never followed by a second API call; rendering uses
+    only the saved result. Image data and credentials stay out of audit logs.
     """
-    key=get_key('claude')
-    if not key:raise ValueError('Chưa cấu hình Claude API Key.')
-    from .brains import reserve_budget
+    receipt=ask_mirai_design_vision(SYSTEM+'\nChỉ xuất đúng 1 JSON object với các trường: '+
+                 ', '.join(DESIGN_SCHEMA['required'])+'. Không dùng Markdown.',
+                 prompt,preview,mime,client=client,max_tokens=MAX_OUTPUT_TOKENS)
+    raw=receipt['text'].strip()
+    if raw.startswith('```'):
+        raw=re.sub(r'^```(?:json)?\s*|\s*```$', '',raw,flags=re.I).strip()
     try:
-        reservation,_=reserve_budget('creative',model,'design_direct',prompt,SYSTEM,
-                MAX_OUTPUT_TOKENS,'user_direct_design',extra_input_tokens=4000)
-    except ValueError as exc:
-        raise ValueError(str(exc)) from exc
-    response=None
-    try:
-        payload=_make_request(model,prompt,preview,mime)
-        headers={'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json'}
-        if client is None:
-            with httpx.Client(timeout=90) as session:
-                response=session.post('https://api.anthropic.com/v1/messages',json=payload,headers=headers)
-        else:
-            response=client.post('https://api.anthropic.com/v1/messages',json=payload,headers=headers)
-        response.raise_for_status()
-        data=response.json()
-        usage=data.get('usage') or {}
-        _update_usage(reservation,'completed',usage,model)
-        raw=''.join(part.get('text','') for part in data.get('content',[]) if part.get('type')=='text')
-        result=_validate_result(json.loads(raw))
-        return result,{'input_tokens':int(usage.get('input_tokens',0)),
-                       'output_tokens':int(usage.get('output_tokens',0))},model
-    except httpx.HTTPStatusError as exc:
-        _update_usage(reservation,'failed',model=model)
-        raise ValueError(f'Claude HTTP {exc.response.status_code}: {exc.response.text[:220]}') from exc
-    except (httpx.TimeoutException,httpx.TransportError) as exc:
-        # Provider may have billed request even without a response; keep reservation.
-        raise ValueError('Không xác định được kết quả Claude do mất kết nối. Khoản dự trù được giữ lại để tránh gọi trùng.') from exc
-    except (json.JSONDecodeError,KeyError,TypeError) as exc:
-        raise ValueError('Claude đã phản hồi nhưng JSON không hợp lệ. Lượt gọi được tính theo usage API.') from exc
+        brief=_validate_result(json.loads(raw))
+    except (json.JSONDecodeError,ValueError,TypeError) as exc:
+        raise ModelError('Claude qua MiraiAPI đã phản hồi nhưng JSON không đúng định dạng. Lượt gọi đã được ghi quota.') from exc
+    usage={'input_tokens':receipt.get('input_tokens') or 0,
+           'output_tokens':receipt.get('output_tokens') or 0,
+           'quota_used':receipt.get('quota_used') or 0,
+           'quota_status':receipt.get('quota_status') or ''}
+    return brief,usage,receipt['model']
 
 
 def create_claude_concept(product_name,ingredients,user_prompt,image_bytes,page_id=None,client=None):
@@ -182,19 +168,19 @@ def create_claude_concept(product_name,ingredients,user_prompt,image_bytes,page_
     preview,mime=_prepare_preview(image)
     prompt=json.dumps({'product_name':product_name,'ingredients':ingredients,
                        'user_prompt':user_prompt or 'Thiết kế poster sản phẩm đẹp, rõ chữ, mobile-first.'},ensure_ascii=False)
-    model,_=route_claude_model('creative','design_direct',prompt)
     # Call first; only keep uploaded source after successfully recording JSON.
-    brief,usage,model=_claude_message(model,prompt,preview,mime,client=client)
+    brief,usage,model=_mirai_message(prompt,preview,mime,client=client)
     filename=uuid.uuid4().hex+'.png'
     concept_id='DC'+uuid.uuid4().hex[:14].upper()
     image.save(DESIGN_DIR/filename,'PNG')
     try:
         with db() as con:
             con.execute('''INSERT INTO design_claude_concepts
-              (id,product_name,ingredients,user_prompt,image_filename,result_json,model,input_tokens,output_tokens,page_id,created)
-              VALUES(?,?,?,?,?,?,?,?,?,?,?)''',
+              (id,product_name,ingredients,user_prompt,image_filename,result_json,model,input_tokens,output_tokens,page_id,created,provider,quota_used,quota_status)
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
               (concept_id,product_name,ingredients,user_prompt,filename,json.dumps(brief,ensure_ascii=False),
-               model,usage['input_tokens'],usage['output_tokens'],page_id,now()))
+               model,usage['input_tokens'],usage['output_tokens'],page_id,now(),
+               'miraiapi',usage['quota_used'],usage['quota_status']))
     except Exception:
         (DESIGN_DIR/filename).unlink(missing_ok=True)
         raise
@@ -208,8 +194,8 @@ def create_claude_concept(product_name,ingredients,user_prompt,image_bytes,page_
         f'Layout: 1:1={brief["layout_1_1"]}, 9:16={brief["layout_9_16"]}, 16:9={brief["layout_16_9"]}. '
         f'Prompt người dùng: {user_prompt[:450]}. Đây là gợi ý chưa có xác minh CTR.',
         source_ref=concept_id,page_id=page_id)
-    log('creative','design_claude_direct',f'Nhận concept {concept_id} từ Claude; chưa render ảnh.')
-    return {'ok':True,'concept_id':concept_id,'design_result':brief,'model':model,
+    log('creative','design_mirai_concept',f'Nhận concept {concept_id} từ Claude qua MiraiAPI; chưa render ảnh.')
+    return {'ok':True,'concept_id':concept_id,'design_result':brief,'model':model,'provider':'miraiapi',
             'usage':usage,'source_image_url':'/media/design/'+filename,
             'message':'Đã lưu kết quả Claude. Chưa tạo poster; sử dụng nút Dùng kết quả để tạo PNG.'}
 
@@ -267,12 +253,13 @@ def render_claude_concept(concept_id,ratios,layout_type='overview'):
                  (id,product_name,ingredients,note,image_filename,layout_type,layout_name,guidance,provider,page_id,created)
                  VALUES(?,?,?,?,?,?,?,?,?,?,?)''',
                  (project_id,row['product_name'],row['ingredients'],row['user_prompt'],row['image_filename'],
-                  layout_type,result[mapping[ratios[0]]],result['reasoning_summary'],'claude_direct',row['page_id'],created))
+                  layout_type,result[mapping[ratios[0]]],result['reasoning_summary'],
+                  'miraiapi_design' if row['provider']=='miraiapi' else 'claude_direct',row['page_id'],created))
             con.executemany('''INSERT INTO design_outputs (id,project_id,ratio,filename,width,height,created)
                                 VALUES(?,?,?,?,?,?,?)''',
                  [(x['id'],project_id,x['ratio'],x['filename'],x['width'],x['height'],created) for x in outputs])
             con.execute('INSERT INTO design_concept_projects(concept_id,project_id) VALUES(?,?)',(concept_id,project_id))
-        log('creative','design_concept_render',f'Đã tạo {len(outputs)} ảnh PNG từ concept Claude {concept_id}; không gọi Claude lại.')
+        log('creative','design_concept_render',f'Đã tạo {len(outputs)} ảnh PNG từ concept {concept_id}; không gọi API lại.')
     except Exception:
         for out in outputs:(DESIGN_DIR/out['filename']).unlink(missing_ok=True)
         raise

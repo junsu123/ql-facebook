@@ -220,13 +220,13 @@ function renderDesign(){
       ${[['1:1','1024×1024'],['9:16','1080×1920'],['16:9','1600×900']].map(([value,res])=>`<label><input type="checkbox" name="ratios" value="${value}" ${value==='1:1'?'checked':''}><strong>${value}</strong><small>${res}</small></label>`).join('')}</div></div>
       <div class="grid-2">
         <div class="form-field"><label>Loại poster</label><select name="layout_type" class="select"><option value="overview">Tổng quan sản phẩm</option><option value="ingredients">Thành phần</option><option value="offer">Giới thiệu / ưu đãi (không tự thêm giá)</option></select></div>
-        <div class="form-field"><label>Chế độ thiết kế</label><select name="mode" class="select"><option value="auto">Tự động – Claude khi cần</option><option value="claude">Bắt buộc hỏi Claude</option><option value="local">Tự thiết kế – không gọi Claude</option></select></div>
+        <div class="form-field"><label>Chế độ thiết kế</label><select name="mode" class="select"><option value="auto">Tự động – Claude qua MiraiAPI khi cần</option><option value="claude">Bắt buộc hỏi Claude qua MiraiAPI</option><option value="local">Tự thiết kế – không gọi Claude</option></select></div>
       </div>
       ${pick('Liên kết Fanpage (tùy chọn)','page_id',pageOptions())}
       ${field('Ghi chú ý tưởng (không tự in lên poster)','note','','textarea','rows="2" maxlength="1000"')}
-      ${field('Prompt tạo ảnh gửi Claude','user_prompt','','textarea','rows="5" maxlength="4000" placeholder="Ví dụ: poster trà thảo mộc, chữ lớn dễ đọc, tối giản, nền xám ghi, bố cục giàu khoảng thở..."')}
+      ${field('Prompt tạo ảnh gửi Claude qua MiraiAPI','user_prompt','','textarea','rows="5" maxlength="4000" placeholder="Ví dụ: poster trà thảo mộc, chữ lớn dễ đọc, tối giản, nền xám ghi, bố cục giàu khoảng thở..."')}
       <div class="actions"><button class="btn primary" type="submit" id="designSubmit">✦ Tạo poster PNG</button>
-      <button class="btn ghost" type="button" data-action="design.claude-direct" id="directClaudeButton">🧠 Gọi Claude trực tiếp</button></div>
+      <button class="btn ghost" type="button" data-action="design.claude-direct" id="directClaudeButton">🧠 Gọi Claude qua MiraiAPI</button></div>
       <p class="card-sub">Nền xám ghi #777973. Vùng trên cùng ở chính giữa 150×80 px luôn trống. Ảnh xuất thật, không phải prompt. Không tự viết công dụng sức khỏe hoặc tuyên bố điều trị.</p>
       </form>
     </div>
@@ -237,23 +237,23 @@ function renderDesign(){
       </div>
       <p class="muted">${brain.next_level_positive?`Cần tổng cộng ${brain.next_level_positive} đánh giá tốt để đạt cấp tiếp theo.`:'Đã đạt cấp bố cục cao nhất hiện có.'}</p>
       <div class="office-note">Level chỉ phản ánh lượng phản hồi tốt. Agent học lựa chọn layout và mẫu bố cục, <strong>không tự huấn luyện mô hình hình ảnh mới</strong>. Khi chọn “Tự thiết kế”, công cụ Pillow dựng poster ngay trên máy, không dùng token Claude.</div>
-      <p class="muted">Claude chỉ phân tích concept khi cần, sử dụng API key và ngân sách Claude hiện tại. Một concept dùng chung cho cả ba tỷ lệ.</p>
+      <p class="muted">Claude phân tích concept qua MiraiAPI, dùng key và hạn mức quota Mirai đã cấu hình (chung Học viện 10M). Một concept dùng chung cho cả ba tỷ lệ.</p>
       <p class="muted">Các poster được lưu tại thư mục dữ liệu trên máy, không tải ảnh sản phẩm của bạn lên GitHub.</p>
     </div>
-  </div><div class="space-between"><h2>🧠 Kết quả Claude trực tiếp và bộ nhớ agent</h2><span class="badge blue">${concepts.length} concept gần đây</span></div>
+  </div><div class="space-between"><h2>🧠 Kết quả Claude qua MiraiAPI và bộ nhớ agent</h2><span class="badge blue">${concepts.length} concept gần đây</span></div>
   <div class="stack">${concepts.length?concepts.map(c=>{
     const r=c.design_result||{};
     return `<div class="card claude-brief-card" id="concept-${E(c.id)}">
       <div class="space-between"><h2>${E(r.concept_name||'Concept Claude')}</h2><span class="badge blue">${E(c.model)}</span></div>
-      <p class="meta">${E(c.product_name)} · ${F(c.created)} · ${Number(c.input_tokens)} input / ${Number(c.output_tokens)} output token</p>
+      <p class="meta">${E(c.product_name)} · ${F(c.created)} · ${E(c.provider||"anthropic_direct")} · ${Number(c.input_tokens)} input / ${Number(c.output_tokens)} output token · ${Number(c.quota_used||0).toLocaleString("vi-VN")} quota</p>
       <p><strong>Headline:</strong> ${E(r.headline)}</p>
       <p><strong>Prompt ảnh:</strong> ${E(short(r.image_prompt,700))}</p>
       <p class="meta">Bố cục: 1:1=${E(r.layout_1_1)}, 9:16=${E(r.layout_9_16)}, 16:9=${E(r.layout_16_9)}.</p>
       <div class="actions"><button class="btn primary sm" data-action="design.concept-render" data-id="${E(c.id)}">🖼️ Dùng kết quả để tạo poster</button>
       <button class="btn ghost sm" data-action="design.concept-view" data-id="${E(c.id)}">📋 Xem toàn bộ JSON</button></div>
-      <p class="card-sub">Kết quả Claude được lưu làm tài liệu học cho agent, chưa chứng minh ảnh có CTR cao. Claude không tạo PNG; Pillow thực hiện bước dựng ảnh.</p>
+      <p class="card-sub">Kết quả Claude được lưu làm tài liệu học cho agent, chưa chứng minh ảnh có CTR cao. Claude không tạo PNG; Pillow thực hiện bước dựng ảnh. Quota được theo dõi tại MiraiAPI.</p>
     </div>`;
-  }).join(''):empty('🧠','Chưa có kết quả Claude trực tiếp','Nhập dữ liệu và bấm Gọi Claude trực tiếp; kết quả sẽ được lưu vào bộ nhớ.')}</div>
+  }).join(''):empty('🧠','Chưa có concept Claude từ MiraiAPI','Nhập dữ liệu và bấm Gọi Claude qua MiraiAPI; kết quả sẽ được lưu vào bộ nhớ.')}</div>
   <div class="space-between"><h2>📚 Thư viện poster đã tạo</h2><button class="btn ghost sm" data-action="design.refresh">↻ Làm mới</button></div>
   <div class="stack">${projectCards}</div>`;
 }
@@ -604,9 +604,9 @@ async function action(name,id,el){
       for(const field of ['product_name','ingredients'])if(!String(data.get(field)||'').trim())throw new Error('Thiếu '+field);
       const request=new FormData();
       for(const k of ['product_name','ingredients','user_prompt','page_id','image'])request.append(k,data.get(k)||'');
-      el.textContent='⏳ Đang gọi Claude...';
+      el.textContent='⏳ Claude qua MiraiAPI...' ;
       const result=await api('/api/design/claude-direct','POST',request);
-      toast('Claude đã trả concept. Agent đã ghi nhận kết quả, chưa tạo poster.');
+      toast('MiraiAPI đã trả concept Claude. Agent đã lưu để học, chưa tạo poster.');
       await reload();
       setTimeout(()=>document.getElementById('concept-'+result.concept_id)?.scrollIntoView({block:'center',behavior:'smooth'}),150);
       break;
@@ -614,7 +614,7 @@ async function action(name,id,el){
     case 'design.concept-view':{
       const c=(S.data?.design_concepts||[]).find(c=>c.id===id);
       if(!c)throw new Error('Không tìm thấy concept. Hãy làm mới màn hình.');
-      modal('🧠 Kết quả Claude nguyên văn',`<pre class="design-result-json">${E(JSON.stringify(c.design_result,null,2))}</pre>`,null,null);
+      modal('🧠 Kết quả Claude qua MiraiAPI (JSON)',`<pre class="design-result-json">${E(JSON.stringify(c.design_result,null,2))}</pre>`,null,null);
       break;
     }
     case 'design.concept-render':{
@@ -626,7 +626,7 @@ async function action(name,id,el){
       if(!ratios.length)throw new Error('Chọn ít nhất một tỷ lệ ở form thiết kế.');
       const render=await api('/api/design/concepts/'+encodeURIComponent(id)+'/render','POST',{
         ratios,layout_type:data.get('layout_type')||'overview'});
-      toast('Đã dựng '+render.outputs.length+' poster PNG từ kết quả Claude đã lưu, không gọi Claude lại.');
+      toast('Đã dựng '+render.outputs.length+' poster PNG, không gọi API thêm.');
       await reload();break;
     }
 

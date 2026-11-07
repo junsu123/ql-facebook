@@ -84,4 +84,4 @@ def test_claude_concept_only_one_call_for_all_ratios(monkeypatch):
     monkeypatch.setattr(design,'_claude_layout',fake)
     r=create('1:1,9:16,16:9',mode='claude')
     assert r.status_code==200 and len(calls)==1
-    assert r.json()['concept_provider']=='claude'
+    assert r.json()['concept_provider']=='miraiapi_layout'
