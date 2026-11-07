@@ -70,7 +70,14 @@ def mirai_report() -> dict:
              COALESCE(SUM(input_tokens),0) input_tokens,
              COALESCE(SUM(output_tokens),0) output_tokens
              FROM mirai_academy_usage WHERE created>=? GROUP BY status''',(_today_start_utc(),)).fetchall()
+    with db() as c:
+        by_agent=c.execute('''SELECT agent_id,COALESCE(SUM(CASE
+              WHEN status IN ('reserved','unknown') THEN quota_reserved
+              WHEN status='completed' THEN quota_used ELSE 0 END),0) AS quota
+              FROM mirai_academy_usage WHERE created>=? GROUP BY agent_id''',(_today_start_utc(),)).fetchall()
     return {'provider':'miraiapi.com','used_quota_today':used,'daily_quota_limit':cap,
+            'target_quota_today':cap,'quota_by_agent':{x['agent_id']:x['quota'] for x in by_agent},
+            'target_status':'reached' if used>=cap else 'in_progress',
             'quota_remaining':max(0,cap-used),
             'model':cfg.get('academy_mirai_model',DEFAULT_MODEL),
             'model_ratio':float(cfg.get('academy_mirai_ratio',str(DEFAULT_RATIO))),

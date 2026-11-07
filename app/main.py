@@ -36,7 +36,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.9.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.10.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -78,7 +78,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.9.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.10.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -151,6 +151,8 @@ class SettingsChange(BaseModel):
     academy_daily_token_limit:int|None=Field(default=None,ge=10000,le=100000000)
     academy_enabled:bool|None=None
     academy_interval_seconds:int|None=Field(default=None,ge=10,le=3600)
+    academy_intensive_mode:bool|None=None
+    academy_practice_rounds:int|None=Field(default=None,ge=1,le=4)
 
 @app.post('/api/settings')
 def update_settings(req:SettingsChange):
@@ -159,13 +161,27 @@ def update_settings(req:SettingsChange):
            'claude_cache_enabled','brain_learning_enabled',
            'claude_daily_budget_usd','claude_agent_daily_budget_usd',
            'academy_daily_token_limit','academy_enabled','academy_interval_seconds',
-           'academy_mirai_model','academy_mirai_ratio')
+           'academy_mirai_model','academy_mirai_ratio',
+           'academy_intensive_mode','academy_practice_rounds')
+    old_config=config()
+    # A changed credential/model needs a fresh paid connectivity test.
+    def changed_provider_setting(key: str) -> bool:
+        if key not in values:return False
+        if key=='academy_mirai_ratio':
+            try:return abs(float(values[key])-float(old_config.get(key,'1')))>1e-10
+            except (TypeError,ValueError):return True
+        return str(values[key])!=str(old_config.get(key,''))
+    changed_mirai=('mirai_key' in values and bool(values['mirai_key'].strip())) or any(
+        changed_provider_setting(key) for key in ('academy_mirai_model','academy_mirai_ratio'))
     with db() as c:
         c.execute("INSERT INTO settings(key,value) VALUES('provider','claude') ON CONFLICT(key) DO UPDATE SET value='claude'")
+        if changed_mirai:
+            c.execute("INSERT INTO settings(key,value) VALUES('academy_mirai_verified','0') ON CONFLICT(key) DO UPDATE SET value='0'")
+            c.execute("INSERT INTO settings(key,value) VALUES('academy_enabled','0') ON CONFLICT(key) DO UPDATE SET value='0'")
         for key in saved:
             if key not in values:
                 continue
-            value=('1' if values[key] else '0') if key in ('auto_run_agents','claude_cache_enabled','brain_learning_enabled','academy_enabled') else str(values[key])
+            value=('1' if values[key] else '0') if key in ('auto_run_agents','claude_cache_enabled','brain_learning_enabled','academy_enabled','academy_intensive_mode') else str(values[key])
             c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',(key,value))
     if 'claude_key' in values:
         save_key('claude',values['claude_key'])
@@ -206,7 +222,16 @@ def mirai_test_call():
     # Explicitly invoked, paid inference test. The service reads the saved key
     # and model; neither the key nor raw provider payload is sent to the UI.
     try:
-        return test_mirai_completion()
+        result=test_mirai_completion()
+        if result.get('ok') is True:
+            with db() as c:
+                c.execute("INSERT INTO settings(key,value) VALUES('academy_mirai_verified','1') ON CONFLICT(key) DO UPDATE SET value='1'")
+                current=c.execute("SELECT value FROM settings WHERE key='academy_intensive_mode'").fetchone()
+                if current is None or current['value']=='1':
+                    c.execute("INSERT INTO settings(key,value) VALUES('academy_enabled','1') ON CONFLICT(key) DO UPDATE SET value='1'")
+            result['academy_auto_started']=config().get('academy_enabled')=='1'
+            log('ceo','academy_activated','MiraiAPI đã qua test; Học viện 10M được kích hoạt theo cấu hình.')
+        return result
     except ModelError as exc:
         raise HTTPException(400,str(exc)) from exc
 
@@ -771,7 +796,10 @@ def scheduler_loop():
                 learning_tick(40)
                 last_brain_cycle=time.monotonic()
             if cfg.get('academy_enabled','0')=='1' and get_key('mirai'):
-                interval=max(10,int(cfg.get('academy_interval_seconds','35')))
+                # Intensive mode processes useful queued work as soon as the single
+                # provider worker is free, while respecting quota and 429 pauses.
+                interval=(10 if cfg.get('academy_intensive_mode','1')=='1'
+                          else max(10,int(cfg.get('academy_interval_seconds','35'))))
                 if time.monotonic()-last_academy_cycle>=interval:
                     with _academy_lock:
                         if not _academy_future or _academy_future.done():

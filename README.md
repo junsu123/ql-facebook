@@ -1,10 +1,19 @@
-# AI FANPAGE COMPANY — Virtual Chibi Office (V1.9.0)
+# Bản V1.10 – Học cường độ cao qua MiraiAPI (mục tiêu 10M quota/ngày)
+
+- Sau **Test gọi API Mirai thành công**, nếu bật **Học tập tối đa**, Học viện tự kích hoạt và bắt đầu xử lý hàng đợi tài liệu khi backend chạy.
+- Mỗi tài liệu được tóm tắt theo đoạn, 9 agent có bài học chuyên môn và thêm 1–4 lượt thực hành tình huống dựa trên chính nguồn đó. Kết quả mô phỏng **không** được đánh dấu như dữ kiện Facebook đã xác minh.
+- Mức mục tiêu **10.000.000 là quota quy đổi, không phải token thô**, với phép tính `(input + 5×output)×hệ số model`. Hệ số phải được chủ tài khoản kiểm chứng, quota là ước tính từ usage API.
+- Mặc định chế độ tích cực chạy từng bước sau khoảng 10 giây hoặc khi kết thúc request trước đó; tôn trọng rate limit, giới hạn quota nội bộ và khoản dự trù các yêu cầu không rõ kết quả. Không tự vượt CAPTCHA, không thu thập Facebook.
+- **Không thể cam kết dùng hết đúng 10M quota/ngày** nếu không đủ nguồn học có ích, API rate limit/hết quota thật hoặc backend tắt. Không tạo hội thoại rỗng chỉ để tiêu quota.
+- Đặt giới hạn tiền tại nhà cung cấp MiraiAPI để tránh phát sinh chi phí ngoài dự kiến. Tài liệu chỉ được gửi lên MiraiAPI sau khi bạn xác nhận quyền sử dụng.
+
+# AI FANPAGE COMPANY — Virtual Chibi Office (V1.10.0)
 
 Phần mềm quản trị marketing AI dạng **local-first**, có giao diện văn phòng 3D hoạt hình người tí hon, 9 agent (CEO + 8 nhân viên), quản lý tối đa 100 Fanpage thuộc công ty, Firefox Profile riêng cho mỗi tài khoản, bộ nhớ từng Page, tạo nội dung AI, kiểm duyệt theo quy tắc, lịch nội bộ và báo cáo KPI thủ công.
 
 > **Phạm vi trung thực:** Đây là **bản chạy được V1 / nền tảng MVP**, chưa phải phần mềm đã kiểm định cho vận hành 100 Page thật. Không dùng Meta API, không cài extension và **không tự động nhấn Đăng trên Facebook**. Người dùng đăng bằng Firefox rồi xác nhận thủ công. Không có chức năng tự thu thập quyền Page, tài khoản hoặc Insights từ Facebook. CEO dùng Claude API trực tiếp; Học viện 10M dùng MiraiAPI riêng với giới hạn quota.
 
-## V1.9.0 – Nút Test gọi API Mirai thật từ giao diện
+## V1.10.0 – Nút Test gọi API Mirai thật từ giao diện
 
 - Vào **Cài đặt → MiraiAPI – Học viện 10M**, nhập `MiraiAPI Key`, tên model và hệ số quota. Bấm **⚡ Test gọi API Mirai (tốn ít quota)**.
 - Nút sẽ lưu riêng ba trường MiraiAPI vừa nhập, sau đó **gửi một yêu cầu suy luận ngắn** tới `POST https://api.miraiapi.com/v1/chat/completions` (khác với nút “Xem danh sách model” chỉ gọi `GET /models`).
