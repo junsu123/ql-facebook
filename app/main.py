@@ -29,6 +29,7 @@ from .academy import academy_overview, add_source, academy_tick, recover_interru
 from .knowledge import (browse_knowledge, knowledge_overview, source_detail,
                         list_sources as list_knowledge_sources, export_knowledge)
 from .mirai import available_models, mirai_report, init_mirai, test_mirai_completion
+from .source_harvester import overview as harvester_overview, import_original_courses, fetch_approved_batch
 from .growth import (create_sprint, get_sprint, list_sprints, record_progress,
                      set_baseline, generate_ceo_plan, attach_page)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
@@ -38,7 +39,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.11.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.12.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -49,6 +50,8 @@ _submitted:set[str]=set()
 _stop=threading.Event()
 _academy_lock=threading.Lock()
 _academy_future=None
+_harvester_lock=threading.Lock()
+_harvester_future=None
 _background_lock=threading.Lock()
 _background_jobs:set[Future]=set()
 
@@ -80,7 +83,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.11.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.12.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -121,6 +124,7 @@ def bootstrap():
         'settings':config(),
         'brain_overview':agent_brain_overview(),
         'academy':academy_overview(),
+        'harvester':harvester_overview(),
         'firefox_available':bool(executable()),
         'firefox_installer':firefox_install_status(),
         'counts':{
@@ -244,6 +248,26 @@ def get_mirai_usage():
 @app.get('/api/academy')
 def get_academy():
     return academy_overview()
+
+@app.get('/api/academy/harvester')
+def get_harvester():
+    return harvester_overview()
+
+@app.post('/api/academy/harvester/import-original')
+def seed_original_study_pack():
+    # User-initiated loading of original Vietnamese lessons bundled in repo.
+    return import_original_courses()
+
+@app.post('/api/academy/harvester/download-open')
+def fetch_curated_study_sources():
+    # Only 4 preapproved CC-BY documents, robots.txt checked, no domain crawler.
+    # Background work is tracked so auto-restart will not interrupt a download.
+    global _harvester_future
+    with _harvester_lock:
+        if _harvester_future and not _harvester_future.done():
+            return {'status':'already_running'}
+        _harvester_future=submit_background(fetch_approved_batch,4)
+    return {'status':'started', 'note':'Chỉ tải nguồn có giấy phép phù hợp; liên kết Meta và các nguồn khác chỉ lưu tham khảo.'}
 
 class AcademySourceInput(BaseModel):
     title: str=Field(min_length=3,max_length=180)

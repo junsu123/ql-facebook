@@ -266,3 +266,12 @@ Tài liệu Anthropic: [Messages API](https://platform.claude.com/docs/en/api/ht
 **Không xóa** `%LOCALAPPDATA%\AI-Fanpage-Company`, đặc biệt `company.sqlite3`, `profiles`, `api_secrets.json.enc` và `local_secret.key`: đây là dữ liệu, thông tin phiên Firefox và khóa API đã mã hóa của bạn. Không chia sẻ những tệp này hoặc mật khẩu, cookie, API key khi báo lỗi.
 
 Những thay đổi này tăng khả năng phát hiện lỗi chung; chưa xác định nguyên nhân cụ thể của lỗi Windows khi chưa có log hoặc ảnh màn hình từ máy người dùng.
+
+
+## V1.12 – Bộ thu thập kiến thức có quyền sử dụng
+
+- Học viện có nút **Nạp giáo trình cho 9 agent**: 27 giáo trình marketing tiếng Việt do dự án tự biên soạn, chỉ trích dẫn URL nguồn. Các giáo trình được đưa vào hàng đợi MiraiAPI theo chuyên môn. Nạp lần hai không nhân đôi tài liệu.
+- **Tải tài liệu mở**: chỉ xét một danh mục URL Google Developers đã được chọn và có tuyên bố giấy phép CC BY 4.0; trước khi tải kiểm tra HTTPS, miền, robots.txt, content-type, giới hạn dung lượng, tuyên bố giấy phép tại trang, và lưu nguồn/ghi nhận lỗi. Không quét Facebook, không bỏ qua đăng nhập, không chạy crawler toàn miền.
+- Danh mục Meta Blueprint và học liệu có quyền hạn chế chỉ lưu liên kết, không sao chép toàn văn. Tải lại các nguồn bị chặn không tự động diễn ra.
+- Số lượng "đã tải" trên màn hình là số tài liệu thực tế tải thành công. Kế hoạch học không cam kết dùng hết 10 triệu quota vì còn phụ thuộc nguồn, ngân sách và giới hạn của MiraiAPI.
+- Môi trường kiểm thử offline không thể tải nguồn Internet; khi sử dụng trên Windows có Internet, bấm **Tải tài liệu mở được phép** rồi xem trạng thái của từng nguồn.

@@ -130,6 +130,8 @@ def initialize():
     init_mirai()
     from .growth import init_growth
     init_growth()
+    from .source_harvester import init_harvester
+    init_harvester()
 
 def log(agent: str, kind: str, message: str, task_id: str | None = None):
     run('INSERT INTO activity(agent_id,kind,message,task_id,created) VALUES(?,?,?,?,?)',

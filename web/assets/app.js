@@ -295,7 +295,7 @@ function renderBrains(){
   <div class="grid-2" style="margin-top:17px"><div class="card"><h2>⚙️ Tối ưu chi phí Claude</h2><p>① Ưu tiên bộ nhớ và quy tắc cục bộ. ② Dùng model Haiku cho việc thường. ③ Chỉ nâng lên Sonnet khi khó, có yêu cầu hoặc khi model nhỏ không giải quyết được. ④ Tái dùng câu trả lời trùng khớp trong 6 giờ. ⑤ Khóa ngân sách mỗi agent và toàn công ty.</p><button class="btn ghost" data-route="settings">Đi đến cài đặt ngân sách</button></div><div class="card"><h2>🛡️ Điều kiện tự học</h2><p>Học và ghi nhớ 24/24 nghĩa là xử lý các sự kiện khi phần mềm đang chạy, không phải tạo yêu cầu AI liên tục hay tự suy đoán dữ liệu Facebook. Khi tắt máy, hoạt động dừng; sự kiện còn trong database sẽ được xử lý khi mở lại.</p><p class="muted">Dữ liệu mỗi agent lưu riêng. CEO chỉ giao việc và đọc báo cáo, không mặc định xem mọi thông tin nhạy cảm.</p></div></div>`;
 }
 function renderAcademy(){
-  const a=S.data.academy||{},c=a.counts||{},u=a.usage||{};
+  const a=S.data.academy||{},c=a.counts||{},u=a.usage||{},h=S.data.harvester||{},hc=h.counts||{};
   const limit=Number(a.daily_token_limit||10000000),used=Number(u.used_quota_today||0),pct=Math.min(100,Math.max(0,used/Math.max(limit,1)*100));
   const trainingCount=Number(c.jobs_done||0),totalJobs=Number(c.jobs||0);
   const practiceDone=Number(c.practice_done||0),practiceTotal=Number(c.practice_total||0);
@@ -308,6 +308,13 @@ function renderAcademy(){
        <div class="space-between"><strong>${used.toLocaleString('vi-VN')} / ${limit.toLocaleString('vi-VN')} quota</strong><span class="muted">${pct.toFixed(2)}%</span></div>
        <p class="card-sub">Model Học viện: <strong>${E(u.model||'chưa cấu hình')}</strong> · hệ số quota: <strong>${Number(u.model_ratio||1)}</strong>. Học viện không trừ ngân sách Claude trực tiếp; quota thực tế do MiraiAPI quyết định.</p>
        <div class="warn">Đây là quota <strong>ước tính nội bộ</strong>, không phải số dư đã xác minh. Kiểm tra quota thực tại <a href="https://miraiapi.com/usage/" target="_blank" rel="noopener noreferrer">miraiapi.com/usage</a>. Mỗi model có hệ số khác nhau; nhập đúng hệ số từ bảng Model &amp; giá. ${u.configured?'':'<strong>Chưa có MiraiAPI Key.</strong>'}</div>
+    </div>
+    <div class="card" style="margin-top:16px"><div class="space-between"><h2>📥 Bộ thu thập kiến thức Marketing – 9 agent</h2><span class="badge blue">Nguồn được tuyển chọn</span></div>
+      <p class="muted">Nạp <strong>${Number(h.original_courses||0)} giáo trình tiếng Việt tự biên soạn</strong> cho 9 nhân viên; danh mục có <strong>${Number(hc.catalog_total||0)} nguồn đối chiếu</strong>. Chỉ ${Number(hc.eligible_open||0)} trang có giấy phép phù hợp được xét tải tự động. Các khóa học Meta, giáo trình có hạn chế bản quyền chỉ lưu liên kết tham khảo.</p>
+      <div class="stat-grid">${stat('📘','Đã nạp giáo trình',h.original_imported||0,'Tự biên soạn, dùng để học','#6fdbb2')}${stat('🌐','Tài liệu web đã tải',hc.downloaded||0,'Tải có thật từ nguồn được phép','#89baff')}${stat('📎','Liên kết tham khảo',hc.reference_only||0,'Không sao chép toàn văn','#ffcc82')}${stat('⚠️','Nguồn bị chặn',hc.blocked||0,'Lỗi mạng, robots hoặc giấy phép','#f89f9f')}</div>
+      <div class="actions" style="margin-top:13px"><button class="btn primary" data-action="harvester.seed">📚 Nạp giáo trình cho 9 agent</button><button class="btn ghost" data-action="harvester.download">⬇ Tải tài liệu mở được phép</button><button class="btn ghost" data-action="harvester.refresh">↻ Kiểm tra kết quả</button></div>
+      <p class="card-sub">Tải xuống chạy trong nền khi ứng dụng đang mở. Nếu không truy cập được nguồn, trạng thái sẽ báo lỗi và không giả vờ đã tải. Nút tải không quét Facebook hoặc tải học liệu có quyền hạn chế.</p>
+      <div class="table-scroll"><table class="data-table"><thead><tr><th>Nguồn học</th><th>Quyền tải</th><th>Trạng thái</th></tr></thead><tbody>${(h.catalog||[]).map(x=>`<tr><td><a href="${E(x.url)}" rel="noopener noreferrer" target="_blank">${E(x.title)}</a></td><td>${E(x.license)}</td><td>${E(x.status)} ${x.last_error?'<small class="muted">'+E(short(x.last_error,100))+'</small>':''}</td></tr>`).join('')}</tbody></table></div>
     </div>
     <div class="office-note">🎯 Mục tiêu 10M quota/ngày là mức cố gắng sử dụng tối đa có ích, không bảo đảm đạt 100% nếu thiếu nguồn, key hết quota thật hoặc bị rate-limit. Mỗi bước phải có tài liệu và kết quả kiểm chứng.</div>
     <div class="grid-2" style="margin-top:17px"><div class="card"><h2>📥 Nạp nguồn đào tạo</h2><p class="muted">Dán tài liệu bạn sở hữu hoặc được phép sử dụng. Bản này nhận văn bản thuần tối đa 300.000 ký tự/lần; không tự thu thập dữ liệu Facebook.</p>
@@ -612,6 +619,10 @@ async function action(name,id,el){
     case 'claude.check':{const r=await api('/api/claude/check','POST');toast(r.ok?('Claude đã kết nối. Haiku: '+(r.haiku_available?'Có':'Không')+'; Sonnet: '+(r.sonnet_available?'Có':'Không')):'Không thể kiểm tra Claude',!r.ok);break;}
     case 'academy.toggle':{const was=!!S.data.academy?.enabled;await api('/api/settings','POST',{academy_enabled:!was});toast(was?'Đã tạm dừng học tự động.':'Đã bật học tự động khi server đang chạy.');await reload();break;}
     case 'academy.step':{const x=await api('/api/academy/step','POST');toast(x.status==='started'?'Đã gửi một bước học vào hàng đợi.':'Học viện đang xử lý.');setTimeout(reload,1500);break;}
+    case 'harvester.seed':{const x=await api('/api/academy/harvester/import-original','POST');toast('Đã nạp '+x.imported+' giáo trình mới; '+x.new_training_jobs+' nhiệm vụ học, '+x.duplicates+' tài liệu đã có.');await reload();break;}
+    case 'harvester.download':{const x=await api('/api/academy/harvester/download-open','POST');toast(x.status==='started'?'Đang tải các trang mở đã duyệt. Xem bảng kết quả sau ít phút.':'Đã có đợt tải đang chạy.');setTimeout(reload,3000);break;}
+    case 'harvester.refresh':{await reload();toast('Đã cập nhật trạng thái các nguồn học.');break;}
+
     case 'knowledge.refresh':{await loadKnowledge();break;}
     case 'knowledge.prev':{S.knowledge.offset=Math.max(0,S.knowledge.offset-S.knowledge.limit);await loadKnowledge();break;}
     case 'knowledge.next':{if(S.knowledge.records?.has_more){S.knowledge.offset+=S.knowledge.limit;await loadKnowledge();}break;}

@@ -1,0 +1,525 @@
+{
+  "version": "2026-11-07",
+  "license": "Original training content written for AI Fanpage Company; cited URLs are references only",
+  "catalog": [
+    {
+      "id": "meta-page",
+      "title": "Xây dựng hiện diện bằng Facebook Page",
+      "url": "https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page",
+      "agents": [
+        "ceo",
+        "strategy",
+        "publishing"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "meta-community",
+      "title": "Meta Community Management Online Courses",
+      "url": "https://www.facebookblueprint.com/student/collection/205897-facebook-community-manager-online-courses",
+      "agents": [
+        "ceo",
+        "strategy",
+        "customer",
+        "analytics"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "meta-content",
+      "title": "Chiến lược nội dung cộng đồng",
+      "url": "https://www.facebookblueprint.com/student/path/196036-strategic-content-for-your-community",
+      "agents": [
+        "research",
+        "strategy",
+        "content",
+        "analytics"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "meta-moderation",
+      "title": "Quản lý và điều tiết cộng đồng",
+      "url": "https://www.facebookblueprint.com/student/path/196035-managing-online-communities-course",
+      "agents": [
+        "customer",
+        "compliance"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "meta-original",
+      "title": "Meta: Rewarding Original Creators",
+      "url": "https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/",
+      "agents": [
+        "content",
+        "creative",
+        "strategy",
+        "compliance"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "meta-spam",
+      "title": "Meta: Cracking Down on Spammy Content",
+      "url": "https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/",
+      "agents": [
+        "ceo",
+        "strategy",
+        "content",
+        "compliance"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "meta-creator",
+      "title": "Meta: New Metrics for Success",
+      "url": "https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/amp/",
+      "agents": [
+        "analytics",
+        "creative"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "google-helpful",
+      "title": "Google: Helpful Reliable People-first Content",
+      "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+      "agents": [
+        "content",
+        "strategy",
+        "compliance"
+      ],
+      "mode": "licensed_html",
+      "license": "CC-BY-4.0",
+      "attribution": "Google for Developers – https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+      "max_chars": 85000
+    },
+    {
+      "id": "google-seo",
+      "title": "Google SEO Starter Guide",
+      "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+      "agents": [
+        "research",
+        "content"
+      ],
+      "mode": "licensed_html",
+      "license": "CC-BY-4.0",
+      "attribution": "Google for Developers – https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+      "max_chars": 85000
+    },
+    {
+      "id": "google-robots",
+      "title": "Google: Robots.txt Guide",
+      "url": "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
+      "agents": [
+        "research",
+        "compliance"
+      ],
+      "mode": "licensed_html",
+      "license": "CC-BY-4.0",
+      "attribution": "Google for Developers – https://developers.google.com/search/docs/crawling-indexing/robots/intro",
+      "max_chars": 85000
+    },
+    {
+      "id": "google-images",
+      "title": "Google: Image SEO Guidelines",
+      "url": "https://developers.google.com/search/docs/appearance/google-images",
+      "agents": [
+        "creative",
+        "content"
+      ],
+      "mode": "licensed_html",
+      "license": "CC-BY-4.0",
+      "attribution": "Google for Developers – https://developers.google.com/search/docs/appearance/google-images",
+      "max_chars": 85000
+    },
+    {
+      "id": "google-sitepolicies",
+      "title": "Google Developers site licensing",
+      "url": "https://developers.google.com/terms/site-policies",
+      "agents": [
+        "ceo",
+        "compliance"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "w3c-alt",
+      "title": "W3C WAI Image Accessibility Tutorials",
+      "url": "https://www.w3.org/WAI/tutorials/images/",
+      "agents": [
+        "creative",
+        "content"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "openstax",
+      "title": "OpenStax Principles of Marketing",
+      "url": "https://openstax.org/details/books/principles-marketing",
+      "agents": [
+        "ceo",
+        "research",
+        "analytics",
+        "strategy"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "os-marketing-pdf",
+      "title": "OpenStax marketing textbook PDF (license check by edition)",
+      "url": "https://assets.openstax.org/oscms-prodcms/media/documents/Principles_Marketing-WEB.pdf",
+      "agents": [
+        "research",
+        "strategy"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "oer-social",
+      "title": "Introduction to Social Media – CC BY 4",
+      "url": "https://oerrepository.ntt.edu.vn/items/a0173c22-940b-4c30-b239-09afbf1dd987",
+      "agents": [
+        "research",
+        "content",
+        "customer"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "concordia-digital",
+      "title": "Digital Marketing Strategy – noncommercial license",
+      "url": "https://opentextbooks.concordia.ca/digitalmarketing/",
+      "agents": [
+        "strategy",
+        "analytics"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    },
+    {
+      "id": "measurement",
+      "title": "Marketing Science Center – CC0 synthetic datasets",
+      "url": "https://www.marketing-science-center.com/en/datasets",
+      "agents": [
+        "analytics",
+        "research"
+      ],
+      "mode": "reference_only",
+      "license": "LINK_ONLY",
+      "attribution": "",
+      "max_chars": 85000
+    }
+  ],
+  "curriculum": [
+    {
+      "id": "ceo-1",
+      "title": "Hệ điều hành CEO: mục tiêu tăng trưởng Fanpage",
+      "agents": [
+        "ceo"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page",
+      "body": "# Bài học CEO 1: Hệ điều hành CEO: mục tiêu tăng trưởng Fanpage\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Xác lập mục tiêu: 100 Fanpage không đồng nghĩa 100 kế hoạch giống nhau. Phân nhóm theo sản phẩm, người dùng, mức trưởng thành của Page, năng lực sản xuất và dữ liệu hiện có.\n\n2. Với mỗi Page lập baseline: số follower hiện tại, follower mới 7 ngày trước, lượt xem có nguồn, tỷ lệ tương tác theo reach nếu có, lượt nhấp và chuyển đổi có bằng chứng.\n\n3. Đặt hai lớp KPI: leading indicators như số bài hữu ích được kiểm duyệt, thời gian xử lý bình luận, tỷ lệ thử nghiệm và lagging indicators như follower mới, view, lead, doanh thu.\n\n4. Mục tiêu tuần đầu là giả thuyết vận hành, không phải dự đoán chắc chắn. Nếu Page mới không có dữ liệu, dùng mục tiêu thử nghiệm nhỏ, kiểm tra sau ngày 3 và ngày 7.\n\n5. CEO phân công nhiệm vụ có đầu ra, trách nhiệm, thời hạn, xác minh kết quả và quy tắc escalation. Chỉ mô tả nhiệm vụ thành công khi có artifact hoặc phản hồi hệ thống.\n\n6. Phân bổ nguồn lực theo hiệu quả có kiểm soát: bảo vệ Page đang tăng trưởng ổn định, dành phần ngân sách nhỏ để thăm dò ý tưởng mới, dừng thử nghiệm vi phạm quy tắc.\n\n7. Đo tiến độ theo chiến dịch và nguồn dữ liệu, không sử dụng lượt xem hoặc số người theo dõi do agent tự suy đoán.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "ceo-2",
+      "title": "Quản trị tranh luận giữa các phòng ban",
+      "agents": [
+        "ceo"
+      ],
+      "url": "https://www.facebookblueprint.com/student/collection/205897-facebook-community-manager-online-courses",
+      "body": "# Bài học CEO 2: Quản trị tranh luận giữa các phòng ban\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/collection/205897-facebook-community-manager-online-courses\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Khi Content đề xuất giật tít, Compliance phản biện về chứng cứ và chính sách. CEO bắt buộc ghi nhận cả lợi ích dự kiến và rủi ro trước khi chốt.\n\n2. Khi Nghiên cứu nêu xu hướng, yêu cầu nguồn, ngày xuất bản, đối tượng áp dụng, giới hạn và sự khác biệt giữa quan sát với dự báo.\n\n3. Khi Phân tích phát hiện view giảm, tránh kết luận vì thuật toán; kiểm tra lịch đăng, chủ đề, dạng nội dung, mùa vụ, nguồn đo và kích thước mẫu.\n\n4. Bản ghi quyết định gồm: câu hỏi, các phương án, giả định, người đề xuất, rủi ro, KPI cần đo và ngày đánh giá lại.\n\n5. Cho phép tự động trong hành lang chính sách; không cho CEO tự vượt quyền, tăng ngân sách hoặc xuất bản nội dung bị chặn.\n\n6. Ưu tiên minh bạch: người dùng chỉ trao đổi với CEO nhưng phải xem được nhật ký của đội ngũ và chất lượng bằng chứng.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "ceo-3",
+      "title": "Kiểm soát chi phí và năng suất AI",
+      "agents": [
+        "ceo"
+      ],
+      "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+      "body": "# Bài học CEO 3: Kiểm soát chi phí và năng suất AI\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://developers.google.com/search/docs/fundamentals/creating-helpful-content\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Dùng bộ nhớ và SQL xử lý vấn đề lặp lại trước khi gọi LLM. Phân loại nhiệm vụ để chọn model theo rủi ro, không theo danh xưng người gọi.\n\n2. Tính chi phí theo đầu vào, đầu ra, cache và hệ số quota thực tế của nhà cung cấp. Giữ mức trần chi tiêu độc lập với quota token.\n\n3. Không dùng toàn bộ 10 triệu quota chỉ để làm đầy thanh tiến độ. Đặt điều kiện có tài liệu mới, tình huống mới hoặc bài đánh giá còn thiếu.\n\n4. Tạo cơ chế kiểm tra năng suất: số bài học có nguồn, mức độ mới, chất lượng bài kiểm tra, số kế hoạch được áp dụng và hiệu quả thử nghiệm.\n\n5. Khi 9 agent dùng cùng bài đọc, tạo bản tóm tắt chung một lần rồi phân phát nhiệm vụ chuyên môn, tránh nhân chi phí chín lần.\n\n6. Khi nghỉ hoặc thiếu dữ liệu, ưu tiên xử lý cục bộ: chống trùng, chuẩn hóa từ khóa, tìm chứng cứ và lên danh mục kiến thức còn thiếu.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "research-1",
+      "title": "Phương pháp nghiên cứu khách hàng và đối thủ",
+      "agents": [
+        "research"
+      ],
+      "url": "https://openstax.org/details/books/principles-marketing",
+      "body": "# Bài học RESEARCH 1: Phương pháp nghiên cứu khách hàng và đối thủ\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://openstax.org/details/books/principles-marketing\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Bắt đầu bằng nghiên cứu sản phẩm: công năng xác thực, giá, quy cách, tình huống sử dụng, rào cản mua và chứng cứ có sẵn.\n\n2. Tạo chân dung khách hàng giả thuyết theo nhu cầu và bối cảnh: người mới biết sản phẩm, đang so sánh, đang cân nhắc, đã mua và người cần hỗ trợ.\n\n3. Ghi rõ nguồn của từng thông tin; phân biệt quan sát từ dữ liệu nội bộ, dữ liệu điều tra công khai, quảng cáo đối thủ và ý kiến cá nhân.\n\n4. Đối thủ là nguồn phân tích định vị; không tải hay sao chép bài viết, ảnh hoặc video để tái đăng.\n\n5. Bảng nghiên cứu phải có cột claim, nguồn, ngày, mức tin cậy, rủi ro áp dụng, cơ hội tạo nội dung nguyên bản và câu hỏi cần xác minh.\n\n6. Kết thúc bằng danh sách 10 câu hỏi thật của khách hàng và 5 giả thuyết có thể kiểm chứng bằng nội dung hoặc thảo luận.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "research-2",
+      "title": "Nghiên cứu nhu cầu thông qua dữ liệu có quyền truy cập",
+      "agents": [
+        "research"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page",
+      "body": "# Bài học RESEARCH 2: Nghiên cứu nhu cầu thông qua dữ liệu có quyền truy cập\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Sử dụng báo cáo Insights được chủ Page xuất và cho phép phân tích. Không suy đoán dữ liệu private từ giao diện Facebook.\n\n2. Phân tích lượt xem theo phân phối định dạng, chủ đề và ngày đăng. Không so trực tiếp view của Reels với reach của ảnh nếu cách định nghĩa khác nhau.\n\n3. Xây danh mục FAQ từ câu hỏi thực tế đã được chia sẻ hợp lệ; tránh lưu danh tính khách hàng khi không cần thiết.\n\n4. Phân nhóm phản hồi: quan tâm giá, hướng dẫn sử dụng, độ tin cậy, vận chuyển, tính phù hợp và chăm sóc sau mua.\n\n5. Ưu tiên insight tác động đến quyết định nội dung và trải nghiệm người xem, không tìm cách thao túng cảm xúc hoặc tạo tương tác giả.\n\n6. Báo cáo luôn nêu mẫu dữ liệu, thời gian đo và điều chưa biết.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "research-3",
+      "title": "Phát hiện xu hướng có kiểm chứng",
+      "agents": [
+        "research"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/196036-strategic-content-for-your-community",
+      "body": "# Bài học RESEARCH 3: Phát hiện xu hướng có kiểm chứng\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/196036-strategic-content-for-your-community\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Một xu hướng có thể là mùa vụ, thảo luận cộng đồng, phong cách dựng video, câu hỏi mới hoặc định dạng sáng tạo.\n\n2. Kiểm tra thời điểm xuất hiện, ngành hàng, đối tượng, mức liên quan tới thương hiệu và các hạn chế pháp lý trước khi đề xuất sử dụng.\n\n3. Không đưa tin chưa xác minh hoặc clip của người khác vào nội dung thương hiệu chỉ vì có view cao.\n\n4. Phân loại xu hướng theo thời gian sống: tức thời, mùa vụ, kiến thức evergreen. Evergreen cần ưu tiên vào kho kiến thức lâu dài.\n\n5. Với mỗi xu hướng đề xuất 3 góc tiếp cận riêng của sản phẩm: giải đáp, thử nghiệm có thật và câu chuyện hậu trường, kèm KPI kiểm chứng.\n\n6. Thí nghiệm từng xu hướng trên quy mô nhỏ để giảm rủi ro và tránh spam nhiều Page.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "strategy-1",
+      "title": "Định vị Fanpage và trụ cột nội dung",
+      "agents": [
+        "strategy"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page",
+      "body": "# Bài học STRATEGY 1: Định vị Fanpage và trụ cột nội dung\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Mỗi Page cần có lời hứa giá trị rõ ràng: thông tin giúp ai, giải quyết nhu cầu gì và khác biệt thật sự ra sao.\n\n2. Xác lập 4–6 trụ cột: kiến thức hữu ích, hướng dẫn dùng, hậu trường xác thực, FAQ, phản hồi đã đồng ý sử dụng, cập nhật sản phẩm.\n\n3. Thiết kế tỷ trọng nội dung ban đầu theo mục tiêu và dữ liệu: phần lớn tạo giá trị, phần nhỏ giới thiệu sản phẩm, luôn thử nghiệm và đánh giá lại.\n\n4. Mỗi bài phải có một mục tiêu chính: xem hết, lưu, thảo luận có ý nghĩa, nhấp, hoặc theo dõi; tránh ép người dùng bình luận theo kịch bản giả.\n\n5. Độ nguyên bản gồm trải nghiệm, ảnh thật, góc nhìn mới và dữ kiện riêng; không chỉ thay vài từ khi đăng nhiều Page.\n\n6. Lập calendar với cột đối tượng, góc nội dung, hook, định dạng, tài liệu nguồn, người duyệt, trạng thái và bài học sau đăng.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "strategy-2",
+      "title": "Thử nghiệm 7 ngày tăng trưởng có đo lường",
+      "agents": [
+        "strategy"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/196036-strategic-content-for-your-community",
+      "body": "# Bài học STRATEGY 2: Thử nghiệm 7 ngày tăng trưởng có đo lường\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/196036-strategic-content-for-your-community\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Ngày 1 thiết lập mốc follower, khảo sát nội dung và thử giới thiệu rõ lý do nên theo dõi Page.\n\n2. Ngày 2 đăng một nội dung giáo dục có thể lưu lại, ngày 3 giải đáp câu hỏi và đo phản hồi ban đầu.\n\n3. Ngày 4 thử video ngắn chứa thông tin nguyên bản, ngày 5 kiểm tra ý kiến khách hàng được phép dùng và phản biện câu hỏi còn tồn đọng.\n\n4. Ngày 6 thử định dạng khác theo dữ liệu, ngày 7 tổng kết và đề xuất follow vì giá trị nội dung tương lai.\n\n5. KPI phải ghi rõ số follower đầu kỳ, cuối kỳ, net follows, views theo định dạng, tần suất và chi phí sản xuất.\n\n6. Không gán thành công cho một hook duy nhất nếu các biến về chất lượng video, thời điểm và phân phối thay đổi đồng thời.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "strategy-3",
+      "title": "Phân nhóm 100 Page không trùng chiến lược",
+      "agents": [
+        "strategy"
+      ],
+      "url": "https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/",
+      "body": "# Bài học STRATEGY 3: Phân nhóm 100 Page không trùng chiến lược\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Phân cụm theo thương hiệu, phân khúc, danh mục và nhu cầu khách hàng thay vì tạo nhiều Page bản sao.\n\n2. Một bộ kiến thức sản phẩm có thể dùng chung nhưng hook, ví dụ, media và câu chuyện phải riêng theo đối tượng và giá trị.\n\n3. Không tự động đăng một video giống nhau lên nhiều Page; Meta ưu tiên tính nguyên bản và giảm phân phối nội dung nhân bản.\n\n4. Mỗi Page có nhật ký thử nghiệm riêng và quy tắc không lặp chủ đề trong khung thời gian hợp lý.\n\n5. Nếu nhiều Page không khác nhau về đối tượng hoặc mục đích, CEO cần đánh giá có nên hợp nhất chiến lược thay vì duy trì bằng mọi giá.\n\n6. Rà soát hàng tuần để bỏ giả thuyết kém hiệu quả, cập nhật persona, lịch và ưu tiên sản xuất.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "content-1",
+      "title": "Viết hook có giá trị và không giật tít sai",
+      "agents": [
+        "content"
+      ],
+      "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+      "body": "# Bài học CONTENT 1: Viết hook có giá trị và không giật tít sai\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://developers.google.com/search/docs/fundamentals/creating-helpful-content\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Hook tốt nêu đúng vấn đề hoặc lợi ích học được; không tạo sự sợ hãi, hứa hẹn chữa bệnh hay kết quả không kiểm chứng.\n\n2. Ví dụ cấu trúc hook giáo dục: câu hỏi thường gặp → lý do đáng quan tâm → câu trả lời có chứng cứ → hành động phù hợp.\n\n3. Hook hậu trường: một công đoạn thật trong quy trình → lý do công đoạn đó cần thiết → hình ảnh chứng minh.\n\n4. Hook so sánh: hai cách dùng hoặc hai lựa chọn có số liệu xác thực; tránh nói xấu thương hiệu khác.\n\n5. CTA theo dõi nên giải thích giá trị của những bài tiếp theo, tránh lạm dụng “comment số 1”, câu kéo tương tác giả.\n\n6. Tự kiểm tra 5 điểm: người đọc hiểu ngay, không gây hiểu lầm, có thông tin mới, phù hợp Page, có nguồn nội bộ hoặc công khai.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "content-2",
+      "title": "Kịch bản Reels dễ theo dõi",
+      "agents": [
+        "content"
+      ],
+      "url": "https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/",
+      "body": "# Bài học CONTENT 2: Kịch bản Reels dễ theo dõi\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Giai đoạn 0–3 giây dùng hình ảnh hoặc câu hỏi đặc trưng của vấn đề, không dùng thông tin gây sốc sai sự thật.\n\n2. Giai đoạn tiếp trình bày một ý chính bằng hình ảnh thật, nhịp cắt vừa phải và phụ đề dễ đọc.\n\n3. Đưa bằng chứng hoặc demo rõ ràng; tuyệt đối không bịa lời chứng thực, chứng chỉ hoặc kết quả dùng sản phẩm.\n\n4. Kết thúc bằng câu tóm tắt và lời hẹn chủ đề tiếp theo; người xem quyết định có theo dõi hay không.\n\n5. So sánh view, thời gian xem và phản hồi theo định dạng khi có dữ liệu, không chỉ đánh giá bởi tổng view.\n\n6. Khi dùng video bên thứ ba, chỉ sử dụng khi có quyền và có đóng góp sáng tạo đáng kể.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "content-3",
+      "title": "Câu chuyện thương hiệu và sản phẩm có chứng cứ",
+      "agents": [
+        "content"
+      ],
+      "url": "https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/",
+      "body": "# Bài học CONTENT 3: Câu chuyện thương hiệu và sản phẩm có chứng cứ\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Trọng tâm storytelling là nhân vật, tình huống, xung đột có thật và bài học liên quan sản phẩm, không giả khách mua hoặc nhà máy.\n\n2. Tách ba nhóm nội dung: thông tin kiểm chứng, trải nghiệm cá nhân có thật, và tình huống minh họa được gắn nhãn.\n\n3. Đối với thực phẩm và thảo mộc, không sử dụng tuyên bố điều trị hoặc chức năng sinh lý chưa được phép, kể cả thêm chữ hỗ trợ.\n\n4. Không lạm dụng hashtag và caption dài không liên quan; Meta đã công bố hạn chế nội dung spammy kiểu này.\n\n5. Một câu chuyện nên có thông tin mới hoặc góc nhìn mới; tuyệt đối không spin hàng loạt cùng bài cho nhiều Page.\n\n6. Khi nội dung quảng cáo hay ưu đãi có thời hạn, cần ghi điều kiện áp dụng và đảm bảo khả năng cung ứng.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "creative-1",
+      "title": "Brief thiết kế phù hợp điện thoại",
+      "agents": [
+        "creative"
+      ],
+      "url": "https://www.w3.org/WAI/tutorials/images/",
+      "body": "# Bài học CREATIVE 1: Brief thiết kế phù hợp điện thoại\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.w3.org/WAI/tutorials/images/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Thiết lập một nội dung hình ảnh có một ý chính, tiêu đề đủ đọc trên điện thoại, sản phẩm đúng ảnh gốc và không chồng đè.\n\n2. Đối với ảnh có chữ, chỉ đưa những tuyên bố đã kiểm chứng; nhãn giảm giá phải có điều kiện rõ ràng.\n\n3. Tạo bản xuất kích thước thích hợp cho feed và video dọc; tránh đưa thông số không xác minh vào sản phẩm.\n\n4. Mỗi brief ghi màu thương hiệu, vùng an toàn, vị trí logo nếu được phép, ảnh nguồn và bản quyền.\n\n5. Với thông tin quan trọng nằm trong ảnh, bổ sung caption mô tả hoặc văn bản thay thế để tăng khả năng tiếp cận.\n\n6. Ghi rõ đâu là minh họa AI, đâu là ảnh thực tế để không tạo hiểu nhầm về chất lượng sản phẩm hay cơ sở sản xuất.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "creative-2",
+      "title": "Sản xuất video nguyên bản",
+      "agents": [
+        "creative"
+      ],
+      "url": "https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/",
+      "body": "# Bài học CREATIVE 2: Sản xuất video nguyên bản\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Lên storyboard gồm mục tiêu, từng cảnh, lời thoại, bối cảnh, đạo cụ, shot list và tiêu chí kiểm tra.\n\n2. Luôn có nội dung thực chất: kiến thức, thực hành sử dụng thật, sản phẩm thật hoặc phân tích có nguồn.\n\n3. Đảm bảo nguồn nhạc, video, font chữ và hình ảnh có quyền sử dụng; không lấy video của người khác và chỉ thêm viền, logo hoặc tốc độ.\n\n4. Dựng phụ đề rõ, phù hợp người xem không bật âm thanh; tránh chữ nhỏ, chuyển động quá nhanh và hình ảnh dễ gây hiểu lầm.\n\n5. Ghi lịch sử các lần sửa brief và đối chiếu kết quả sau khi xuất bản thực tế.\n\n6. Khi không có công cụ tạo media thật, agent chỉ được trả về brief, không khẳng định đã xuất file hoàn chỉnh.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "creative-3",
+      "title": "Kiểm tra chất lượng hình ảnh và quyền sử dụng",
+      "agents": [
+        "creative"
+      ],
+      "url": "https://www.w3.org/WAI/tutorials/images/",
+      "body": "# Bài học CREATIVE 3: Kiểm tra chất lượng hình ảnh và quyền sử dụng\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.w3.org/WAI/tutorials/images/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Tạo checklist nguồn gốc tệp, giấy phép, hạn sử dụng, đồng ý từ nhân vật nếu có và quyền sử dụng thương hiệu.\n\n2. Không sử dụng logo nền tảng hoặc chứng nhận ISO, GMP, FDA nếu không có bằng chứng và quyền dùng phù hợp.\n\n3. Kiểm tra tính tương phản, cỡ chữ, nội dung thay thế, vùng cắt và tính nhất quán tên sản phẩm.\n\n4. Khi ảnh AI có hộp sản phẩm, đối chiếu với ảnh gốc và từ chối bản làm sai chữ hoặc thiết kế bao bì.\n\n5. Không dùng khuôn mặt của khách hàng thật hoặc lời review nếu chưa được cho phép.\n\n6. Ghi chú tỷ lệ, dung lượng, tên file và liên kết đến bản duyệt trước khi đăng.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "publishing-1",
+      "title": "Quy trình duyệt và lịch đăng Fanpage",
+      "agents": [
+        "publishing"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page",
+      "body": "# Bài học PUBLISHING 1: Quy trình duyệt và lịch đăng Fanpage\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Một bài đi qua trạng thái draft, kiểm duyệt, sẵn sàng, lên lịch và xác nhận đã đăng có bằng chứng.\n\n2. Chỉ đánh dấu published khi người quản trị xác nhận hoặc có hệ thống có quyền cung cấp kết quả; không nhầm “đã mở Firefox” với “đã đăng”.\n\n3. Không tự động hóa giao diện Facebook nếu thiếu quyền; không dùng thủ thuật né CAPTCHA hoặc xác minh danh tính.\n\n4. Lịch đăng dựa trên hành vi thực tế từng Page khi có dữ liệu, thử từng khung giờ và đánh giá lại.\n\n5. Không để nhiều chiến dịch đè bài, đăng quá dày hoặc nội dung trùng tại một Page.\n\n6. Khi lỗi mạng hoặc không rõ kết quả, dừng đăng lại và kiểm tra thủ công để tránh trùng.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "publishing-2",
+      "title": "Quản lý trạng thái tài khoản Firefox",
+      "agents": [
+        "publishing"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page",
+      "body": "# Bài học PUBLISHING 2: Quản lý trạng thái tài khoản Firefox\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/211566-online-business-presence-facebook-page\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Một tài khoản Facebook có một Firefox profile riêng cố định; ghi mapping quyền Page do người dùng xác nhận.\n\n2. Cookie hiện diện không đồng nghĩa phiên đăng nhập hợp lệ; người dùng cần xác nhận giao diện thực tế.\n\n3. Tài khoản cần 2FA, khóa profile, PID, log mở/đóng, kiểm tra an toàn trước khi xóa.\n\n4. Không giữ mật khẩu Facebook trong database. Profile là dữ liệu bí mật phải bảo vệ và không upload vào Git.\n\n5. Đóng trình duyệt bằng đúng phiên đã tạo, tránh kết thúc nhầm Firefox khác của người dùng.\n\n6. Không dùng hàng trăm profile để giả mạo người dùng hoặc tạo tương tác không xác thực.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "publishing-3",
+      "title": "Điều phối lịch cho nhiều Page",
+      "agents": [
+        "publishing"
+      ],
+      "url": "https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/",
+      "body": "# Bài học PUBLISHING 3: Điều phối lịch cho nhiều Page\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Nhóm Page theo ngành và độ trưởng thành, lưu calendar độc lập, tránh đăng trùng theo lô.\n\n2. Tính năng lịch phải xử lý múi giờ, ngày nghỉ, khoảng cách tối thiểu và tránh giờ không phù hợp.\n\n3. Trách nhiệm agent là phát hiện bài thiếu media, claim chưa duyệt, profile không thể mở, lỗi đường dẫn.\n\n4. Theo dõi SLA chuẩn bị nội dung và lịch chuyển trạng thái; không nhận quota MiraiAPI là công suất đăng Facebook.\n\n5. Lưu audit từng chỉnh sửa, trạng thái và người phê duyệt.\n\n6. Khi Page bị hạn chế, tạm dừng và báo CEO; không chuyển tài khoản để né hạn chế.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "customer-1",
+      "title": "Lắng nghe và trả lời bình luận hữu ích",
+      "agents": [
+        "customer"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/196035-managing-online-communities-course",
+      "body": "# Bài học CUSTOMER 1: Lắng nghe và trả lời bình luận hữu ích\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/196035-managing-online-communities-course\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Phân nhóm câu hỏi theo thông tin sản phẩm, giao hàng, phàn nàn, cảm ơn, spam hoặc cần hỗ trợ riêng.\n\n2. Trả lời bằng thông tin xác thực, tôn trọng người dùng, không trả lời đại trà như bot hoặc ép tương tác.\n\n3. Nếu câu hỏi có dữ liệu cá nhân hoặc chi tiết đơn hàng, hướng người dùng sang kênh riêng thích hợp thay vì yêu cầu công khai.\n\n4. Đối với câu hỏi sức khỏe, không chẩn đoán hoặc hứa chữa bệnh; mời kiểm tra nhãn và tư vấn chuyên môn khi phù hợp.\n\n5. Phản hồi khiếu nại theo quy trình: ghi nhận, xác minh, nêu bước giải quyết và thời gian cập nhật, tránh đổ lỗi.\n\n6. Dùng lịch sử phản hồi thật để đề xuất FAQ và cải thiện nội dung, đồng thời xóa/ẩn dữ liệu nhận diện không cần thiết.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "customer-2",
+      "title": "Điều hành cộng đồng và xử lý xung đột",
+      "agents": [
+        "customer"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/196035-managing-online-communities-course",
+      "body": "# Bài học CUSTOMER 2: Điều hành cộng đồng và xử lý xung đột\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/196035-managing-online-communities-course\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Thông báo quy tắc thảo luận minh bạch; áp dụng nhất quán cho các thành viên.\n\n2. Phân biệt góp ý trái chiều có thiện chí với quấy rối, spam và lừa đảo; không xóa chỉ vì bình luận không tích cực.\n\n3. Giải quyết căng thẳng bằng cách thừa nhận vấn đề, nêu dữ kiện, mời trao đổi riêng khi cần và ghi nhật ký xử lý.\n\n4. Không để agent tự gửi phản hồi công khai nếu chưa có quyền kết nối phù hợp; V1 chỉ đề xuất phản hồi.\n\n5. Tạo danh mục 10 câu hỏi chưa có đáp án và chuyển về bộ phận sản phẩm xác minh.\n\n6. Đo thời gian phản hồi và tỷ lệ vấn đề giải quyết được, không đánh giá chỉ bằng số lượt bình luận.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "customer-3",
+      "title": "Chăm sóc sau mua và trải nghiệm có giá trị",
+      "agents": [
+        "customer"
+      ],
+      "url": "https://www.facebookblueprint.com/student/collection/205897-facebook-community-manager-online-courses",
+      "body": "# Bài học CUSTOMER 3: Chăm sóc sau mua và trải nghiệm có giá trị\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/collection/205897-facebook-community-manager-online-courses\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Xây dựng FAQ về hướng dẫn sử dụng, bảo quản, chính sách đổi trả và liên hệ hỗ trợ dựa trên dữ liệu đã xác minh.\n\n2. Gửi thông tin cần thiết qua kênh được cho phép; không spam quảng cáo trong Messenger.\n\n3. Phân tích nguyên nhân khách cần hỏi lặp lại để sửa mô tả sản phẩm hoặc bài hướng dẫn.\n\n4. Không tạo khách hàng ảo, review ảo hoặc lời chứng thực được bịa.\n\n5. Đề xuất nội dung giải đáp từ chủ đề xuất hiện nhiều lần; ưu tiên những vấn đề mang lại giá trị thật.\n\n6. Đánh giá chất lượng hỗ trợ qua kết quả khách nhận được, không dùng tin nhắn tự động lặp để tăng chỉ số.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "analytics-1",
+      "title": "Thiết kế hệ thống KPI có nguồn",
+      "agents": [
+        "analytics"
+      ],
+      "url": "https://www.facebookblueprint.com/student/collection/205897-facebook-community-manager-online-courses",
+      "body": "# Bài học ANALYTICS 1: Thiết kế hệ thống KPI có nguồn\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/collection/205897-facebook-community-manager-online-courses\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Xác định metric dictionary: follower total, net follows, reach, views, engagement, clicks, leads và sale, ghi nguồn và định nghĩa.\n\n2. Mỗi báo cáo có kỳ đo, Page, định dạng nội dung, thời gian đăng và ngày lấy dữ liệu.\n\n3. Views không thể thay thế reach. Tổng engagement cần nêu có bao gồm chia sẻ, like và comment hay không.\n\n4. Với 100 Page, tổng hợp theo Page trước rồi theo phân nhóm; tránh đánh giá chỉ theo tổng lượt xem dễ thiên lệch bởi Page lớn.\n\n5. Không suy ra tương quan thành quan hệ nhân quả. Kết quả tăng follow có thể đến từ thay đổi nội dung và nhiều yếu tố bên ngoài.\n\n6. Dữ liệu người dùng nhập thủ công được đánh dấu nguồn thủ công, không tự nâng thành “Meta verified”.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "analytics-2",
+      "title": "Thiết kế thử nghiệm nội dung không gây hiểu nhầm",
+      "agents": [
+        "analytics"
+      ],
+      "url": "https://openstax.org/details/books/principles-marketing",
+      "body": "# Bài học ANALYTICS 2: Thiết kế thử nghiệm nội dung không gây hiểu nhầm\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://openstax.org/details/books/principles-marketing\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Nêu giả thuyết trước, ví dụ hook theo dạng câu hỏi có thể tăng tỷ lệ xem tiếp so với hook mô tả, không coi là chân lý.\n\n2. Chọn biến độc lập cần thử, chỉ tiêu kết quả, mẫu tối thiểu, thời gian và nguyên tắc dừng.\n\n3. Không thể làm A/B nghiêm ngặt chỉ bằng hai bài khác ngày, khác chủ đề và khác video; ghi rõ giới hạn.\n\n4. Đánh giá theo phân phối tương tác, không chọn kết quả tốt nhất do may mắn mà bỏ các trường hợp thất bại.\n\n5. Rút bài học có phạm vi: chỉ áp dụng cho nhóm Page và điều kiện tương tự cho đến khi có dữ liệu mở rộng.\n\n6. Lưu baseline, kết quả thử, mức độ tự tin và quyết định thử tiếp hay dừng.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "analytics-3",
+      "title": "Đọc báo cáo và tối ưu nội dung tuần",
+      "agents": [
+        "analytics"
+      ],
+      "url": "https://www.facebookblueprint.com/student/path/196036-strategic-content-for-your-community",
+      "body": "# Bài học ANALYTICS 3: Đọc báo cáo và tối ưu nội dung tuần\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://www.facebookblueprint.com/student/path/196036-strategic-content-for-your-community\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Báo cáo tuần gồm số bài đã đăng xác minh, số người theo dõi mới, lượt xem, tương tác, phản hồi tiêu cực và lỗi xuất bản.\n\n2. Thống kê theo chủ đề, định dạng và mục tiêu. Đo tỷ lệ trên cùng định nghĩa metric qua các khoảng thời gian tương đương.\n\n3. Phát hiện bất thường: view tăng nhưng follow không tăng, nhiều bình luận nhưng chưa có câu trả lời, tỷ lệ giảm dù reach tăng.\n\n4. Đề xuất hành động gắn với dữ liệu, ví dụ rút ngắn đoạn mở đầu hoặc mở thêm chủ đề FAQ có phản hồi tích cực.\n\n5. Không tạo cam kết “bảy ngày đạt X follow”; đưa khoảng mục tiêu và mức tin cậy khi có số liệu.\n\n6. CEO nhận tóm tắt ngoại lệ và danh sách thử nghiệm có thể triển khai trong giới hạn được phê duyệt.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "compliance-1",
+      "title": "Chính sách nội dung nguyên bản của Meta",
+      "agents": [
+        "compliance"
+      ],
+      "url": "https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/",
+      "body": "# Bài học COMPLIANCE 1: Chính sách nội dung nguyên bản của Meta\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://about.fb.com/news/2026/03/rewarding-original-creators-on-facebook/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Nội dung nguyên bản do Page tạo, có góc nhìn hoặc trải nghiệm mới được ưu tiên hơn việc nhân bản nội dung của người khác.\n\n2. Không coi thay viền, đổi tốc độ, thay caption hoặc lồng tiếng lại tối thiểu là chuyển hóa sáng tạo có giá trị.\n\n3. Tránh mạng lưới Page đăng cùng bản sao, caption dài không liên quan hoặc dùng hashtag không phục vụ nội dung.\n\n4. Không mua follow, tạo comment ảo hoặc dùng tài khoản giả mạo người thật.\n\n5. Kiểm tra quyền tác giả, đồng ý sử dụng hình ảnh, chứng từ sản phẩm và dẫn nguồn trước đăng.\n\n6. Chặn claim không có bằng chứng và báo CEO khi cần giải quyết xung đột giữa mục tiêu view và chính sách.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "compliance-2",
+      "title": "Rà soát tuyên bố sản phẩm và minh bạch thương mại",
+      "agents": [
+        "compliance"
+      ],
+      "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+      "body": "# Bài học COMPLIANCE 2: Rà soát tuyên bố sản phẩm và minh bạch thương mại\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://developers.google.com/search/docs/fundamentals/creating-helpful-content\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Phân loại câu khẳng định: thông tin trên nhãn, claim do nhà sản xuất đưa, quan điểm trải nghiệm và tuyên bố về sức khỏe.\n\n2. Yêu cầu bằng chứng phù hợp cho thông tin giảm cân, điều trị, cải thiện chức năng cơ thể hoặc chứng nhận, không dùng “hỗ trợ” để hợp thức hóa tùy tiện.\n\n3. Ảnh và video AI minh họa không được trình bày như chứng cứ thật về công dụng hoặc chất lượng.\n\n4. Giá, số lượng, quà tặng và chương trình giảm giá phải khớp dữ liệu kinh doanh cập nhật.\n\n5. Mỗi bài có checklist nội dung nhạy cảm, chứng cứ, mức độ rủi ro và người cần duyệt.\n\n6. Nhắc lại rằng chính sách Meta và pháp luật Việt Nam có thể cập nhật; khi thiếu nguồn pháp lý mới cần yêu cầu kiểm tra trước xuất bản.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    },
+    {
+      "id": "compliance-3",
+      "title": "Bảo vệ dữ liệu và quyền tự động hóa",
+      "agents": [
+        "compliance"
+      ],
+      "url": "https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/",
+      "body": "# Bài học COMPLIANCE 3: Bảo vệ dữ liệu và quyền tự động hóa\n\nTài liệu đào tạo nội bộ do AI Fanpage Company tự biên soạn dựa trên thực hành marketing được xem xét; không sao chép toàn văn các nguồn dẫn.\nNguồn tham khảo: https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/\nMức độ: HƯỚNG DẪN / cần kiểm nghiệm bằng dữ liệu Page thật.\n\n1. Không thu thập tự động dữ liệu người dùng, bình luận hoặc hồ sơ Facebook khi không có quyền và cơ sở pháp lý.\n\n2. Không sử dụng công cụ vượt xác minh, né giới hạn hoặc che giấu tự động hóa.\n\n3. API key, cookie, profile Firefox và dữ liệu khách hàng là bí mật cần phân quyền và không đưa vào tài liệu Học viện.\n\n4. Nguồn web phải lưu URL, ngày truy cập, giấy phép và mức độ tin cậy; không sao chép toàn văn nguồn có bản quyền khi chưa được phép.\n\n5. Tách dữ kiện chính thức khỏi ý kiến tác giả và tình huống mô phỏng của agent.\n\n6. Lưu audit truy xuất và xử lý dữ liệu; chỉ báo cáo bằng chứng đã quan sát, không tự tạo bằng chứng giả.\n\n## Checklist trước khi áp dụng\n- Có dữ liệu nguồn xác thực?\n- Có vượt quy tắc nội dung, bản quyền, quyền riêng tư hay chính sách Meta không?\n- Đã định nghĩa chỉ số đánh giá và khi nào xem lại?\n- Đã ghi nhãn rõ bài học nội bộ, không nhầm với thực nghiệm Facebook thật?\n\n## Bài thực hành\nThiết kế một tình huống gắn với một Page và một sản phẩm do người dùng cung cấp. Trình bày ba phương án, giả thuyết, rủi ro, tiêu chí đo và thông tin còn thiếu. Không bịa dữ liệu.\n",
+      "kind": "original_curriculum"
+    }
+  ]
+}

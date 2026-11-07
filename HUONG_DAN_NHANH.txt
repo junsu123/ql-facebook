@@ -92,3 +92,7 @@ V1.11: KHO KIEN THUC DA HOC
 - Tim kiem, loc theo agent va do tin cay; bam "Xem toan bo" de xem nguyen van ket qua da luu va nguon goc.
 - Bam "Xuat toan bo CSV" hoac "JSONL day du" de tai tat ca ket qua dung bo loc (khong chi trang dang xem).
 - Khi Hoi hoc chua co tai lieu/ket qua, man hinh hien chua co du lieu, khong tao bai hoc gia.
+
+V1.12: Vao Hoc vien 10M > Nap giao trinh cho 9 agent de them 27 bai hoc viet bang tieng Viet.
+Bam Tai tai lieu mo duoc phep de tai cac trang Google Developers duoc phep; neu robots/ban quyen chan, phan mem ghi ro loi.
+Nguon Meta Blueprint chi duoc luu lien ket tham khao, khong copy toan van.
