@@ -199,7 +199,13 @@ def render_poster(project: dict, image: Image.Image, ratio: str) -> tuple[str,in
     w,h=RATIOS[ratio]
     poster=Image.new('RGBA',(w,h),BACKGROUND+(255,))
     draw=ImageDraw.Draw(poster)
-    name=project['product_name'];components=[i.strip() for i in re.split(r'[,;\n]+',project['ingredients']) if i.strip()]
+    name=project['product_name']
+    concept=project.get('claude_copy') or {}
+    components=([str(b).strip() for b in concept.get('bullets',[]) if str(b).strip()] if concept
+        else [i.strip() for i in re.split(r'[,;\n]+',project['ingredients']) if i.strip()])
+    main_title=concept.get('headline') or name
+    section_title=(concept.get('subheadline') or name) if concept else None
+    footer=(concept.get('cta') or 'TÌM HIỂU SẢN PHẨM') if concept else 'TÌM HIỂU SẢN PHẨM'
     typ=project['layout_type'];layout=project['layout_name']
     bright=(250,249,240);soft=(234,231,220);accent=(247,228,180)
 
@@ -207,9 +213,9 @@ def render_poster(project: dict, image: Image.Image, ratio: str) -> tuple[str,in
     # Every other element starts at y>=125 so this region remains exactly clear.
     if ratio=='1:1':
         margin=62
-        title_bottom=_write_wrapped(draw,name.upper(),(margin,165),495,56,bright,3,True,1.17,33)
+        title_bottom=_write_wrapped(draw,main_title.upper(),(margin,165),495,56,bright,3,True,1.17,33)
         subtitle_y=max(415,title_bottom+20)
-        _write_wrapped(draw,'THÀNH PHẦN' if typ=='ingredients' else 'TRÀ / SẢN PHẨM',
+        _write_wrapped(draw,(section_title or ('THÀNH PHẦN' if typ=='ingredients' else 'TRÀ / SẢN PHẨM')),
                        (margin,subtitle_y),460,27,accent,1,True)
         _paste_product(poster,image,(490,350,485,560) if layout!='minimal' else (515,395,445,505))
         lines=components[:5] if typ=='ingredients' else components[:4]
@@ -218,32 +224,39 @@ def render_poster(project: dict, image: Image.Image, ratio: str) -> tuple[str,in
             if curr>852:break
             draw.ellipse((margin,curr+14,margin+9,curr+23),fill=accent)
             curr=_write_wrapped(draw,c,(margin+22,curr),390,25,soft,2,False,1.2,20)+13
-        draw.text((margin,938),'TÌM HIỂU SẢN PHẨM',font=_font(20,bold=True),fill=accent)
+        _write_wrapped(draw,footer,(margin,930),w-2*margin,20,accent,1,True,min_font=19)
     elif ratio=='9:16':
         margin=76
-        y=_write_wrapped(draw,name.upper(),(margin,185),w-2*margin,75,bright,4,True,1.2,45)
+        y=_write_wrapped(draw,main_title.upper(),(margin,185),w-2*margin,75,bright,4,True,1.2,45)
         draw.line((margin,min(535,y+30),w-margin,min(535,y+30)),fill=accent,width=3)
         _paste_product(poster,image,(100,540,880,1000) if layout!='minimal' else (155,640,760,850))
         ly=1510 if layout!='minimal' else 1480
-        _write_wrapped(draw,'THÀNH PHẦN', (margin,ly),w-2*margin,38,accent,1,True)
+        _write_wrapped(draw,section_title or 'THÀNH PHẦN', (margin,ly),w-2*margin,38,accent,1,True)
         curr=ly+72
         for c in components[:6]:
             if curr>1802:break
             draw.ellipse((margin,curr+16,margin+10,curr+26),fill=accent)
             curr=_write_wrapped(draw,c,(margin+27,curr),w-2*margin-27,31,soft,2,False,1.22,23)+13
-        draw.text((margin,1860),'TÌM HIỂU SẢN PHẨM',font=_font(25,bold=True),fill=accent)
+        _write_wrapped(draw,footer,(margin,1850),w-2*margin,25,accent,1,True,min_font=20)
     else:
         margin=85
-        y=_write_wrapped(draw,name.upper(),(margin,173),800,73,bright,3,True,1.17,40)
+        y=_write_wrapped(draw,main_title.upper(),(margin,173),800,73,bright,3,True,1.17,40)
         y=max(435,y+25)
-        _write_wrapped(draw,'THÀNH PHẦN', (margin,y),800,31,accent,1,True)
+        _write_wrapped(draw,section_title or 'THÀNH PHẦN', (margin,y),800,31,accent,1,True)
         curr=y+55
         for c in components[:4]:
             if curr>765:break
             draw.ellipse((margin,curr+13,margin+10,curr+23),fill=accent)
             curr=_write_wrapped(draw,c,(margin+24,curr),750,28,soft,2,False,1.2,21)+10
         _paste_product(poster,image,(920,115,630,710) if layout!='minimal' else (975,155,540,640))
-        draw.text((margin,830),'TÌM HIỂU SẢN PHẨM',font=_font(21,bold=True),fill=accent)
+        _write_wrapped(draw,footer,(margin,818),800,21,accent,1,True,min_font=19)
+
+    if concept:
+        # Always include the source product name even when Claude proposes a slogan.
+        # Position below the reserved 150×80 top-center area.
+        _write_wrapped(draw,name,(62 if ratio=='1:1' else 76 if ratio=='9:16' else 85,123),
+                       400 if ratio=='1:1' else 820 if ratio=='9:16' else 750,
+                       22,soft,1,False,min_font=18)
 
     # The user provided note is kept in project metadata, not asserted as an
     # unverified health/discount claim on the rendered poster.

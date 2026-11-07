@@ -58,3 +58,8 @@
 
 /* AI Product Poster Studio */
 .poster-top{align-items:start;margin-bottom:20px}.poster-top>.card{min-width:0}.poster-ratio-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.poster-ratio-picker label{cursor:pointer;padding:12px 8px;border:1px solid #526080;border-radius:11px;background:#232b46;display:flex;align-items:center;justify-content:center;gap:5px;flex-direction:column}.poster-ratio-picker label:has(input:checked){border-color:#b8a1fb;background:#413a65}.poster-ratio-picker small{color:#b6c3e0;font-size:10px}.poster-ratio-picker input{accent-color:#a994f0}.poster-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}.poster-output{min-width:0;padding:11px;border:1px solid #44506b;border-radius:12px;background:#192239}.poster-output img{width:100%;height:250px;object-fit:contain;background:#777973;border-radius:9px;margin-bottom:9px}.poster-output .toolbar{gap:6px;margin-top:10px}.poster-output .btn{font-size:11px}.poster-stats{grid-template-columns:1fr 1fr}.poster-project{margin:10px 0}.poster-project h2{overflow-wrap:anywhere}@media(max-width:850px){.poster-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:570px){.poster-grid{grid-template-columns:1fr}.poster-top{grid-template-columns:1fr}.poster-ratio-picker{grid-template-columns:repeat(3,1fr)}.poster-output img{height:330px}}
+
+/* V1.14 Claude brief: readable, scrollable structured result */
+.claude-brief-card { overflow-wrap: anywhere; }
+.design-result-json { max-height: 65vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  background: rgba(8,12,28,.7); padding: 14px; border-radius: 10px; color:#e7e7f2; font-size:12px; }

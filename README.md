@@ -1,6 +1,6 @@
-# AI Fanpage Company V1.13 – Agent thiết kế poster PNG
+# AI Fanpage Company V1.14 – Claude Direct Design + Agent Memory
 
-Đã thêm menu **Thiết kế poster**. Xem mục **V1.13.0** bên dưới để sử dụng.
+Đã thêm menu **Thiết kế poster**. Xem mục **V1.14** bên dưới để sử dụng.
 
 # V1.11 – Kho kiến thức đã học: xem và xuất toàn bộ dữ liệu thật
 
@@ -115,6 +115,16 @@ Phần mềm quản trị marketing AI dạng **local-first**, có giao diện v
 - Bộ tính ngân sách Claude có dự phòng múi giờ UTC+07:00 nếu dữ liệu IANA không tồn tại, tránh lỗi `/api/bootstrap` HTTP 500 khi mở giao diện.
 - Công cụ `diagnose_windows.bat` kiểm tra tình trạng timezone/tzdata.
 - Nếu đang chạy V1.3.1, thực hiện `git pull origin main` rồi **đóng cửa sổ máy chủ cũ** và khởi động lại bằng `start_windows.bat` để tự cài dependency. Có thể sửa ngay bằng `.venv\Scripts\python.exe -m pip install tzdata` trong thư mục dự án.
+
+## V1.14 – Prompt tạo ảnh và gọi Claude trực tiếp
+
+- Trong **Thiết kế poster**, nhập tên sản phẩm, thành phần, tải ảnh 3D gốc, viết **Prompt tạo ảnh** và bấm **Gọi Claude trực tiếp**.
+- Backend gửi yêu cầu đến **Anthropic Claude Messages API** qua key Claude đã lưu (KHÔNG qua MiraiAPI), kèm một ảnh xem trước JPEG đã thu nhỏ. Claude trả về JSON cấu trúc gồm concept, headline, bullets, CTA, prompt ảnh và lựa chọn bố cục cho **1:1 / 9:16 / 16:9**.
+- **Gọi Claude trực tiếp chỉ lấy kết quả**: lưu JSON, ảnh gốc và token thực dùng trong SQLite, đồng thời lập tức ghi bài học vào **bộ nhớ agent Sáng tạo** với mức tin cậy *chưa xác minh*. Không xuất PNG hay tự động gọi Claude lần nữa.
+- Nút **Dùng kết quả để tạo poster** lấy đúng concept đã lưu và dùng Pillow dựng PNG từ **ảnh sản phẩm gốc** theo ba tỷ lệ; không phát sinh thêm lượt gọi Claude. Bố cục chỉ áp dụng trong các layout hero/editorial/minimal, không tái tạo hình ảnh bằng mô hình sinh ảnh mới.
+- Không chèn logo sàn, dùng nền xám ghi `#777973`, vùng top-center 150×80 px để trống; kiểm tra cơ bản một số tuyên bố y tế thiếu bằng chứng, người dùng vẫn phải kiểm duyệt trước khi đăng.
+- Tôn trọng ngân sách và hạn mức Claude trong **Cài đặt**, tính cả lượng token ảnh ước tính khi đặt trước chi phí. Yêu cầu lỗi mạng không tự gửi lại để tránh phát sinh phí trùng.
+- Bản hiện tại chưa thử bằng API key Claude thật. Cần kiểm tra quyền truy cập model và hóa đơn Anthropic trước khi vận hành thương mại. Để đọc tài liệu Anthropic chính thức xem <https://platform.claude.com/docs/en/api/http/messages> và <https://platform.claude.com/docs/en/build-with-claude/structured-outputs>.
 
 ## V1.13.0 – AI Design Agent: Poster sản phẩm từ ảnh 3D
 

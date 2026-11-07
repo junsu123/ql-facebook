@@ -152,11 +152,12 @@ def _rates(model: str, prompt_tokens: int=0) -> tuple[float,float]:
     return CLAUDE_PRICING[model]
 
 
-def _max_reservation(model: str,prompt: str,system: str,max_tokens:int) -> float:
-    ip,op=_rates(model,_tokens_upper(system+prompt))
+def _max_reservation(model: str,prompt: str,system: str,max_tokens:int,extra_input_tokens:int=0) -> float:
+    estimated_input=_tokens_upper(system+prompt)+max(0,int(extra_input_tokens))
+    ip,op=_rates(model,estimated_input)
     # Reservation covers a generous upper bound on input, full response output,
     # and possible cache write premium.  Values in USD.
-    return round((_tokens_upper(system+prompt)*ip*1.25+max_tokens*op)/1_000_000 + 0.000001,9)
+    return round((estimated_input*ip*1.25+max_tokens*op)/1_000_000 + 0.000001,9)
 
 
 def _vietnam_billing_timezone():
@@ -191,14 +192,14 @@ def _spent_today(c:sqlite3.Connection, agent_id:str|None=None) -> float:
     return float(r['dollars'])
 
 
-def reserve_budget(agent_id:str, model:str, purpose:str, prompt:str,system:str,max_tokens:int, route_reason:str='') -> tuple[str,float]:
+def reserve_budget(agent_id:str, model:str, purpose:str, prompt:str,system:str,max_tokens:int, route_reason:str='',extra_input_tokens:int=0) -> tuple[str,float]:
     if agent_id not in AGENT_IDS:
         raise ValueError('Agent không tồn tại')
     cfg=budget_settings()
     total_cap=max(0,float(cfg.get('claude_daily_budget_usd','1')))
     agent_cap=max(0,float(cfg.get('claude_agent_daily_budget_usd','.25')))
-    amount=_max_reservation(model,prompt,system,max_tokens)
-    requested_tokens=_tokens_upper(system+prompt)+max_tokens
+    amount=_max_reservation(model,prompt,system,max_tokens,extra_input_tokens)
+    requested_tokens=_tokens_upper(system+prompt)+max_tokens+max(0,int(extra_input_tokens))
     rid='R'+uuid.uuid4().hex
     with db() as c:
         # BEGIN IMMEDIATE serializes reservations across workers and processes.

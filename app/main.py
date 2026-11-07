@@ -33,6 +33,7 @@ from .knowledge import (browse_knowledge, knowledge_overview, source_detail,
 from .mirai import available_models, mirai_report, init_mirai, test_mirai_completion
 from .source_harvester import overview as harvester_overview, import_original_courses, fetch_approved_batch
 from .design import (create_posters, list_projects, submit_feedback, design_stats)
+from .design_claude import (create_claude_concept, get_concepts, render_claude_concept)
 from .growth import (create_sprint, get_sprint, list_sprints, record_progress,
                      set_baseline, generate_ceo_plan, attach_page)
 from .firefox import (BrowserError, account_status, create_profile, open_profile,
@@ -42,7 +43,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.13.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.14.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -86,7 +87,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.13.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.14.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -129,6 +130,7 @@ def bootstrap():
         'academy':academy_overview(),
         'harvester':harvester_overview(),
         'design':list_projects(20),
+        'design_concepts':get_concepts(20),
         'firefox_available':bool(executable()),
         'firefox_installer':firefox_install_status(),
         'counts':{
@@ -803,6 +805,41 @@ async def design_create(
                     [part.strip() for part in ratios.split(',')],layout_type,mode,note,page_id or None)
     except ValueError as e:
         raise HTTPException(400,str(e)) from e
+
+@app.post('/api/design/claude-direct')
+async def design_claude_direct(
+    image: UploadFile = File(...), product_name: str = Form(...),
+    ingredients: str = Form(...), user_prompt: str = Form(''),
+    page_id: str = Form(''),
+):
+    """One direct Claude Vision request; save the structured brief for learning."""
+    if image.content_type not in ('image/png','image/jpeg','image/webp','application/octet-stream'):
+        raise HTTPException(400,'Ảnh cần có định dạng PNG/JPEG/WEBP.')
+    blob=await image.read(12*1024*1024+1)
+    if len(blob)>12*1024*1024:
+        raise HTTPException(400,'Ảnh sản phẩm vượt 12 MB.')
+    try:
+        return await run_in_threadpool(create_claude_concept,product_name,ingredients,user_prompt,blob,page_id or None)
+    except (ValueError,ModelError) as exc:
+        raise HTTPException(400,str(exc)) from exc
+
+@app.get('/api/design/concepts')
+def design_claude_list():
+    return {'items':get_concepts(50)}
+
+class DesignConceptRender(BaseModel):
+    ratios:list[str]=Field(default_factory=lambda:['1:1'])
+    layout_type:str='overview'
+
+@app.post('/api/design/concepts/{concept_id}/render')
+def design_claude_render(concept_id:str,req:DesignConceptRender):
+    """Render already-saved Claude result using Pillow, no second LLM call."""
+    try:
+        return render_claude_concept(concept_id,req.ratios,req.layout_type)
+    except LookupError as exc:
+        raise HTTPException(404,str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400,str(exc)) from exc
 
 @app.post('/api/design/outputs/{output_id}/review')
 def design_review(output_id:str, data:PosterReview):

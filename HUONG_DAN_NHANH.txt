@@ -103,3 +103,12 @@ AI DESIGN AGENT V1.13
 - Nhấn Tạo poster PNG; ảnh lưu ở media/design trên máy và có nút tải ảnh.
 - Nhấn Đánh giá 1-5 sao từng ảnh để agent học chọn bố cục. Claude chỉ tư vấn bố cục, không vẽ lại bao bì.
 - Dùng PNG nền trong suốt để hình sản phẩm đẹp; file JPG có nền giữ nguyên nền của ảnh gốc.
+
+V1.14 – GỌI CLAUDE TRỰC TIẾP TRONG THIẾT KẾ POSTER
+1. Cập nhật code rồi mở lại phần mềm (nếu có watcher V1.7, tự restart).
+2. Vào Cài đặt, lưu Claude API key và đặt giới hạn USD/ngày.
+3. Vào Thiết kế poster: nhập sản phẩm, thành phần, ảnh 3D, Prompt tạo ảnh.
+4. Bấm Gọi Claude trực tiếp để nhận và lưu bản thiết kế JSON, chưa xuất PNG.
+5. Bấm Dùng kết quả để tạo poster để dựng PNG 1:1, 9:16, 16:9.
+6. Đánh giá ảnh bằng sao để agent học sở thích bố cục.
+LƯU Ý: Claude tư vấn nội dung/bố cục, không sinh ảnh pixel bằng API này.

@@ -196,6 +196,7 @@ function renderContent(){
 function renderDesign(){
   const records=S.data?.design?.items||[];
   const brain=S.data?.design?.brain||{};
+  const concepts=S.data?.design_concepts||[];
   const projectCards=records.length?records.map(p=>`<div class="card poster-project">
     <div class="space-between"><h2>${E(p.product_name)}</h2><span class="badge ${p.provider==='claude'?'blue':'green'}">${p.provider==='claude'?'Claude concept':'Bố cục nội bộ'}</span></div>
     <p class="muted">${E(p.layout_name)} · ${E(p.layout_type)} · ${F(p.created)}</p>
@@ -223,7 +224,9 @@ function renderDesign(){
       </div>
       ${pick('Liên kết Fanpage (tùy chọn)','page_id',pageOptions())}
       ${field('Ghi chú ý tưởng (không tự in lên poster)','note','','textarea','rows="2" maxlength="1000"')}
-      <button class="btn primary" type="submit" id="designSubmit">✦ Tạo poster PNG</button>
+      ${field('Prompt tạo ảnh gửi Claude','user_prompt','','textarea','rows="5" maxlength="4000" placeholder="Ví dụ: poster trà thảo mộc, chữ lớn dễ đọc, tối giản, nền xám ghi, bố cục giàu khoảng thở..."')}
+      <div class="actions"><button class="btn primary" type="submit" id="designSubmit">✦ Tạo poster PNG</button>
+      <button class="btn ghost" type="button" data-action="design.claude-direct" id="directClaudeButton">🧠 Gọi Claude trực tiếp</button></div>
       <p class="card-sub">Nền xám ghi #777973. Vùng trên cùng ở chính giữa 150×80 px luôn trống. Ảnh xuất thật, không phải prompt. Không tự viết công dụng sức khỏe hoặc tuyên bố điều trị.</p>
       </form>
     </div>
@@ -237,7 +240,21 @@ function renderDesign(){
       <p class="muted">Claude chỉ phân tích concept khi cần, sử dụng API key và ngân sách Claude hiện tại. Một concept dùng chung cho cả ba tỷ lệ.</p>
       <p class="muted">Các poster được lưu tại thư mục dữ liệu trên máy, không tải ảnh sản phẩm của bạn lên GitHub.</p>
     </div>
-  </div><div class="space-between"><h2>📚 Thư viện poster đã tạo</h2><button class="btn ghost sm" data-action="design.refresh">↻ Làm mới</button></div>
+  </div><div class="space-between"><h2>🧠 Kết quả Claude trực tiếp và bộ nhớ agent</h2><span class="badge blue">${concepts.length} concept gần đây</span></div>
+  <div class="stack">${concepts.length?concepts.map(c=>{
+    const r=c.design_result||{};
+    return `<div class="card claude-brief-card" id="concept-${E(c.id)}">
+      <div class="space-between"><h2>${E(r.concept_name||'Concept Claude')}</h2><span class="badge blue">${E(c.model)}</span></div>
+      <p class="meta">${E(c.product_name)} · ${F(c.created)} · ${Number(c.input_tokens)} input / ${Number(c.output_tokens)} output token</p>
+      <p><strong>Headline:</strong> ${E(r.headline)}</p>
+      <p><strong>Prompt ảnh:</strong> ${E(short(r.image_prompt,700))}</p>
+      <p class="meta">Bố cục: 1:1=${E(r.layout_1_1)}, 9:16=${E(r.layout_9_16)}, 16:9=${E(r.layout_16_9)}.</p>
+      <div class="actions"><button class="btn primary sm" data-action="design.concept-render" data-id="${E(c.id)}">🖼️ Dùng kết quả để tạo poster</button>
+      <button class="btn ghost sm" data-action="design.concept-view" data-id="${E(c.id)}">📋 Xem toàn bộ JSON</button></div>
+      <p class="card-sub">Kết quả Claude được lưu làm tài liệu học cho agent, chưa chứng minh ảnh có CTR cao. Claude không tạo PNG; Pillow thực hiện bước dựng ảnh.</p>
+    </div>`;
+  }).join(''):empty('🧠','Chưa có kết quả Claude trực tiếp','Nhập dữ liệu và bấm Gọi Claude trực tiếp; kết quả sẽ được lưu vào bộ nhớ.')}</div>
+  <div class="space-between"><h2>📚 Thư viện poster đã tạo</h2><button class="btn ghost sm" data-action="design.refresh">↻ Làm mới</button></div>
   <div class="stack">${projectCards}</div>`;
 }
 function renderGrowth(){
@@ -580,6 +597,39 @@ async function action(name,id,el){
     case 'office.zoom-out':window.OfficeLive?.current?.zoomAt(.86);break;
     case 'office.reset':window.OfficeLive?.reset();break;
     case 'design.refresh':{await reload();toast('Đã cập nhật thư viện thiết kế.');break;}
+    case 'design.claude-direct':{
+      const form=document.getElementById('designForm');if(!form)throw new Error('Không tìm thấy form thiết kế.');
+      const data=new FormData(form);
+      if(!data.get('image')?.size)throw new Error('Hãy tải ảnh sản phẩm 3D trước khi gọi Claude.');
+      for(const field of ['product_name','ingredients'])if(!String(data.get(field)||'').trim())throw new Error('Thiếu '+field);
+      const request=new FormData();
+      for(const k of ['product_name','ingredients','user_prompt','page_id','image'])request.append(k,data.get(k)||'');
+      el.textContent='⏳ Đang gọi Claude...';
+      const result=await api('/api/design/claude-direct','POST',request);
+      toast('Claude đã trả concept. Agent đã ghi nhận kết quả, chưa tạo poster.');
+      await reload();
+      setTimeout(()=>document.getElementById('concept-'+result.concept_id)?.scrollIntoView({block:'center',behavior:'smooth'}),150);
+      break;
+    }
+    case 'design.concept-view':{
+      const c=(S.data?.design_concepts||[]).find(c=>c.id===id);
+      if(!c)throw new Error('Không tìm thấy concept. Hãy làm mới màn hình.');
+      modal('🧠 Kết quả Claude nguyên văn',`<pre class="design-result-json">${E(JSON.stringify(c.design_result,null,2))}</pre>`,null,null);
+      break;
+    }
+    case 'design.concept-render':{
+      const c=(S.data?.design_concepts||[]).find(c=>c.id===id);
+      if(!c)throw new Error('Không tìm thấy concept Claude.');
+      const form=document.getElementById('designForm');
+      const data=new FormData(form);
+      const ratios=data.getAll('ratios');
+      if(!ratios.length)throw new Error('Chọn ít nhất một tỷ lệ ở form thiết kế.');
+      const render=await api('/api/design/concepts/'+encodeURIComponent(id)+'/render','POST',{
+        ratios,layout_type:data.get('layout_type')||'overview'});
+      toast('Đã dựng '+render.outputs.length+' poster PNG từ kết quả Claude đã lưu, không gọi Claude lại.');
+      await reload();break;
+    }
+
     case 'design.review':{
       modal('⭐ Đánh giá chất lượng poster',`<p>Agent sử dụng phản hồi này để chọn bố cục tốt hơn trong những lần tiếp theo. Không giả định ảnh có CTR cao nếu chưa nhập KPI.</p>
         <div class="form-field"><label>Số sao</label><select class="select" name="rating"><option value="5">5 – Rất tốt</option><option value="4">4 – Tốt</option><option value="3">3 – Bình thường</option><option value="2">2 – Cần sửa</option><option value="1">1 – Kém</option></select></div>
