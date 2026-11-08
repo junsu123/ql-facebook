@@ -23,6 +23,8 @@ from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image, UnidentifiedImageError
 
 from .db import BASE, MEDIA_DIR, all_rows, db, initialize, log, now, one, run
+from .products import (list_products, get_product, add_product, edit_product, remove_product,
+                       add_product_images, remove_product_image, assign_product, MAX_IMAGE_BYTES)
 from .ai import (ModelError, ceo_message, config, create_task, execute_task,
                  generate_content, save_key, get_key)
 from .brains import (agent_brain_overview, relevant_memories, learning_tick,
@@ -43,7 +45,7 @@ from .firefox_installer import (FirefoxInstallError, start_install as start_fire
 
 ROOT=Path(__file__).resolve().parent.parent
 WEB=ROOT/'web'
-app=FastAPI(title='AI Fanpage Company',version='1.15.0',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='AI Fanpage Company',version='1.16.0',docs_url='/api/docs',redoc_url=None)
 INSTANCE_ID=uuid.uuid4().hex
 initialize()
 app.mount('/assets',StaticFiles(directory=WEB/'assets'),name='assets')
@@ -87,7 +89,7 @@ def index():return FileResponse(WEB/'index.html')
 
 @app.get('/api/health')
 def health():
-    return {'ok':True,'version':'1.15.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
+    return {'ok':True,'version':'1.16.0','instance_id':INSTANCE_ID,'supervised':os.environ.get('AIFC_SUPERVISED')=='1','platform':os.name,'firefox_available':bool(executable()),'data_dir':str(BASE)}
 
 @app.get('/api/system/restart-readiness')
 def restart_readiness():
@@ -117,6 +119,7 @@ def bootstrap():
     return {
         'accounts':accounts,
         'pages':all_rows('SELECT * FROM pages ORDER BY created DESC'),
+        'products':list_products(),
         'agents':agents,
         'tasks':all_rows('SELECT * FROM tasks ORDER BY created DESC LIMIT 150'),
         'contents':all_rows('SELECT c.*,p.name AS page_name FROM contents c JOIN pages p ON c.page_id=p.id ORDER BY c.created DESC LIMIT 250'),
@@ -135,6 +138,7 @@ def bootstrap():
         'firefox_installer':firefox_install_status(),
         'counts':{
             'pages':one('SELECT count(*) AS n FROM pages')['n'],
+            'products':one('SELECT count(*) AS n FROM products')['n'],
             'accounts':len(accounts),
             'queued':one("SELECT count(*) AS n FROM tasks WHERE status='queued'")['n'],
             'running':one("SELECT count(*) AS n FROM tasks WHERE status='running'")['n'],
@@ -474,6 +478,72 @@ def delete_page(page_id:str):
     log('strategy','page_removed',f'Đã xóa hồ sơ nội bộ của Page {page_id}')
     return {'ok':True}
 
+# Product catalog: HTTPS folder links are references only. Images are uploaded explicitly.
+class ProductInput(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    name:str=Field(min_length=2,max_length=180)
+    sku:str=Field(default='',max_length=80)
+    category:str=Field(default='',max_length=160)
+    ingredients:str=Field(default='',max_length=5000)
+    description:str=Field(default='',max_length=8000)
+    approved_facts:str=Field(default='',max_length=8000)
+    folder_url:str=Field(default='',max_length=2000)
+    status:str=Field(default='active',pattern='^(active|archived)$')
+    page_ids:list[str]=Field(default_factory=list,max_length=100)
+
+@app.get('/api/products')
+def products_list():
+    return {'items':list_products()}
+
+@app.get('/api/products/{product_id}')
+def products_detail(product_id:str):
+    try:return get_product(product_id)
+    except LookupError as exc:raise HTTPException(404,str(exc)) from exc
+
+@app.post('/api/products')
+def product_create(body:ProductInput):
+    try:return add_product(body.model_dump())
+    except ValueError as exc:raise HTTPException(400,str(exc)) from exc
+
+@app.put('/api/products/{product_id}')
+def product_edit(product_id:str,body:ProductInput):
+    try:return edit_product(product_id,body.model_dump())
+    except LookupError as exc:raise HTTPException(404,str(exc)) from exc
+    except ValueError as exc:raise HTTPException(400,str(exc)) from exc
+
+@app.delete('/api/products/{product_id}')
+def product_delete(product_id:str):
+    try:remove_product(product_id)
+    except LookupError as exc:raise HTTPException(404,str(exc)) from exc
+    return {'ok':True}
+
+@app.post('/api/products/{product_id}/images')
+async def product_images_upload(product_id:str, files:list[UploadFile]=File(...)):
+    if not 1<=len(files)<=20:raise HTTPException(400,'Mỗi lần chỉ được tải 1–20 ảnh.')
+    uploads=[]
+    for file in files:
+        raw=await file.read(MAX_IMAGE_BYTES+1)
+        if len(raw)>MAX_IMAGE_BYTES:raise HTTPException(400,'Ảnh vượt quá 12MB.')
+        uploads.append((file.filename or 'image',raw))
+    try:return await run_in_threadpool(add_product_images,product_id,uploads)
+    except LookupError as exc:raise HTTPException(404,str(exc)) from exc
+    except ValueError as exc:raise HTTPException(400,str(exc)) from exc
+
+@app.delete('/api/products/{product_id}/images/{image_id}')
+def product_image_delete(product_id:str,image_id:str):
+    try:return remove_product_image(product_id,image_id)
+    except LookupError as exc:raise HTTPException(404,str(exc)) from exc
+
+class ProductAssignment(BaseModel):
+    page_id:str
+    focus:str=Field(default='Giới thiệu sản phẩm',min_length=3,max_length=300)
+
+@app.post('/api/products/{product_id}/assign')
+def product_agent_assign(product_id:str,body:ProductAssignment):
+    try:return assign_product(product_id,body.page_id,body.focus)
+    except LookupError as exc:raise HTTPException(404,str(exc)) from exc
+    except ValueError as exc:raise HTTPException(400,str(exc)) from exc
+
 class MemoryNew(BaseModel):
     note:str=Field(min_length=5,max_length=3000)
 
@@ -657,10 +727,11 @@ def create_draft(req:DraftCreate):
 class GenerateRequest(BaseModel):
     page_id:str
     topic:str=Field(min_length=2,max_length=300)
+    product_id:str|None=None
 
 @app.post('/api/contents/generate')
 def generate(req:GenerateRequest):
-    try:return generate_content(req.page_id,req.topic)
+    try:return generate_content(req.page_id,req.topic,req.product_id)
     except (ModelError,ValueError) as err:raise HTTPException(400,str(err))
 
 class DraftEdit(BaseModel):
@@ -871,10 +942,26 @@ class AttachMedia(BaseModel):
 
 @app.post('/api/contents/{cid}/media')
 def attach_media(cid:str,req:AttachMedia):
-    name=req.path.removeprefix('/media/')
-    if '/' in name or '\\' in name or not (MEDIA_DIR/name).is_file():raise HTTPException(400,'Ảnh chưa được tải lên hệ thống')
+    content=one('SELECT id,page_id FROM contents WHERE id=?',(cid,))
+    if not content:raise HTTPException(404,'Không tìm thấy bài viết')
+    path=req.path.strip()
+    if path.startswith('/media/products/'):
+        # Only images belonging to products explicitly linked to this Page.
+        filename=path.removeprefix('/media/products/')
+        if not filename or '/' in filename or '\\' in filename:
+            raise HTTPException(400,'Đường dẫn ảnh không hợp lệ')
+        record=one('''SELECT i.id FROM product_images i
+                      JOIN product_page_links l ON l.product_id=i.product_id
+                      WHERE l.page_id=? AND i.filename=?''',(content['page_id'],filename))
+        if not record or not (MEDIA_DIR/'products'/filename).is_file():
+            raise HTTPException(400,'Ảnh chưa được liên kết với Fanpage này.')
+    else:
+        name=path.removeprefix('/media/')
+        if not name or '/' in name or '\\' in name or not (MEDIA_DIR/name).is_file():
+            raise HTTPException(400,'Ảnh chưa được tải lên hệ thống')
+        path='/media/'+name
     run('UPDATE contents SET media_path=?,status=?,review_details=?,updated=? WHERE id=?',
-        ('/media/'+name,'draft','',now(),cid))
+        (path,'draft','',now(),cid))
     return one('SELECT * FROM contents WHERE id=?',(cid,))
 
 class MetricRow(BaseModel):

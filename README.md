@@ -1,3 +1,24 @@
+# AI Fanpage Company V1.16 – Quản lý sản phẩm và thư viện ảnh cho Agent
+
+## Mới
+
+- Menu **📦 Quản lý sản phẩm**: tên, mã SKU, ngành hàng, thành phần, mô tả, dữ kiện đã được doanh nghiệp kiểm tra, link thư mục ảnh và trạng thái hoạt động/lưu trữ.
+- Liên kết một sản phẩm với nhiều Fanpage. Dữ liệu sản phẩm được CEO, agent nghiên cứu, chiến lược, Content, Sáng tạo và Kiểm duyệt tham chiếu trong công việc; không cần sao chép lại thông tin vào mỗi Page.
+- Lưu **link HTTPS của folder** (Drive, Dropbox, OneDrive...) làm nguồn tham khảo. **Không tự đọc/tải nội dung trong thư mục chỉ nhờ URL**: thư mục riêng tư yêu cầu cấp quyền qua nhà cung cấp. Công cụ không đăng nhập, không thu thập cookie và không quét link bên ngoài.
+- Có nút **Nhập ảnh** hỗ trợ PNG/JPEG/WEBP và chọn nhiều file hoặc cả thư mục ảnh trên máy tính nếu trình duyệt hỗ trợ. Backend xác minh bytes ảnh, giới hạn 12MB/file, 20 file/lần, 80 file/sản phẩm; chống nạp trùng SHA256. Ảnh được lưu trong `%LOCALAPPDATA%\\AI-Fanpage-Company\\media\\products` hoặc `AIFC_DATA_DIR/media/products`.
+- **Giao agent**: giao cùng lúc 5 nhiệm vụ nghiên cứu, chiến lược, viết bài, thiết kế brief và kiểm duyệt cho Page liên kết. Đây là nhiệm vụ hàng đợi, không giả vờ đã đăng Facebook hay đọc nội dung ảnh bằng mô hình Vision nếu chưa gọi công cụ.
+- **Thiết kế poster**: chọn sản phẩm và ảnh đã lưu, sau đó tạo PNG 1:1/9:16/16:9 hoặc xin Claude qua MiraiAPI tư vấn; không cần chọn lại file gốc trên máy.
+- **Nội dung & Lịch**: có thể chọn sản phẩm khi yêu cầu AI viết; tự gắn ảnh đầu tiên của sản phẩm nếu có. Ngoài ra có nút **Ảnh sản phẩm** để dùng ảnh hiện có cho bản nháp. Backend xác nhận Page đã liên kết với sản phẩm trước khi cho gắn ảnh.
+- Tránh mất ảnh trong bài cũ: xóa sản phẩm hoặc ảnh khỏi thư viện không xóa file đã được bản nháp/bài viết trong hệ thống tham chiếu.
+- SQLite migration tự tạo bảng sản phẩm khi khởi động. Dữ liệu Facebook, Claude API, MiraiAPI, Firefox Profile và poster V1.15 giữ nguyên.
+
+## Lưu ý
+
+Link folder chỉ là tài liệu tham khảo; để AI thật sự nhận được ảnh, hãy tải ảnh từ thư mục vào kho nội bộ bằng nút Nhập ảnh. Khả năng đồng bộ riêng tư từ Google Drive/Dropbox/OneDrive cần xác thực của nhà cung cấp và triển khai connector riêng; hiện chưa có tự đồng bộ từ link.
+
+Không có API Facebook, không tự đăng bài. Các tuyên bố sản phẩm do người dùng cung cấp vẫn cần kiểm chứng trước khi xuất bản, đặc biệt với sản phẩm sức khỏe.
+
+
 # AI Fanpage Company V1.15 – Claude Design qua MiraiAPI
 
 ## V1.15 – Thiết kế poster gọi Claude qua MiraiAPI

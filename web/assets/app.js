@@ -1,11 +1,11 @@
 /* AI Fanpage Company — local-first SPA (no external JS dependencies). */
 'use strict';
 const ROUTES=[
-  ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['growth','🚀','Tăng trưởng 7 ngày'],['pages','📣','100 Fanpage'],
+  ['office','🏢','Văn phòng 3D'],['ceo','🧠','AI CEO'],['growth','🚀','Tăng trưởng 7 ngày'],['products','📦','Quản lý sản phẩm'],['pages','📣','100 Fanpage'],
   ['accounts','🦊','Tài khoản Firefox'],['design','🎨','Thiết kế poster'],['content','📝','Nội dung & Lịch'],
   ['tasks','✅','Nhiệm vụ AI'],['insights','📊','Báo cáo & Bộ nhớ'],['brains','🧠','Bộ não nhân viên'],['academy','🎓','Học viện 10M'],['knowledge','📖','Kho kiến thức đã học'],['settings','⚙️','Cài đặt']
 ];
-const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all',growthDetailId:null,knowledge:{kind:'all',agent_id:'',q:'',confidence:'all',offset:0,limit:25,loading:false,loaded:false,requestId:0,overview:null,records:null,sourceOffset:0}};
+const S={data:null,route:(location.hash.slice(1)||'office'),busy:false,taskFilter:'all',growthDetailId:null,designProductId:null,knowledge:{kind:'all',agent_id:'',q:'',confidence:'all',offset:0,limit:25,loading:false,loaded:false,requestId:0,overview:null,records:null,sourceOffset:0}};
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const F=(date)=>date?new Date(date).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}):'—';
 const short=(s,n=105)=>String(s||'').length>n?String(s).slice(0,n)+'…':String(s||'');
@@ -44,6 +44,7 @@ function closeModal(){document.getElementById('modal-root').innerHTML='';}
 const field=(label,name,value='',kind='text',extra='')=>`<div class="form-field"><label>${E(label)}</label>${kind==='textarea'?`<textarea class="textarea" name="${name}" ${extra}>${E(value)}</textarea>`:`<input class="input" type="${kind}" name="${name}" value="${E(value)}" ${extra}>`}</div>`;
 const pick=(label,name,options,value='',none='— Chọn —')=>`<div class="form-field"><label>${E(label)}</label><select class="select" name="${name}"><option value="">${E(none)}</option>${options.map(o=>`<option value="${E(o.value)}" ${selected(o.value,value)}>${E(o.label)}</option>`).join('')}</select></div>`;
 const pageOptions=()=>V('pages').map(p=>({value:p.id,label:p.name}));
+const productOptions=()=>V('products').map(p=>({value:p.id,label:p.name+(p.sku?' · '+p.sku:'')}));
 const accountOptions=()=>V('accounts').map(p=>({value:p.id,label:p.label+' ('+p.id+')'}));
 function heading(title,subtitle,actions=''){
   return `<div class="page-heading"><div><span class="smallcaps">AI FANPAGE COMPANY</span><h1>${title}</h1><p>${subtitle}</p></div><div class="toolbar">${actions}</div></div>`;
@@ -170,6 +171,28 @@ function renderAccounts(){
       <div class="actions"><button class="btn sm primary" data-action="account.open" data-id="${a.id}">Mở Firefox</button><button class="btn sm ghost" data-action="account.confirm" data-id="${a.id}">Xác nhận đăng nhập</button><button class="btn sm ghost" data-action="account.reload" data-id="${a.id}">↻ Reload</button><button class="btn sm ghost" data-action="account.close" data-id="${a.id}">Đóng</button><button class="btn sm danger" data-action="account.delete" data-id="${a.id}">Xóa</button></div></div>`).join(''):empty('🦊','Chưa có tài khoản Firefox','Bấm Thêm tài khoản để tạo profile và mở trình duyệt.')}</div>
     <div class="footer-tip">Nếu máy chưa có Firefox, hãy tải và cài từ Mozilla bằng nút ở trên trước khi thêm tài khoản. Không tự đóng trình duyệt khi bạn đang nhập 2FA.</div>`;
 }
+function renderProducts(){
+  const products=V('products'),photoCount=products.reduce((n,p)=>n+(p.images||[]).length,0);
+  return `${heading('Quản lý sản phẩm','Kho thông tin cho CEO, Content và Thiết kế: tên, thành phần, thư mục ảnh, ảnh đã tải vào máy và Fanpage liên kết.',`<button class="btn primary" data-action="product.add">＋ Thêm sản phẩm</button>`)}
+  <div class="stat-grid">${stat('📦','Sản phẩm',products.length,'Hồ sơ trong database','#a995f4')}${stat('🖼️','Ảnh đã tải',photoCount,'Có thể dùng để thiết kế poster','#78c1ee')}${stat('📣','Liên kết Fanpage',products.reduce((x,p)=>x+(p.page_ids||[]).length,0),'Số liên kết sản phẩm – Page','#60dcb9')}${stat('🔗','Link thư mục ảnh',products.filter(p=>p.folder_url).length,'Lưu tham chiếu, không tự tải','#ffc783')}</div>
+  <div class="office-note" style="margin:18px 0">Link Google Drive/Dropbox/OneDrive chỉ là <strong>đường dẫn tham chiếu</strong>. Để các agent dùng được ảnh ngay, hãy bấm <strong>Nhập ảnh</strong> hoặc <strong>Chọn thư mục trên máy</strong>. Phần mềm không tự truy cập thư mục riêng tư và không lưu mật khẩu dịch vụ lưu trữ.</div>
+  <div class="product-grid">${products.length?products.map(p=>`<article class="card product-card">
+    <div class="space-between"><div><h2>📦 ${E(p.name)}</h2><p class="meta">${E(p.sku||'Chưa có mã')} · ${E(p.category||'Chưa phân loại')}</p></div><span class="badge ${p.status==='active'?'green':'yellow'}">${p.status==='active'?'Đang sử dụng':'Đã lưu trữ'}</span></div>
+    <p class="product-description">${E(short(p.description||p.ingredients||'Chưa có mô tả/thành phần',260))}</p>
+    <p class="meta">🌿 Thành phần: ${E(short(p.ingredients||'Chưa nhập',210))}</p>
+    <div class="product-photo-grid">${(p.images||[]).slice(0,6).map(im=>`<a href="${E(im.url)}" target="_blank" rel="noopener noreferrer" title="${E(im.original_name)}"><img loading="lazy" src="${E(im.url)}" alt="Ảnh ${E(p.name)}"></a>`).join('')||'<div class="product-photo-empty">🖼️ Chưa tải ảnh sản phẩm</div>'}</div>
+    <p class="meta">${p.image_count} ảnh đã nhập · ${(p.page_ids||[]).length} Fanpage liên kết</p>
+    ${p.folder_url?`<p><a href="${E(p.folder_url)}" target="_blank" rel="noopener noreferrer" class="linkish">📁 Mở thư mục ảnh tham chiếu</a></p>`:'<p class="muted">Chưa có link thư mục ảnh</p>'}
+    <div class="toolbar product-actions">
+      <button class="btn sm primary" data-action="product.assign" data-id="${E(p.id)}">🧠 Giao agent</button>
+      <button class="btn sm ghost" data-action="product.images" data-id="${E(p.id)}">📸 Nhập ảnh</button>
+      <button class="btn sm ghost" data-action="product.design" data-id="${E(p.id)}" ${(p.images||[]).length?'':'disabled'}>🎨 Tạo poster</button>
+      <button class="btn sm ghost" data-action="product.edit" data-id="${E(p.id)}">Sửa</button>
+      <button class="btn sm danger" data-action="product.delete" data-id="${E(p.id)}">Xóa</button>
+    </div>
+  </article>`).join(''):empty('📦','Chưa có sản phẩm','Bấm Thêm sản phẩm để tạo kho dữ liệu dùng chung cho các agent.')}</div>`;
+}
+
 function renderPages(){
   const pages=V('pages');
   return `${heading('Quản lý 100 Fanpage','Hồ sơ, chiến lược, thông tin sản phẩm và Firefox Profile gắn với từng Page.',`<button class="btn primary" data-action="page.add">＋ Thêm Fanpage</button>`)}
@@ -189,6 +212,7 @@ function renderContent(){
     ${['approved','ready','scheduled'].includes(p.status)?`<button class="btn sm ghost" data-action="content.prepare" data-id="${p.id}">🦊 Mở để đăng</button>`:''}
     ${['approved','ready','scheduled'].includes(p.status)?`<button class="btn sm ghost" data-action="content.complete" data-id="${p.id}">✅ Đã đăng</button>`:''}
     ${['ready','scheduled'].includes(p.status)?`<button class="btn sm ghost" data-action="content.cancel" data-id="${p.id}">Hủy lịch</button>`:''}
+    <button class="btn sm ghost" data-action="content.product-media" data-id="${p.id}">📦 Ảnh sản phẩm</button>
     <button class="btn sm ghost" data-action="content.media" data-id="${p.id}">🖼️ Thêm ảnh</button>
     </div></div>`).join(''):empty('📝','Chưa có nội dung','Tạo bản nháp mới hoặc kết nối AI để viết nội dung theo Page.')}</div>
   <div class="warn">Lịch tự động chuyển bài sang trạng thái “Đến lịch”; không tự nhấn Đăng trên Facebook vì không sử dụng Meta API và không được giả định quyền tự động hóa giao diện.</div>`;
@@ -197,6 +221,7 @@ function renderDesign(){
   const records=S.data?.design?.items||[];
   const brain=S.data?.design?.brain||{};
   const concepts=S.data?.design_concepts||[];
+  const chosen=V('products').find(p=>p.id===S.designProductId)||null;
   const projectCards=records.length?records.map(p=>`<div class="card poster-project">
     <div class="space-between"><h2>${E(p.product_name)}</h2><span class="badge ${p.provider==='claude'?'blue':'green'}">${p.provider==='claude'?'Claude concept':'Bố cục nội bộ'}</span></div>
     <p class="muted">${E(p.layout_name)} · ${E(p.layout_type)} · ${F(p.created)}</p>
@@ -213,9 +238,11 @@ function renderDesign(){
   <div class="grid-2 poster-top">
     <div class="card"><h2>🎨 Tạo poster từ ảnh sản phẩm</h2>
       <form id="designForm" class="stack">
-      ${field('Tên sản phẩm','product_name','','text','minlength="2" maxlength="180" required placeholder="Trà thảo mộc Ba Kích"')}
-      ${field('Thành phần (phân tách bằng dấu phẩy)','ingredients','','textarea','rows="4" maxlength="1800" required placeholder="Ba kích, đinh lăng, đông trùng hạ thảo..."')}
-      <div class="form-field"><label>Ảnh sản phẩm 3D (PNG/JPG/WEBP, tối đa 12MB)</label><input class="input" name="image" type="file" accept="image/png,image/jpeg,image/webp" required><span class="muted">PNG nền trong suốt cho kết quả đẹp nhất. Giữ nguyên chữ và màu bao bì.</span></div>
+      ${pick('Sử dụng sản phẩm trong thư viện (tùy chọn)','catalog_product_id',productOptions(),chosen?.id||'','Tự nhập sản phẩm / ảnh')}
+      ${chosen?.images?.length?`<div class="form-field"><label>Ảnh từ sản phẩm đã lưu</label><select class="select" name="catalog_image_id">${chosen.images.map(im=>`<option value="${E(im.id)}">${E(im.original_name)}</option>`).join('')}</select><p class="card-sub">Ảnh được đọc từ thư viện trên máy. Không tải lại từ folder bên ngoài.</p></div>`:''}
+      ${field('Tên sản phẩm','product_name',chosen?.name||'','text','minlength="2" maxlength="180" required placeholder="Trà thảo mộc Ba Kích"')}
+      ${field('Thành phần (phân tách bằng dấu phẩy)','ingredients',chosen?.ingredients||'','textarea','rows="4" maxlength="1800" required placeholder="Ba kích, đinh lăng, đông trùng hạ thảo..."')}
+      <div class="form-field"><label>Ảnh sản phẩm 3D (PNG/JPG/WEBP, tối đa 12MB)</label><input class="input" name="image" type="file" accept="image/png,image/jpeg,image/webp"><span class="muted">Có thể chọn ảnh đã nhập trong thư viện ở trên hoặc tải ảnh mới. PNG nền trong suốt cho kết quả đẹp nhất.</span></div>
       <div class="form-field"><label>Tỷ lệ xuất ảnh (chọn nhiều)</label><div class="poster-ratio-picker">
       ${[['1:1','1024×1024'],['9:16','1080×1920'],['16:9','1600×900']].map(([value,res])=>`<label><input type="checkbox" name="ratios" value="${value}" ${value==='1:1'?'checked':''}><strong>${value}</strong><small>${res}</small></label>`).join('')}</div></div>
       <div class="grid-2">
@@ -498,7 +525,7 @@ function renderSettings(){
 function render(){
   if(!S.data)return;
   window.OfficeLive?.unmount();
-  nav();const dict={office:renderOffice,ceo:renderCEO,pages:renderPages,accounts:renderAccounts,content:renderContent,design:renderDesign,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,knowledge:renderKnowledge,growth:renderGrowth,settings:renderSettings};
+  nav();const dict={office:renderOffice,ceo:renderCEO,products:renderProducts,pages:renderPages,accounts:renderAccounts,content:renderContent,design:renderDesign,tasks:renderTasks,insights:renderInsights,brains:renderBrains,academy:renderAcademy,knowledge:renderKnowledge,growth:renderGrowth,settings:renderSettings};
   document.getElementById('view').innerHTML=(dict[S.route]||renderOffice)();
   if(S.route==='office'){
     const scene=window.OfficeLive?.mount(document.getElementById('office-live-stage'),S.data,id=>action('agent.details',id).catch(err=>toast(err.message,true)));
@@ -508,6 +535,68 @@ function render(){
 }
 async function reload(){S.data=await api('/api/bootstrap');render();}
 function navigate(route){if(!ROUTES.some(r=>r[0]===route))return;S.route=route;location.hash=route;render();if(route==='knowledge')loadKnowledge();window.scrollTo({top:0,behavior:'smooth'});}
+function productForm(product=null){
+  const pages=V('pages');
+  const linked=product?.page_ids||[];
+  modal(product?'✏️ Sửa sản phẩm':'📦 Thêm sản phẩm',
+    field('Tên sản phẩm','name',product?.name||'','text','required minlength="2" maxlength="180"')+
+    field('Mã sản phẩm / SKU','sku',product?.sku||'','text','maxlength="80"')+
+    field('Ngành hàng','category',product?.category||'','text','maxlength="160"')+
+    field('Thành phần','ingredients',product?.ingredients||'','textarea','rows="3" maxlength="5000"')+
+    field('Mô tả và đặc điểm','description',product?.description||'','textarea','rows="4" maxlength="8000"')+
+    field('Thông tin đã được doanh nghiệp xác minh','approved_facts',product?.approved_facts||'','textarea','rows="3" maxlength="8000" placeholder="Thông số, công bố hợp lệ, hướng dẫn dùng, lưu ý..."')+
+    field('Link folder chứa ảnh (Google Drive, Dropbox, OneDrive...)','folder_url',product?.folder_url||'','url','placeholder="https://drive.google.com/drive/folders/..." maxlength="2000"')+
+    `<div class="form-field"><label>Trạng thái</label><select class="select" name="status"><option value="active" ${selected(product?.status||'active','active')}>Đang sử dụng</option><option value="archived" ${selected(product?.status,'archived')}>Lưu trữ</option></select></div>`+
+    `<div class="form-field"><label>Fanpage sử dụng sản phẩm</label><div class="product-page-checks">${pages.length?pages.map(p=>`<label><input type="checkbox" name="page_ids" value="${E(p.id)}" ${linked.includes(p.id)?'checked':''}> ${E(p.name)}</label>`).join(''):'Chưa có Fanpage. Bạn có thể liên kết sau.'}</div></div>`+
+    '<div class="office-note">Link folder là tham chiếu, không đồng nghĩa phần mềm đã tải ảnh. Dữ liệu do bạn cung cấp được đánh dấu chưa xác minh độc lập khi đưa cho agent.</div>',
+    product?'Lưu sản phẩm':'Tạo sản phẩm',async (values,form)=>{
+      const page_ids=[...form.querySelectorAll('[name="page_ids"]:checked')].map(x=>x.value);
+      const payload={...values,page_ids};delete payload.page_ids;
+      payload.page_ids=page_ids;
+      const item=await api('/api/products'+(product?'/'+product.id:''),product?'PUT':'POST',payload);
+      toast('Đã lưu '+item.name+'. Bấm Nhập ảnh để đưa ảnh thật vào thư viện.');
+    });
+}
+function productImagesDialog(product){
+  const thumbnails=(product.images||[]).map(im=>`<div class="product-photo-row"><a href="${E(im.url)}" target="_blank" rel="noopener noreferrer"><img src="${E(im.url)}" alt="${E(im.original_name)}"></a><span>${E(im.original_name)}</span><button type="button" class="btn ghost sm" data-action="product.image-delete" data-id="${E(product.id)}|${E(im.id)}">Xóa</button></div>`).join('');
+  modal('🖼️ Ảnh sản phẩm · '+product.name,
+    `<div class="product-photo-list">${thumbnails||'<p class="muted">Chưa có ảnh.</p>'}</div>`+
+    '<div class="form-field"><label>Chọn nhiều ảnh từ máy</label><input class="input" type="file" name="new_images" accept="image/png,image/jpeg,image/webp" multiple></div>'+
+    '<div class="form-field"><label>Hoặc chọn cả thư mục ảnh từ máy (trình duyệt hỗ trợ)</label><input class="input" type="file" name="folder_images" accept="image/png,image/jpeg,image/webp" multiple webkitdirectory directory></div>'+
+    '<div class="office-note">Chỉ nhập PNG, JPG, WEBP. Mỗi ảnh tối đa 12 MB, tối đa 20 ảnh/lần; có thể nhập nhiều đợt. Link Drive được giữ riêng, không tự tải nội dung thư mục nếu chưa cấp quyền.</div>',
+    'Tải ảnh vào sản phẩm',async (_values,form)=>{
+      const files=[...form.querySelector('[name="new_images"]').files,...form.querySelector('[name="folder_images"]').files].filter(f=>/\.(png|jpe?g|webp)$/i.test(f.name));
+      if(!files.length)throw new Error('Hãy chọn ảnh hoặc thư mục có ảnh PNG/JPG/WEBP.');
+      if(files.length>20)throw new Error('Chỉ tải tối đa 20 ảnh mỗi lần; hãy chọn ít hơn.');
+      const data=new FormData();files.forEach(f=>data.append('files',f,f.name));
+      const result=await api('/api/products/'+product.id+'/images','POST',data);
+      toast('Đã nhập '+result.added+' ảnh. Bỏ qua '+result.duplicates+' ảnh trùng.');
+    });
+}
+function productAssignDialog(product){
+  const options=(product.page_ids||[]).map(id=>V('pages').find(p=>p.id===id)).filter(Boolean).map(p=>({value:p.id,label:p.name}));
+  if(!options.length){toast('Cần liên kết sản phẩm với ít nhất một Fanpage trước.',true);return;}
+  modal('🧠 CEO giao việc · '+product.name,
+    pick('Fanpage thực hiện','page_id',options)+
+    field('Mục tiêu nội dung','focus','Giới thiệu giá trị và cách sử dụng sản phẩm','textarea','rows="3" maxlength="300" required')+
+    '<div class="office-note">CEO sẽ tạo các nhiệm vụ Nghiên cứu, Chiến lược, Content, Sáng tạo và Kiểm duyệt. Chỉ các ảnh đã nhập vào thư viện mới có thể dùng khi tạo poster.</div>',
+    'Giao 5 nhiệm vụ',async f=>{const r=await api('/api/products/'+product.id+'/assign','POST',f);toast('Đã giao '+r.queued+' nhiệm vụ AI, không tự đăng Facebook.');});
+}
+async function designData(form){
+  const data=new FormData(form);
+  if(data.get('image')?.size)return data;
+  const pid=data.get('catalog_product_id'),iid=data.get('catalog_image_id');
+  const product=V('products').find(p=>p.id===pid);
+  const image=product?.images?.find(im=>im.id===iid);
+  if(!image)throw new Error('Hãy chọn ảnh sản phẩm 3D hoặc dùng ảnh đã nhập trong thư viện.');
+  const response=await fetch(image.url);
+  if(!response.ok)throw new Error('Không thể lấy ảnh đã nhập từ thư viện.');
+  const blob=await response.blob();
+  if(blob.size>12*1024*1024)throw new Error('Ảnh sản phẩm vượt 12MB.');
+  data.set('image',new File([blob],image.original_name||'product.png',{type:blob.type||'image/png'}));
+  return data;
+}
+
 function pageForm(page=null){
   modal(page?'Sửa hồ sơ Fanpage':'Thêm Fanpage',
     field('Tên Fanpage','name',page?.name||'','text','required minlength="2"')+field('Đường dẫn Facebook','url',page?.url||'','url','placeholder="https://www.facebook.com/your-page" required')+
@@ -530,7 +619,9 @@ function contentForm(post=null){
     });
 }
 function generateForm(){
-  modal('✦ AI tạo bài Facebook',pick('Fanpage có dữ liệu xác thực','page_id',pageOptions())+field('Chủ đề cần viết','topic','','text','required')+
+  modal('✦ AI tạo bài Facebook',pick('Fanpage có dữ liệu xác thực','page_id',pageOptions())+
+    pick('Sản phẩm từ thư viện (tùy chọn)','product_id',productOptions())+
+    field('Chủ đề cần viết','topic','','text','required')+
     '<div class="office-note">LLM tạo nội dung từ thông tin bạn đã cung cấp. Bài phải được kiểm duyệt trước khi lập lịch.</div>',
     'Yêu cầu AI viết bài',async f=>{await api('/api/contents/generate','POST',f);toast('AI đã tạo bản nháp thực tế.')});
 }
@@ -599,8 +690,7 @@ async function action(name,id,el){
     case 'design.refresh':{await reload();toast('Đã cập nhật thư viện thiết kế.');break;}
     case 'design.claude-direct':{
       const form=document.getElementById('designForm');if(!form)throw new Error('Không tìm thấy form thiết kế.');
-      const data=new FormData(form);
-      if(!data.get('image')?.size)throw new Error('Hãy tải ảnh sản phẩm 3D trước khi gọi Claude.');
+      const data=await designData(form);
       for(const field of ['product_name','ingredients'])if(!String(data.get(field)||'').trim())throw new Error('Thiếu '+field);
       const request=new FormData();
       for(const k of ['product_name','ingredients','user_prompt','page_id','image'])request.append(k,data.get(k)||'');
@@ -661,6 +751,18 @@ async function action(name,id,el){
       'Tôi đã kiểm tra',async f=>api('/api/accounts/'+id+'/confirm','POST',{name:f.name}));break;
     }
     case 'account.delete':if(confirm('Xóa vĩnh viễn Firefox Profile '+id+'? Dữ liệu phiên đăng nhập sẽ mất.')){await api('/api/accounts/'+id,'DELETE');await reload();toast('Đã xóa profile.')}break;
+    case 'product.add':productForm();break;
+    case 'product.edit':productForm(V('products').find(p=>p.id===id));break;
+    case 'product.images':{const p=V('products').find(p=>p.id===id);if(p)productImagesDialog(p);break;}
+    case 'product.assign':{const p=V('products').find(p=>p.id===id);if(p)productAssignDialog(p);break;}
+    case 'product.design':S.designProductId=id;navigate('design');break;
+    case 'product.delete':if(confirm('Xóa sản phẩm và ảnh đã nhập? Các bài viết trước đó sẽ được giữ nguyên.')){await api('/api/products/'+id,'DELETE');await reload();}break;
+    case 'product.image-delete':{
+      const [pid,iid]=id.split('|');
+      if(!confirm('Xóa ảnh này khỏi thư viện sản phẩm?'))break;
+      await api('/api/products/'+encodeURIComponent(pid)+'/images/'+encodeURIComponent(iid),'DELETE');
+      closeModal();await reload();toast('Đã xóa ảnh khỏi sản phẩm.');break;
+    }
     case 'page.add':pageForm();break;
     case 'page.edit':pageForm(V('pages').find(p=>p.id===id));break;
     case 'page.memory':memoryModal(id);break;
@@ -677,6 +779,16 @@ async function action(name,id,el){
     }
     case 'content.complete':publishModal(id);break;
     case 'content.cancel':await api('/api/contents/'+id+'/cancel-schedule','POST');await reload();break;
+    case 'content.product-media':{
+      const post=V('contents').find(c=>c.id===id);
+      if(!post)throw new Error('Bài viết không tồn tại.');
+      const available=V('products').filter(p=>(p.page_ids||[]).includes(post.page_id)).flatMap(p=>(p.images||[]).map(i=>({value:i.url,label:p.name+' · '+i.original_name})));
+      if(!available.length)throw new Error('Chưa có ảnh sản phẩm liên kết với Fanpage này. Hãy nhập ảnh ở Quản lý sản phẩm.');
+      modal('🖼️ Dùng ảnh sản phẩm đã lưu',pick('Chọn ảnh trong kho','path',available),
+        'Gắn ảnh',async f=>{if(!f.path)throw new Error('Hãy chọn ảnh.');
+          await api('/api/contents/'+id+'/media','POST',{path:f.path});toast('Đã gắn ảnh có sẵn; cần kiểm duyệt lại nội dung.');});
+      break;
+    }
     case 'content.media':{
       modal('🖼️ Tải ảnh cho bài đăng','<div class="form-field"><label>Ảnh PNG, JPG hoặc WEBP (tối đa 12MB)</label><input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></div>','Tải lên và liên kết',async (_f,form)=>{
         const file=form.querySelector('input[type=file]').files[0];if(!file)throw new Error('Hãy chọn ảnh.');
@@ -773,6 +885,11 @@ async function action(name,id,el){
     }
   }
 }
+document.addEventListener('change',e=>{
+  if(e.target.matches('#designForm select[name="catalog_product_id"]')){
+    S.designProductId=e.target.value||null;render();
+  }
+});
 document.addEventListener('click',async e=>{
   const route=e.target.closest('[data-route]');if(route){navigate(route.dataset.route);return;}
   const target=e.target.closest('[data-action]');if(!target)return;
@@ -782,7 +899,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('submit',async e=>{
   if(e.target.id==='designForm'){
     e.preventDefault();const form=e.target;const button=form.querySelector('[type=submit]');
-    const data=new FormData(form);
+    let data;try{data=await designData(form);}catch(err){toast(err.message,true);return;}
     const ratios=data.getAll('ratios');if(!ratios.length){toast('Hãy chọn ít nhất một tỷ lệ ảnh.',true);return;}
     data.delete('ratios');data.append('ratios',ratios.join(','));
     if(!data.get('image')?.size){toast('Hãy tải ảnh sản phẩm 3D.',true);return;}
@@ -836,7 +953,7 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.ctrlKey&&e.target.closest('#chatForm')){e.preventDefault();e.target.closest('form').requestSubmit();}});
 window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(ROUTES.some(r=>r[0]===route)&&route!==S.route){S.route=route;render();if(route==='knowledge')loadKnowledge();}});
 (async()=>{try{await reload();if(S.route==='knowledge')await loadKnowledge();if(['downloading','verifying','installer_opened','checking'].includes(S.data?.firefox_installer?.state))startFirefoxInstallerPoll();setInterval(async()=>{if(S.busy||document.querySelector('#modal-root .modal')||document.activeElement?.matches('input,textarea,select'))return;
-  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy','growth','design'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
+  try{S.data=await api('/api/bootstrap');if(S.route==='office')updateOfficeData();else if(['tasks','accounts','insights','brains','academy','growth','design','products'].includes(S.route))render();}catch(_){}},12000);}catch(e){document.getElementById('view').innerHTML=`<div class="card"><h2>⚠️ Không thể kết nối backend</h2><p>${E(e.message)}</p><p>Khởi động: <code>python -m uvicorn app.main:app --host 127.0.0.1 --port 8765</code></p></div>`;}})();
 
 
 // Keep the currently open dashboard in sync with a restarted local backend.

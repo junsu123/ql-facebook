@@ -109,6 +109,9 @@ def ceo_message(message: str) -> dict:
         raise ValueError('Nội dung yêu cầu trống')
     run('INSERT INTO chats(role,body,created) VALUES(?,?,?)',('user',message.strip(),now()))
     pages = all_rows('SELECT id,name,category FROM pages ORDER BY created DESC LIMIT 100')
+    catalog = all_rows('''SELECT p.id,p.name,p.category,p.ingredients,p.description,p.folder_url,
+                        l.page_id FROM products p LEFT JOIN product_page_links l ON l.product_id=p.id
+                        WHERE p.status='active' ORDER BY p.updated DESC LIMIT 100''')
     stats = {
         'pages':len(pages),
         'open_tasks':one("SELECT count(*) AS n FROM tasks WHERE status IN ('queued','running')")['n'],
@@ -126,7 +129,7 @@ Tối đa 8 nhiệm vụ/lượt, ngắn gọn, đúng dữ liệu được cung
     try:
         from .brains import relevant_memories, enqueue_learning, is_hard_problem, brain_system
         useful=relevant_memories('ceo',message,limit=4)
-        raw = call_llm(brain_system('ceo')+'\n'+system,json.dumps({'message':message,'pages':pages,'stats':stats,'ceo_memory':useful},ensure_ascii=False),'ceo',agent_id='ceo',hard=is_hard_problem(message))
+        raw = call_llm(brain_system('ceo')+'\n'+system,json.dumps({'message':message,'pages':pages,'products_owner_supplied':catalog,'stats':stats,'ceo_memory':useful},ensure_ascii=False),'ceo',agent_id='ceo',hard=is_hard_problem(message))
         response = parse_json_reply(raw)
         reply = str(response.get('reply','Đã tạo kế hoạch.'))[:3000]
         assigned = []
@@ -155,6 +158,8 @@ def page_context(page_id: str | None) -> dict:
     page['memories'] = all_rows('SELECT note,source FROM memories WHERE page_id=? ORDER BY id DESC LIMIT 8',(page_id,))
     page['recent_content'] = all_rows('SELECT topic,body FROM contents WHERE page_id=? ORDER BY created DESC LIMIT 5',(page_id,))
     page['metrics'] = all_rows('SELECT date,views,likes,comments,shares FROM metrics WHERE page_id=? ORDER BY date DESC LIMIT 14',(page_id,))
+    from .products import product_context_for_page
+    page['products'] = product_context_for_page(page_id)
     return page
 
 
@@ -197,18 +202,25 @@ Trả lời tiếng Việt dạng văn bản rõ ràng, ngắn gọn, phù hợp
         return one('SELECT * FROM tasks WHERE id=?',(task_id,))
 
 
-def generate_content(page_id: str, topic: str) -> dict:
+def generate_content(page_id: str, topic: str, product_id: str | None = None) -> dict:
     page = page_context(page_id)
     if not page:raise ValueError('Không tìm thấy Fanpage')
-    if not page.get('facts'):
-        raise ValueError('Cần nhập dữ liệu sản phẩm/kiến thức đã xác minh cho Page trước khi tạo nội dung bằng AI.')
+    from .products import product_context_for_page
+    selected_products = product_context_for_page(page_id, product_id)
+    if product_id and not selected_products:
+        raise ValueError('Sản phẩm chưa được liên kết với Fanpage này.')
+    if not page.get('facts') and not selected_products:
+        raise ValueError('Hãy nhập dữ kiện Fanpage hoặc liên kết ít nhất một sản phẩm có dữ liệu.')
+    page['products'] = selected_products
     system = '''Bạn là copywriter marketing. Viết MỘT bài Facebook nguyên bản tiếng Việt ngắn gọn, hữu ích, có lời mời tương tác tự nhiên. CHỈ dùng dữ kiện sản phẩm được cung cấp. Không thổi phồng, không tuyên bố chữa bệnh, không nói điều chưa có bằng chứng. Không tạo bình luận hoặc đánh giá khách hàng giả. Trả về trực tiếp nội dung bài đăng.'''
     from .brains import relevant_memories,enqueue_learning
     memories=relevant_memories('content',topic,page_id)
     text = call_llm(system,json.dumps({'topic':topic,'page':page,'agent_memory':memories},ensure_ascii=False),'content',agent_id='content')
     cid='C'+uuid.uuid4().hex[:10].upper()
-    run('INSERT INTO contents(id,page_id,topic,body,created,updated) VALUES(?,?,?,?,?,?)',
-        (cid,page_id,topic[:200],text,now(),now()))
+    product_photo = (selected_products[0]['uploaded_images'][0]['url']
+                     if product_id and selected_products and selected_products[0]['uploaded_images'] else None)
+    run('INSERT INTO contents(id,page_id,topic,body,media_path,created,updated) VALUES(?,?,?,?,?,?,?)',
+        (cid,page_id,topic[:200],text,product_photo,now(),now()))
     log('content','draft',f'Tạo bản nháp mới: {topic[:100]}')
     enqueue_learning('content','draft_created',f'Đã tạo nháp cho chủ đề {topic[:150]}',source_ref=cid,page_id=page_id)
     return one('SELECT * FROM contents WHERE id=?',(cid,))

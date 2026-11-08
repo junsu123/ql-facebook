@@ -1,3 +1,11 @@
+V1.16 - QUẢN LÝ SẢN PHẨM VÀ ẢNH CHO AGENT
+1. Menu Quản lý sản phẩm -> Thêm sản phẩm; nhập tên, thành phần, mô tả, link folder ảnh (HTTPS), chọn các Fanpage.
+2. Nhấn Nhập ảnh -> chọn nhiều ảnh hoặc chọn cả thư mục ảnh từ máy. Link folder (Drive...) không tự tải ảnh riêng tư.
+3. Nhấn Giao agent -> chọn Fanpage và mục tiêu; hệ thống xếp 5 nhiệm vụ.
+4. Menu Thiết kế poster -> chọn sản phẩm từ thư viện và ảnh đã nhập -> tạo 1:1, 9:16, 16:9.
+5. Menu Nội dung & Lịch -> AI viết bài (chọn sản phẩm) hoặc gắn Ảnh sản phẩm vào bản nháp.
+6. Các ảnh mới được lưu ở thư mục media/products trong vùng dữ liệu cục bộ, không upload GitHub.
+
 AI FANPAGE COMPANY - HUONG DAN KHOI DONG WINDOWS
 ===============================================
 

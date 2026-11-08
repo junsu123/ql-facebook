@@ -39,7 +39,7 @@ def test_update_health_returns_instance_id_and_supervisor_signal(monkeypatch):
         result = client.get('/api/health')
         assert result.status_code == 200
         body = result.json()
-        assert body['instance_id'] and body['version'] == '1.15.0'
+        assert body['instance_id'] and body['version'] == '1.16.0'
         assert body['supervised'] is True
         assert client.get('/api/system/restart-readiness').json()['ready'] is True
         with _worker_lock:
